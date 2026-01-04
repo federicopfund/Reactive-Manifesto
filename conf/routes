@@ -1,0 +1,12 @@
+# Perfil
+GET     /                       controllers.ProfileController.home
+GET     /portfolio              controllers.ProfileController.portfolio
+GET     /publications           controllers.ProfileController.publications
+GET     /blog                   controllers.ProfileController.blog
+GET     /ideas                  controllers.ProfileController.ideas
+GET   /contact                  controllers.ContactController.form
+POST  /contact                  controllers.ContactController.submit
+
+
+# Assets
+GET     /assets/*file           controllers.Assets.versioned(path="/public", file: Asset)
