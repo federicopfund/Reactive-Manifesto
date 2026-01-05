@@ -48,14 +48,66 @@ Esta aplicación web presenta los cuatro pilares fundamentales del Manifiesto Re
 
 ## 🚀 Instalación y Ejecución
 
-### 1. Clonar el repositorio
+### Comandos Rápidos para Levantar la Aplicación
+
+#### 1️⃣ Liberar puerto 9000 (si está ocupado)
+```bash
+# Matar proceso en puerto 9000
+fuser -k 9000/tcp 2>/dev/null
+
+# O usando lsof
+lsof -ti:9000 | xargs kill -9 2>/dev/null
+```
+
+#### 2️⃣ Limpiar compilaciones previas
+```bash
+cd /workspaces/Reactive-Manifiesto && sbt clean
+```
+
+#### 3️⃣ Compilar el proyecto
+```bash
+sbt compile
+```
+
+#### 4️⃣ Iniciar el servidor
+```bash
+sbt run
+```
+
+**El servidor estará disponible en:** http://localhost:9000
+
+### 🎯 Comando Todo-en-Uno
+```bash
+# Liberar puerto, limpiar, compilar e iniciar
+fuser -k 9000/tcp 2>/dev/null && sbt clean compile run
+```
+
+### 🔄 Modo Desarrollo con Auto-reload
+```bash
+# Recarga automática al detectar cambios
+sbt ~run
+```
+
+### 🛑 Detener el Servidor
+
+**Desde terminal sbt:**
+- Presiona `Enter` o `Ctrl+D`
+
+**Desde otra terminal:**
+```bash
+fuser -k 9000/tcp
+```
+
+### 📋 Instalación Completa
+
+#### 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/federicopfund/Reactive-Manifiesto.git
 cd Reactive-Manifiesto
 ```
 
-### 2. Ejecutar la aplicación
+#### 2. Ejecutar la aplicación
 
 ```bash
 sbt run
@@ -63,16 +115,79 @@ sbt run
 
 La aplicación estará disponible en: `http://localhost:9000`
 
-### 3. Compilar el proyecto
+#### 3. Compilar el proyecto
 
 ```bash
 sbt compile
 ```
 
-### 4. Ejecutar tests
+#### 4. Ejecutar tests
 
 ```bash
 sbt test
+```
+
+## 🔧 Comandos Útiles
+
+### Verificar estado del servidor
+```bash
+# Ver procesos sbt activos
+ps aux | grep "[s]bt run"
+
+# Ver qué proceso usa el puerto 9000
+lsof -i:9000
+
+# Probar conectividad
+curl http://localhost:9000/
+```
+
+### Limpieza completa
+```bash
+# Eliminar archivos compilados
+sbt clean
+
+# Limpieza profunda (incluye caché)
+rm -rf target/ project/target/ ~/.ivy2/cache
+```
+
+### Recargar dependencias
+```bash
+sbt
+> reload
+> update
+> compile
+```
+
+### Ejecutar en puerto diferente
+```bash
+# Opción 1
+sbt "run 8080"
+
+# Opción 2
+export PLAY_HTTP_PORT=8080
+sbt run
+```
+
+### 🐛 Troubleshooting
+
+**Error: Puerto 9000 en uso**
+```bash
+fuser -k 9000/tcp
+```
+
+**Error: Compilación falla**
+```bash
+sbt clean
+rm -rf target/
+sbt update
+sbt compile
+```
+
+**Error: Dependencias no resueltas**
+```bash
+sbt clean
+rm -rf ~/.ivy2/cache/
+sbt update
 ```
 
 ## 📁 Estructura del Proyecto
