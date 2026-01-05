@@ -4,6 +4,7 @@ GET     /portfolio              controllers.ProfileController.portfolio
 GET     /publications           controllers.ProfileController.publications
 GET     /blog                   controllers.ProfileController.blog
 GET     /ideas                  controllers.ProfileController.ideas
+GET     /reactive-demo          controllers.ProfileController.reactiveDemo
 GET   /contact                  controllers.ContactController.form
 POST  /contact                  controllers.ContactController.submit
 

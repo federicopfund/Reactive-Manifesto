@@ -26,4 +26,8 @@ class ProfileController @Inject()(cc: ControllerComponents)
   def ideas = Action { implicit request =>
     Ok(views.html.ideas())
   }
+
+  def reactiveDemo = Action { implicit request =>
+    Ok(views.html.reactiveDemo())
+  }
 }

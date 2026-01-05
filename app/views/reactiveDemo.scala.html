@@ -1,0 +1,196 @@
+@()
+
+@main("Reactive Endpoints Demo") {
+    <div class="container mt-5">
+        <h1 class="mb-4">Reactive Endpoints Demo</h1>
+        
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Async Data Endpoints</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <button id="fetchData" class="btn btn-primary">Fetch Async Data</button>
+                            <button id="fetchCombined" class="btn btn-info">Fetch Combined Data</button>
+                            <button id="fetchWithError" class="btn btn-warning">Fetch with Error Handling</button>
+                        </div>
+                        <pre id="asyncResult" class="bg-light p-3" style="max-height: 300px; overflow-y: auto;">Click a button to see results...</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Real-time Event Stream</h3>
+                    </div>
+                    <div class="card-body">
+                        <button id="startEvents" class="btn btn-success">Start Event Stream</button>
+                        <button id="stopEvents" class="btn btn-danger">Stop Stream</button>
+                        <pre id="eventStream" class="bg-light p-3 mt-3" style="max-height: 300px; overflow-y: auto;">No events yet...</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Sensor Data Stream</h3>
+                    </div>
+                    <div class="card-body">
+                        <button id="startSensors" class="btn btn-success">Start Sensor Stream</button>
+                        <button id="stopSensors" class="btn btn-danger">Stop Stream</button>
+                        <pre id="sensorStream" class="bg-light p-3 mt-3" style="max-height: 300px; overflow-y: auto;">No sensor data yet...</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Notification Stream</h3>
+                    </div>
+                    <div class="card-body">
+                        <button id="startNotifications" class="btn btn-success">Start Notifications</button>
+                        <button id="stopNotifications" class="btn btn-danger">Stop Notifications</button>
+                        <div id="notificationList" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Async Data Endpoints
+        document.getElementById('fetchData').addEventListener('click', async () => {
+            const result = await fetch('/api/data');
+            const data = await result.json();
+            document.getElementById('asyncResult').textContent = JSON.stringify(data, null, 2);
+        });
+
+        document.getElementById('fetchCombined').addEventListener('click', async () => {
+            const result = await fetch('/api/data/combined');
+            const data = await result.json();
+            document.getElementById('asyncResult').textContent = JSON.stringify(data, null, 2);
+        });
+
+        document.getElementById('fetchWithError').addEventListener('click', async () => {
+            const result = await fetch('/api/data/with-error-handling');
+            const data = await result.json();
+            document.getElementById('asyncResult').textContent = JSON.stringify(data, null, 2);
+        });
+
+        // Event Stream
+        let eventSource = null;
+        document.getElementById('startEvents').addEventListener('click', () => {
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource('/api/stream/events');
+            document.getElementById('eventStream').textContent = 'Connecting...\n';
+            
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const pre = document.getElementById('eventStream');
+                pre.textContent += JSON.stringify(data, null, 2) + '\n---\n';
+                pre.scrollTop = pre.scrollHeight;
+            };
+        });
+
+        document.getElementById('stopEvents').addEventListener('click', () => {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+        });
+
+        // Sensor Stream
+        let sensorSource = null;
+        document.getElementById('startSensors').addEventListener('click', () => {
+            if (sensorSource) sensorSource.close();
+            sensorSource = new EventSource('/api/stream/sensors');
+            document.getElementById('sensorStream').textContent = 'Connecting...\n';
+            
+            sensorSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const pre = document.getElementById('sensorStream');
+                pre.textContent += JSON.stringify(data, null, 2) + '\n---\n';
+                pre.scrollTop = pre.scrollHeight;
+            };
+        });
+
+        document.getElementById('stopSensors').addEventListener('click', () => {
+            if (sensorSource) {
+                sensorSource.close();
+                sensorSource = null;
+            }
+        });
+
+        // Notification Stream
+        let notificationSource = null;
+        document.getElementById('startNotifications').addEventListener('click', () => {
+            if (notificationSource) notificationSource.close();
+            notificationSource = new EventSource('/api/stream/notifications');
+            const container = document.getElementById('notificationList');
+            container.innerHTML = '<div class="alert alert-info">Connecting...</div>';
+            
+            notificationSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const alertClass = {
+                    'info': 'alert-info',
+                    'warning': 'alert-warning',
+                    'error': 'alert-danger',
+                    'success': 'alert-success'
+                }[data.level] || 'alert-secondary';
+                
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    <strong>${data.level.toUpperCase()}</strong>: ${data.message}
+                    <br><small>Time: ${new Date(data.timestamp).toLocaleTimeString()}</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                container.insertBefore(alertDiv, container.firstChild);
+                
+                // Keep only last 5 notifications
+                while (container.children.length > 5) {
+                    container.removeChild(container.lastChild);
+                }
+            };
+        });
+
+        document.getElementById('stopNotifications').addEventListener('click', () => {
+            if (notificationSource) {
+                notificationSource.close();
+                notificationSource = null;
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (eventSource) eventSource.close();
+            if (sensorSource) sensorSource.close();
+            if (notificationSource) notificationSource.close();
+        });
+    </script>
+
+    <style>
+        .card {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+        }
+        pre {
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .btn {
+            margin-right: 10px;
+        }
+    </style>
+}
