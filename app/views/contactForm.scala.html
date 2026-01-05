@@ -74,7 +74,7 @@
             id="subject"
             name="subject" 
             class="form-control"
-            value="@form("subject").value.flatten.getOrElse("")"
+            value="@form("subject").value.getOrElse("")"
             placeholder="Tema de tu consulta"
             maxlength="200"
             aria-describedby="subject-help"

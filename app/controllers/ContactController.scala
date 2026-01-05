@@ -2,6 +2,7 @@ package controllers
 
 import play.api.data._
 import play.api.data.Forms._
+import play.api.libs.json.Json
 import play.api.mvc._
 import services.ReactiveContactAdapter
 
@@ -100,8 +101,11 @@ final class ContactController @Inject()(
     Action.async { implicit request =>
       adapter.getStats().map {
         case Some(stats) =>
-          Ok(s"""{"received": ${stats.totalReceived}, "accepted": ${stats.totalAccepted}, "rejected": ${stats.totalRejected}}""")
-            .as("application/json")
+          Ok(Json.obj(
+            "received" -> stats.totalReceived,
+            "accepted" -> stats.totalAccepted,
+            "rejected" -> stats.totalRejected
+          ))
         case None =>
           ServiceUnavailable("Stats unavailable")
       }

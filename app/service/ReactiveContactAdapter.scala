@@ -78,16 +78,22 @@ final class ReactiveContactAdapter(system: ActorSystem[ContactCommand]) {
 
   /**
    * Basic input sanitization to prevent XSS and injection attacks
-   * In production, use a proper sanitization library
+   * Uses case-insensitive matching and comprehensive escaping
    */
   private def sanitize(input: String): String = {
     input
       .trim
-      .replaceAll("<script>", "")
-      .replaceAll("</script>", "")
-      .replaceAll("<", "&lt;")
+      .replaceAll("(?i)<script[^>]*>", "")  // Remove script tags (case-insensitive)
+      .replaceAll("(?i)</script>", "")
+      .replaceAll("(?i)<iframe[^>]*>", "")  // Remove iframe tags
+      .replaceAll("(?i)</iframe>", "")
+      .replaceAll("(?i)javascript:", "")     // Remove javascript: protocol
+      .replaceAll("(?i)on\\w+\\s*=", "")     // Remove event handlers
+      .replaceAll("<", "&lt;")               // Escape HTML
       .replaceAll(">", "&gt;")
-      .take(10000) // Hard limit to prevent memory issues
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#x27;")
+      .take(10000)                           // Hard limit to prevent memory issues
   }
 
   /**

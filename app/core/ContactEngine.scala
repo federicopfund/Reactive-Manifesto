@@ -42,8 +42,8 @@ object ContactEngine {
             case Right(_) =>
               context.log.info(s"Contact accepted from: $name")
               
-              // Emit event for potential event sourcing (Message-driven principle)
-              context.self ! storeContact(name, email, message)
+              // In production, this would emit event for event sourcing
+              // Example: context.system.eventStream.publish(ContactSubmitted(...))
               
               replyTo ! ContactAccepted
               stateful(state.copy(
@@ -105,17 +105,6 @@ object ContactEngine {
       case emailRegex(_*) => true
       case _ => false
     }
-  }
-
-  /**
-   * Placeholder for persistent storage
-   * In production, this would interact with database or message queue
-   */
-  private def storeContact(name: String, email: String, message: String): ContactCommand = {
-    // This would trigger persistence actor or publish to event stream
-    // For now, it's a no-op that demonstrates the pattern
-    // In real implementation: persist event, publish to Kafka, etc.
-    GetContactStats(ActorRef.ignore)
   }
 
   /**
