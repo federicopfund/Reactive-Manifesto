@@ -16,7 +16,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-typed" % "2.8.5",
 
   // Testing
-  "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test
+  "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test,
+  "com.typesafe.akka" %% "akka-actor-testkit-typed" % "2.8.5" % Test
 )
 
 // Seguridad ante conflictos transitivos
