@@ -46,7 +46,20 @@ Esta aplicación web presenta los cuatro pilares fundamentales del Manifiesto Re
 - Java 17 o superior
 - SBT 1.9.x
 
-## 🚀 Instalación y Ejecución
+## 🌐 Deployment en Producción
+
+¿Quieres publicar tu aplicación en internet con un dominio personalizado?
+
+👉 **[Ver Guía Completa de Deployment](DEPLOYMENT.md)**
+
+La guía incluye:
+- ✅ Deployment en Render.com (gratis con SSL)
+- ✅ Configuración de dominio personalizado
+- ✅ Setup de base de datos PostgreSQL
+- ✅ Variables de entorno y secrets
+- ✅ Troubleshooting y optimización
+
+## 🚀 Instalación y Ejecución Local
 
 ### Comandos Rápidos para Levantar la Aplicación
 

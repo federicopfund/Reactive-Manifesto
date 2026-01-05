@@ -22,6 +22,9 @@ libraryDependencies ++= Seq(
   // H2 Database (in-memory for development)
   "com.h2database" % "h2" % "2.2.224",
 
+  // PostgreSQL Database (for production)
+  "org.postgresql" % "postgresql" % "42.7.2",
+
   // Testing
   "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test
 )

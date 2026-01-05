@@ -1,0 +1,27 @@
+services:
+  # Play Framework Web Service
+  - type: web
+    name: reactive-manifesto
+    env: java
+    buildCommand: sbt clean compile stage
+    startCommand: ./target/universal/stage/bin/web -Dhttp.port=$PORT -Dplay.http.secret.key=$APPLICATION_SECRET -Dconfig.file=conf/application.prod.conf
+    envVars:
+      - key: APPLICATION_SECRET
+        generateValue: true
+      - key: JAVA_OPTS
+        value: -Xmx512m -Xms256m
+      - key: SBT_OPTS
+        value: -Xmx1024m -Xms512m
+      - key: DATABASE_URL
+        fromDatabase:
+          name: reactive-manifesto-db
+          property: connectionString
+    autoDeploy: true
+    healthCheckPath: /
+
+databases:
+  # PostgreSQL Database
+  - name: reactive-manifesto-db
+    databaseName: reactive_manifesto
+    user: reactive_user
+    plan: free
