@@ -22,16 +22,17 @@ class AsyncDataController @Inject()(
    */
   def getData: Action[AnyContent] = Action.async {
     // Simula una llamada asíncrona a un servicio externo o base de datos
-    val futureData = Future {
-      Thread.sleep(500) // Simula latencia de red/DB
-      Json.obj(
-        "status" -> "success",
-        "data" -> Json.arr(
-          Json.obj("id" -> 1, "name" -> "Reactive Item 1"),
-          Json.obj("id" -> 2, "name" -> "Reactive Item 2"),
-          Json.obj("id" -> 3, "name" -> "Reactive Item 3")
-        ),
-        "timestamp" -> System.currentTimeMillis()
+    val futureData = after(500.millis, actorSystem.scheduler) {
+      Future.successful(
+        Json.obj(
+          "status" -> "success",
+          "data" -> Json.arr(
+            Json.obj("id" -> 1, "name" -> "Reactive Item 1"),
+            Json.obj("id" -> 2, "name" -> "Reactive Item 2"),
+            Json.obj("id" -> 3, "name" -> "Reactive Item 3")
+          ),
+          "timestamp" -> System.currentTimeMillis()
+        )
       )
     }
 
@@ -55,27 +56,30 @@ class AsyncDataController @Inject()(
    * Demuestra: Composición de Futures, paralelización
    */
   def getCombinedData: Action[AnyContent] = Action.async {
-    val futureUsers = Future {
-      Thread.sleep(300)
-      Json.arr(
-        Json.obj("userId" -> 1, "username" -> "reactive_user1"),
-        Json.obj("userId" -> 2, "username" -> "reactive_user2")
+    val futureUsers = after(300.millis, actorSystem.scheduler) {
+      Future.successful(
+        Json.arr(
+          Json.obj("userId" -> 1, "username" -> "reactive_user1"),
+          Json.obj("userId" -> 2, "username" -> "reactive_user2")
+        )
       )
     }
 
-    val futurePosts = Future {
-      Thread.sleep(200)
-      Json.arr(
-        Json.obj("postId" -> 1, "title" -> "Reactive Programming"),
-        Json.obj("postId" -> 2, "title" -> "Akka Streams")
+    val futurePosts = after(200.millis, actorSystem.scheduler) {
+      Future.successful(
+        Json.arr(
+          Json.obj("postId" -> 1, "title" -> "Reactive Programming"),
+          Json.obj("postId" -> 2, "title" -> "Akka Streams")
+        )
       )
     }
 
-    val futureComments = Future {
-      Thread.sleep(250)
-      Json.arr(
-        Json.obj("commentId" -> 1, "text" -> "Great post!"),
-        Json.obj("commentId" -> 2, "text" -> "Very informative")
+    val futureComments = after(250.millis, actorSystem.scheduler) {
+      Future.successful(
+        Json.arr(
+          Json.obj("commentId" -> 1, "text" -> "Great post!"),
+          Json.obj("commentId" -> 2, "text" -> "Very informative")
+        )
       )
     }
 
