@@ -211,13 +211,31 @@ Value: reactive-manifesto.onrender.com
 
 #### Paso 5: Actualizar Allowed Hosts
 
+Para mayor seguridad, agrega tu dominio personalizado a la lista de hosts permitidos.
+
 Edita `conf/application.prod.conf` y agrega tu dominio:
 
 ```hocon
 play.filters.hosts {
-  allowed = [".onrender.com", "localhost", ".reactivemanifesto.com", "reactivemanifesto.com"]
+  allowed = [".onrender.com", "localhost", ".tudominio.com", "www.tudominio.com"]
+  # Por ejemplo: ".reactivemanifesto.com", "reactivemanifesto.com"
 }
 ```
+
+**Alternativamente**, puedes usar una variable de entorno para mayor flexibilidad:
+
+1. En Render, agrega variable de entorno:
+   ```
+   ALLOWED_HOSTS=.tudominio.com,tudominio.com
+   ```
+
+2. En `application.prod.conf`:
+   ```hocon
+   play.filters.hosts {
+     allowed = [".onrender.com", "localhost"]
+     allowed = ${?ALLOWED_HOSTS}
+   }
+   ```
 
 Commit y push los cambios. Render auto-deploiará.
 

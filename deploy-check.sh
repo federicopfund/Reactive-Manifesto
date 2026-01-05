@@ -54,7 +54,7 @@ echo "✅ build.sbt encontrado"
 # Verificar que PostgreSQL driver esté en build.sbt
 if ! grep -q "postgresql" build.sbt; then
     echo "⚠️  Advertencia: PostgreSQL driver no encontrado en build.sbt"
-    echo "   Agrega: \"org.postgresql\" % \"postgresql\" % \"42.7.1\""
+    echo "   Agrega: \"org.postgresql\" % \"postgresql\" % \"42.7.2\""
 fi
 
 echo ""
