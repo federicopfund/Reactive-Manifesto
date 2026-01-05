@@ -16,9 +16,6 @@ jobs:
       matrix:
         java-version: [11]
 
-    env:
-      SBT_OPTS: "-Dsbt.coursier.home=${{ runner.temp }}/coursier-cache"
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +25,6 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ matrix.java-version }}
-          cache: sbt
 
       # Instala sbt de forma simple (sólo el launcher). Opcional si ya tienes otra estrategia.
       - name: Install sbt
@@ -63,9 +59,8 @@ jobs:
         with:
           name: test-reports
           path: |
-            **/target/test-reports
-            **/target/*-reports
-            target
+            **/target/test-reports/**
+            **/target/*-reports/**
 
       - name: Upload built JAR(s)
         if: success()
