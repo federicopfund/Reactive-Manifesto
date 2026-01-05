@@ -1,0 +1,148 @@
+@()(implicit request: RequestHeader, messages: Messages)
+
+@main("Publicaciones") {
+    <!-- Hero Section -->
+    <section class="hero hero-secondary">
+        <div class="container">
+            <div class="hero-content">
+                <h2 class="hero-title">Publicaciones</h2>
+                <p class="hero-subtitle">Artículos, tutoriales y recursos sobre programación reactiva</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Publications Grid -->
+    <section class="publications-section">
+        <div class="container">
+            <div class="publications-grid">
+                <!-- Publication 1 -->
+                <article class="publication-card">
+                    <div class="publication-header">
+                        <span class="publication-category">Tutorial</span>
+                        <span class="publication-date">15 Dic 2025</span>
+                    </div>
+                    <h3 class="publication-title">Introducción a Akka Actors</h3>
+                    <p class="publication-excerpt">
+                        Aprende los fundamentos de los actores en Akka y cómo implementar 
+                        sistemas concurrentes y resilientes usando el modelo de actores.
+                    </p>
+                    <div class="publication-tags">
+                        <span class="tag">Akka</span>
+                        <span class="tag">Scala</span>
+                        <span class="tag">Concurrencia</span>
+                    </div>
+                    <a href="@routes.HomeController.publicacion("akka-actors")" class="publication-link">Leer más →</a>
+                </article>
+
+                <!-- Publication 2 -->
+                <article class="publication-card">
+                    <div class="publication-header">
+                        <span class="publication-category">Artículo</span>
+                        <span class="publication-date">8 Dic 2025</span>
+                    </div>
+                    <h3 class="publication-title">Patrones de Resiliencia</h3>
+                    <p class="publication-excerpt">
+                        Explora patrones avanzados para construir sistemas resilientes: 
+                        circuit breakers, bulkheads, y estrategias de recuperación.
+                    </p>
+                    <div class="publication-tags">
+                        <span class="tag">Patrones</span>
+                        <span class="tag">Resiliencia</span>
+                        <span class="tag">Arquitectura</span>
+                    </div>
+                    <a href="@routes.HomeController.publicacion("patrones-resiliencia")" class="publication-link">Leer más →</a>
+                </article>
+
+                <!-- Publication 3 -->
+                <article class="publication-card">
+                    <div class="publication-header">
+                        <span class="publication-category">Guía</span>
+                        <span class="publication-date">1 Dic 2025</span>
+                    </div>
+                    <h3 class="publication-title">Streams Reactivos con Akka Streams</h3>
+                    <p class="publication-excerpt">
+                        Una guía completa para trabajar con flujos de datos reactivos, 
+                        backpressure y procesamiento asíncrono eficiente.
+                    </p>
+                    <div class="publication-tags">
+                        <span class="tag">Akka Streams</span>
+                        <span class="tag">Reactive Streams</span>
+                        <span class="tag">Backpressure</span>
+                    </div>
+                    <a href="@routes.HomeController.publicacion("akka-streams")" class="publication-link">Leer más →</a>
+                </article>
+
+                <!-- Publication 4 -->
+                <article class="publication-card">
+                    <div class="publication-header">
+                        <span class="publication-category">Tutorial</span>
+                        <span class="publication-date">25 Nov 2025</span>
+                    </div>
+                    <h3 class="publication-title">Play Framework y Programación Asíncrona</h3>
+                    <p class="publication-excerpt">
+                        Descubre cómo Play Framework aprovecha la programación asíncrona 
+                        para construir aplicaciones web de alto rendimiento.
+                    </p>
+                    <div class="publication-tags">
+                        <span class="tag">Play Framework</span>
+                        <span class="tag">Async</span>
+                        <span class="tag">Web</span>
+                    </div>
+                    <a href="@routes.HomeController.publicacion("play-async")" class="publication-link">Leer más →</a>
+                </article>
+
+                <!-- Publication 5 -->
+                <article class="publication-card">
+                    <div class="publication-header">
+                        <span class="publication-category">Caso de Estudio</span>
+                        <span class="publication-date">18 Nov 2025</span>
+                    </div>
+                    <h3 class="publication-title">Escalabilidad con Message Passing</h3>
+                    <p class="publication-excerpt">
+                        Cómo implementar sistemas distribuidos escalables utilizando 
+                        patrones de mensajería y comunicación asíncrona.
+                    </p>
+                    <div class="publication-tags">
+                        <span class="tag">Mensajería</span>
+                        <span class="tag">Distribución</span>
+                        <span class="tag">Escalabilidad</span>
+                    </div>
+                    <a href="@routes.HomeController.publicacion("message-passing")" class="publication-link">Leer más →</a>
+                </article>
+
+                <!-- Publication 6 -->
+                <article class="publication-card">
+                    <div class="publication-header">
+                        <span class="publication-category">Recurso</span>
+                        <span class="publication-date">10 Nov 2025</span>
+                    </div>
+                    <h3 class="publication-title">Testing de Sistemas Reactivos</h3>
+                    <p class="publication-excerpt">
+                        Estrategias y herramientas para testear aplicaciones reactivas: 
+                        TestKit, Property-based testing, y más.
+                    </p>
+                    <div class="publication-tags">
+                        <span class="tag">Testing</span>
+                        <span class="tag">Akka TestKit</span>
+                        <span class="tag">QA</span>
+                    </div>
+                    <a href="@routes.HomeController.publicacion("testing-reactivo")" class="publication-link">Leer más →</a>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter-section">
+        <div class="container">
+            <div class="newsletter-content">
+                <h2 class="section-title">Suscríbete a Nuestro Newsletter</h2>
+                <p class="section-subtitle">Recibe las últimas publicaciones y recursos directamente en tu correo</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Tu email" class="newsletter-input" required>
+                    <button type="submit" class="btn btn-primary">Suscribirse</button>
+                </form>
+            </div>
+        </div>
+    </section>
+}

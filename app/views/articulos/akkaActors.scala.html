@@ -1,0 +1,140 @@
+@()(implicit request: RequestHeader, messages: Messages)
+
+@articulos.articleLayout("Introducción a Akka Actors", "Tutorial", "15 Dic 2025", Seq("Akka", "Scala", "Concurrencia")) {
+    <div class="article-body">
+        <section class="article-section">
+            <h2>El Modelo de Actores</h2>
+            <p>
+                El modelo de actores es un paradigma de programación concurrente que proporciona una abstracción
+                de alto nivel para construir sistemas distribuidos y concurrentes. En Akka, los actores son
+                objetos ligeros que procesan mensajes de forma asíncrona.
+            </p>
+        </section>
+
+        <section class="article-section">
+            <h2>Principios de Diseño Reactivo</h2>
+            
+            <div class="pattern-card">
+                <h3>🎯 Actor Model Pattern</h3>
+                <p>
+                    El patrón de modelo de actores es fundamental en el diseño reactivo. Cada actor es una
+                    entidad independiente que:
+                </p>
+                <ul>
+                    <li><strong>Encapsula estado</strong>: El estado interno del actor está protegido y solo
+                    puede ser modificado por el propio actor</li>
+                    <li><strong>Procesa mensajes secuencialmente</strong>: Garantiza thread-safety sin locks</li>
+                    <li><strong>Comunicación asíncrona</strong>: Los actores se comunican mediante el envío de
+                    mensajes inmutables</li>
+                    <li><strong>Location transparency</strong>: Los actores pueden estar en diferentes nodos
+                    sin cambiar el código</li>
+                </ul>
+            </div>
+
+            <div class="pattern-card">
+                <h3>📦 Let It Crash Philosophy</h3>
+                <p>
+                    En lugar de programación defensiva, Akka promueve la filosofía "let it crash":
+                </p>
+                <ul>
+                    <li>Los actores supervisor gestionan fallos de sus subordinados</li>
+                    <li>Las estrategias de supervisión definen cómo recuperarse de errores</li>
+                    <li>Permite código más simple y limpio</li>
+                    <li>Aumenta la resiliencia del sistema</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="article-section">
+            <h2>Implementación Básica</h2>
+            <div class="code-block">
+                <pre><code>import akka.actor.{Actor, ActorSystem, Props}
+
+// Definir mensajes
+case class Greeting(message: String)
+case object GetGreeting
+
+// Implementar el actor
+class GreeterActor extends Actor {
+  var greeting = ""
+  
+  def receive = {
+    case Greeting(message) =>
+      greeting = message
+      println(s"Greeting received: $message")
+    
+    case GetGreeting =>
+      sender() ! greeting
+  }
+}
+
+// Crear el sistema de actores
+val system = ActorSystem("GreeterSystem")
+val greeter = system.actorOf(Props[GreeterActor], "greeter")
+
+// Enviar mensajes
+greeter ! Greeting("Hello, Akka!")
+greeter ! GetGreeting</code></pre>
+            </div>
+        </section>
+
+        <section class="article-section">
+            <h2>Patrones de Supervisión</h2>
+            <div class="pattern-card">
+                <h3>🔄 Supervision Strategies</h3>
+                <p>Akka proporciona estrategias de supervisión predefinidas:</p>
+                <ul>
+                    <li><strong>Resume</strong>: Continuar procesando con el estado actual</li>
+                    <li><strong>Restart</strong>: Reiniciar el actor con estado limpio</li>
+                    <li><strong>Stop</strong>: Detener permanentemente el actor</li>
+                    <li><strong>Escalate</strong>: Pasar el error al supervisor padre</li>
+                </ul>
+            </div>
+
+            <div class="code-block">
+                <pre><code>import akka.actor.SupervisorStrategy._
+import akka.actor.{OneForOneStrategy, SupervisorStrategy}
+import scala.concurrent.duration._
+
+override val supervisorStrategy: SupervisorStrategy =
+  OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1.minute) {
+    case _: ArithmeticException => Resume
+    case _: NullPointerException => Restart
+    case _: IllegalArgumentException => Stop
+    case _: Exception => Escalate
+  }</code></pre>
+            </div>
+        </section>
+
+        <section class="article-section">
+            <h2>Beneficios del Modelo de Actores</h2>
+            <div class="benefits-grid">
+                <div class="benefit-box">
+                    <h4>🚀 Alta Concurrencia</h4>
+                    <p>Millones de actores pueden ejecutarse concurrentemente sin degradación de rendimiento</p>
+                </div>
+                <div class="benefit-box">
+                    <h4>🔒 Thread-Safe</h4>
+                    <p>Sin necesidad de locks, mutexes o sincronización manual</p>
+                </div>
+                <div class="benefit-box">
+                    <h4>🌐 Distribución</h4>
+                    <p>Escalado horizontal transparente a través de múltiples nodos</p>
+                </div>
+                <div class="benefit-box">
+                    <h4>💪 Resiliencia</h4>
+                    <p>Recuperación automática de fallos mediante supervisión</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="article-section">
+            <h2>Recursos Adicionales</h2>
+            <ul class="resource-list">
+                <li><a href="https://www.reactivedesignpatterns.com/" target="_blank">Reactive Design Patterns Book</a></li>
+                <li><a href="https://doc.akka.io/docs/akka/current/" target="_blank">Akka Documentation</a></li>
+                <li><a href="https://www.manning.com/books/akka-in-action" target="_blank">Akka in Action</a></li>
+            </ul>
+        </section>
+    </div>
+}

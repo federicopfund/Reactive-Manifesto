@@ -1,0 +1,12 @@
+# Default messages
+error.required=This field is required
+error.email=Invalid email
+error.minLength=Message must be at least {0} characters long
+
+# Validation messages
+constraint.required=Required field
+constraint.min=Minimum value: {0}
+constraint.max=Maximum value: {0}
+constraint.minLength=Minimum length: {0}
+constraint.maxLength=Maximum length: {0}
+constraint.email=Invalid email format
