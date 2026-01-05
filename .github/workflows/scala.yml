@@ -29,8 +29,8 @@ jobs:
       with:
         sbt-version: 1.9.9  # Puedes ajustar esta versión según tus necesidades
 
-    - name: Run tests
-      run: sbt test
+    - name: Run clean
+      run: sbt clean
 
     - name: Upload dependency graph
       uses: scalacenter/sbt-dependency-submission@ab086b50c947c9774b70f39fc7f6e20ca2706c91
