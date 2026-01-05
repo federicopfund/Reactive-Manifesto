@@ -1,0 +1,39 @@
+@(title: String)(content: Html)
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@title - Reactive Manifesto</title>
+    <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">
+                <h1>⚡ Reactive Manifesto</h1>
+            </div>
+            <div class="navbar-menu">
+                <a href="#principles" class="nav-link">Principios</a>
+                <a href="#contact" class="nav-link">Contacto</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        @content
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Reactive Manifesto. Construido con Play Framework y Akka.</p>
+            <p class="footer-subtitle">Responsive • Resilient • Elastic • Message-Driven</p>
+        </div>
+    </footer>
+
+    <script src="@routes.Assets.versioned("javascripts/main.js")"></script>
+</body>
+</html>

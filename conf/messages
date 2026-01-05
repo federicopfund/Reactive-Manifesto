@@ -1,0 +1,12 @@
+# Default messages
+error.required=Este campo es obligatorio
+error.email=Email inválido
+error.minLength=El mensaje debe tener al menos {0} caracteres
+
+# Validation messages
+constraint.required=Campo requerido
+constraint.min=Valor mínimo: {0}
+constraint.max=Valor máximo: {0}
+constraint.minLength=Longitud mínima: {0}
+constraint.maxLength=Longitud máxima: {0}
+constraint.email=Formato de email inválido

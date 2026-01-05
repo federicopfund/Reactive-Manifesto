@@ -1,0 +1,162 @@
+@(contactForm: Form[controllers.HomeController.ContactFormData])(implicit request: RequestHeader, messages: Messages)
+
+@main("Inicio") {
+    <!-- Flash Messages -->
+    @request.flash.get("success").map { message =>
+        <div class="alert alert-success">
+            <span class="alert-icon">✓</span>
+            <span class="alert-message">@message</span>
+        </div>
+    }
+    @request.flash.get("error").map { message =>
+        <div class="alert alert-error">
+            <span class="alert-icon">✗</span>
+            <span class="alert-message">@message</span>
+        </div>
+    }
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2 class="hero-title">Bienvenido al Manifiesto Reactivo</h2>
+                <p class="hero-subtitle">Construyendo sistemas que son Responsivos, Resilientes, Elásticos y Orientados a Mensajes</p>
+                <div class="hero-cta">
+                    <a href="#principles" class="btn btn-primary">Explorar Principios</a>
+                    <a href="#contact" class="btn btn-secondary">Contáctanos</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Principles Section -->
+    <section id="principles" class="principles">
+        <div class="container">
+            <h2 class="section-title">Los 4 Pilares del Manifiesto Reactivo</h2>
+            <div class="principles-grid">
+                <div class="principle-card">
+                    <div class="principle-icon">📱</div>
+                    <h3>Responsivo</h3>
+                    <p>Los sistemas responden de manera oportuna. La capacidad de respuesta es la piedra angular de la usabilidad y la utilidad.</p>
+                </div>
+                <div class="principle-card">
+                    <div class="principle-icon">🛡️</div>
+                    <h3>Resiliente</h3>
+                    <p>El sistema permanece responsivo ante fallos. La resiliencia se logra mediante replicación, contención, aislamiento y delegación.</p>
+                </div>
+                <div class="principle-card">
+                    <div class="principle-icon">📈</div>
+                    <h3>Elástico</h3>
+                    <p>El sistema permanece responsivo bajo cargas de trabajo variables. Los sistemas reactivos pueden adaptarse a cambios en la demanda.</p>
+                </div>
+                <div class="principle-card">
+                    <div class="principle-icon">💬</div>
+                    <h3>Orientado a Mensajes</h3>
+                    <p>Los sistemas reactivos se basan en el paso asíncrono de mensajes para establecer límites entre componentes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits">
+        <div class="container">
+            <h2 class="section-title">¿Por qué Reactive?</h2>
+            <div class="benefits-content">
+                <div class="benefit-item">
+                    <div class="benefit-number">01</div>
+                    <h3>Mejor Experiencia de Usuario</h3>
+                    <p>Respuestas rápidas y consistentes mejoran la satisfacción del usuario.</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-number">02</div>
+                    <h3>Escalabilidad Mejorada</h3>
+                    <p>Los sistemas reactivos escalan horizontal y verticalmente según demanda.</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-number">03</div>
+                    <h3>Mayor Confiabilidad</h3>
+                    <p>La resiliencia incorporada garantiza disponibilidad continua del servicio.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">Contáctanos</h2>
+            <p class="section-subtitle">¿Tienes preguntas sobre el Manifiesto Reactivo? Envíanos un mensaje usando nuestro sistema reactivo basado en Akka.</p>
+            
+            <div class="contact-wrapper">
+                <form method="POST" action="@routes.HomeController.submitContact()" class="contact-form">
+                    @helper.CSRF.formField
+                    
+                    <div class="form-group">
+                        <label for="name">Nombre</label>
+                        <input 
+                            type="text" 
+                            id="name" 
+                            name="name" 
+                            value="@contactForm("name").value"
+                            class="form-input @if(contactForm("name").hasErrors) {form-input-error}"
+                            placeholder="Tu nombre completo"
+                            required
+                        >
+                        @contactForm("name").errors.map { error =>
+                            <span class="form-error">@Messages(error.message)</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            value="@contactForm("email").value"
+                            class="form-input @if(contactForm("email").hasErrors) {form-input-error}"
+                            placeholder="tu@email.com"
+                            required
+                        >
+                        @contactForm("email").errors.map { error =>
+                            <span class="form-error">@Messages(error.message)</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Mensaje</label>
+                        <textarea 
+                            id="message" 
+                            name="message" 
+                            rows="5"
+                            class="form-input @if(contactForm("message").hasErrors) {form-input-error}"
+                            placeholder="Escribe tu mensaje aquí... (mínimo 10 caracteres)"
+                            required
+                        >@contactForm("message").value</textarea>
+                        @contactForm("message").errors.map { error =>
+                            <span class="form-error">@Messages(error.message)</span>
+                        }
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Enviar Mensaje
+                    </button>
+                </form>
+
+                <div class="contact-info">
+                    <div class="info-card">
+                        <div class="info-icon">🚀</div>
+                        <h4>Tecnología Reactiva</h4>
+                        <p>Este formulario utiliza Akka Typed para procesamiento asíncrono y tolerante a fallos.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">⚡</div>
+                        <h4>Procesamiento Rápido</h4>
+                        <p>Los mensajes se procesan mediante un sistema de actores altamente eficiente.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
