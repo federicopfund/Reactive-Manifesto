@@ -9,6 +9,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Aplicar tema inmediatamente para evitar flash -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </head>
 <body>
     <nav class="navbar">
@@ -17,8 +27,13 @@
                 <h1>⚡ Reactive Manifesto</h1>
             </div>
             <div class="navbar-menu">
-                <a href="#principles" class="nav-link">Principios</a>
-                <a href="#contact" class="nav-link">Contacto</a>
+                <a href="@routes.HomeController.index()" class="nav-link">Inicio</a>
+                <a href="@routes.HomeController.publicaciones()" class="nav-link">Publicaciones</a>
+                <a href="@routes.HomeController.portafolio()" class="nav-link">Portafolio</a>
+                <a href="@routes.HomeController.index()#contact" class="nav-link">Contacto</a>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
+                    <span class="theme-icon" id="theme-icon">🌙</span>
+                </button>
             </div>
         </div>
     </nav>
