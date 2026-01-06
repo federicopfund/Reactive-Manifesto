@@ -1,0 +1,179 @@
+// ============================================
+// Components - Cards Sistema Reactivo
+// ============================================
+
+.card {
+  background: var(--bg-white);
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  box-shadow: var(--shadow-md);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.4), transparent 70%);
+    opacity: 0;
+    transition: opacity $transition-slow $easing-default;
+    z-index: -1;
+    border-radius: $border-radius-xl;
+    filter: blur(15px);
+  }
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3),
+                0 10px 20px -5px rgba(99, 102, 241, 0.2),
+                0 0 40px rgba(99, 102, 241, 0.15);
+    border-color: var(--primary-light);
+
+    &::after {
+      opacity: 0.8;
+    }
+  }
+
+  &-header {
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: $spacing-md;
+    margin-bottom: $spacing-md;
+
+    h3, h4, h5 {
+      margin-bottom: 0;
+    }
+  }
+
+  &-footer {
+    border-top: 2px solid var(--border-color);
+    padding-top: $spacing-md;
+    margin-top: $spacing-md;
+  }
+
+  // Variantes
+  &-primary {
+    border-left: 4px solid var(--primary-color);
+  }
+
+  &-success {
+    border-left: 4px solid var(--success-color);
+  }
+
+  &-warning {
+    border-left: 4px solid var(--warning-color);
+  }
+
+  &-error, &-danger {
+    border-left: 4px solid var(--error-color);
+  }
+}
+
+// Principle Card
+.principle-card {
+  @extend .card;
+  text-align: left;
+  cursor: default;
+
+  .principle-icon {
+    font-size: 3rem;
+    margin-bottom: $spacing-md;
+    display: block;
+    text-align: center;
+  }
+
+  h3 {
+    font-size: $font-size-2xl;
+    margin-bottom: 0.75rem;
+    color: var(--primary-color);
+    text-align: center;
+    transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  p {
+    color: var(--text-light);
+    line-height: $line-height-relaxed;
+    margin-bottom: $spacing-md;
+    transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .principle-features {
+    list-style: none;
+    padding: 0;
+    margin: $spacing-md 0 0 0;
+    
+    li {
+      padding: $spacing-sm 0;
+      color: var(--text-light);
+      font-size: $font-size-sm;
+      position: relative;
+      padding-left: $spacing-lg;
+      
+      &::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: var(--success-color);
+        font-weight: $font-weight-bold;
+      }
+    }
+  }
+}
+
+// Grids
+.principles-grid,
+.publications-grid,
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: $spacing-xl;
+  margin-top: $spacing-3xl;
+}
+
+// Benefit Item
+.benefit-item {
+  @extend .card;
+  display: flex;
+  gap: $spacing-xl;
+  align-items: flex-start;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .benefit-number {
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    color: var(--primary-light);
+    min-width: 60px;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &:hover .benefit-number {
+    color: var(--primary-color);
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+    transform: scale(1.1);
+  }
+
+  h3 {
+    font-size: $font-size-2xl;
+    margin-bottom: 0.5rem;
+    transition: color $transition-base $easing-default;
+  }
+
+  &:hover h3 {
+    color: var(--primary-color);
+  }
+}
+
+// Responsive
+@media (max-width: $breakpoint-md) {
+  .principles-grid,
+  .publications-grid,
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .benefit-item {
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+}
+
