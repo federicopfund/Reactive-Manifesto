@@ -1,0 +1,170 @@
+// ============================================
+// Mixins - Funciones Reutilizables
+// ============================================
+
+// Media Queries
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == 'sm' {
+    @media (min-width: $breakpoint-sm) { @content; }
+  } @else if $breakpoint == 'md' {
+    @media (min-width: $breakpoint-md) { @content; }
+  } @else if $breakpoint == 'lg' {
+    @media (min-width: $breakpoint-lg) { @content; }
+  } @else if $breakpoint == 'xl' {
+    @media (min-width: $breakpoint-xl) { @content; }
+  }
+}
+
+// Flexbox Center
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Flexbox Between
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// Gradient Text
+@mixin gradient-text($from, $to) {
+  background: linear-gradient(135deg, $from, $to);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// Card
+@mixin card($padding: $spacing-lg) {
+  background: var(--bg-white);
+  border-radius: $border-radius-lg;
+  padding: $padding;
+  box-shadow: $shadow-md;
+  transition: transform $transition-base, box-shadow $transition-base;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+// Button Base
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  border-radius: $border-radius-md;
+  font-weight: $font-weight-medium;
+  font-size: $font-size-base;
+  cursor: pointer;
+  transition: all $transition-base;
+  text-decoration: none;
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Button Variant
+@mixin button-variant($bg-color, $text-color: white) {
+  @include button-base;
+  background: $bg-color;
+  color: $text-color;
+
+  &:hover:not(:disabled) {
+    background: darken($bg-color, 10%);
+    transform: translateY(-1px);
+    box-shadow: $shadow-md;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// Input Base
+@mixin input-base {
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  border: 2px solid $border-color;
+  border-radius: $border-radius-md;
+  font-size: $font-size-base;
+  transition: all $transition-base;
+  background: var(--bg-white);
+  color: var(--text-dark);
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+
+  &::placeholder {
+    color: var(--text-light);
+  }
+}
+
+// Truncate Text
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Absolute Center
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// Clearfix
+@mixin clearfix {
+  &::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+}
+
+// Transition
+@mixin transition($properties...) {
+  transition-property: $properties;
+  transition-duration: $transition-base;
+  transition-timing-function: ease;
+}
+
+// Box Shadow Layers
+@mixin shadow-layer($color: rgba(0, 0, 0, 0.1)) {
+  box-shadow: 
+    0 1px 3px 0 $color,
+    0 1px 2px -1px $color;
+}
+
+// Gradient Background
+@mixin gradient-bg($from, $to, $angle: 135deg) {
+  background: linear-gradient($angle, $from, $to);
+}
+
+// Grid Container
+@mixin grid-container($columns: 3, $gap: $spacing-lg) {
+  display: grid;
+  grid-template-columns: repeat($columns, 1fr);
+  gap: $gap;
+
+  @include respond-to('sm') {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+}
+
+// Animation
+@mixin animation($name, $duration: 1s, $timing: ease, $iteration: 1) {
+  animation: $name $duration $timing $iteration;
+}

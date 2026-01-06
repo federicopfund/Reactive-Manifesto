@@ -1,0 +1,212 @@
+// ============================================
+// Base - Reset y Estilos Fundamentales
+// ============================================
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  // Light Mode (Default)
+  --primary-color: #{$primary-color};
+  --primary-dark: #{$primary-dark};
+  --primary-light: #{$primary-light};
+  --secondary-color: #{$secondary-color};
+  --success-color: #{$success-color};
+  --error-color: #{$error-color};
+  --text-dark: #{$text-dark};
+  --text-light: #{$text-light};
+  --text-muted: #9ca3af;
+  --bg-light: #{$bg-light};
+  --bg-white: #{$bg-white};
+  --bg-gradient: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  --border-color: #{$border-color};
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+  --shadow-xl: #{$shadow-xl};
+}
+
+// Dark Mode
+[data-theme="dark"] {
+  --primary-color: #818cf8;
+  --primary-dark: #6366f1;
+  --primary-light: #a5b4fc;
+  --secondary-color: #f472b6;
+  --success-color: #34d399;
+  --error-color: #f87171;
+  --text-dark: #f9fafb;
+  --text-light: #d1d5db;
+  --text-muted: #9ca3af;
+  --bg-light: #1f2937;
+  --bg-white: #111827;
+  --bg-gradient: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  --border-color: #374151;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
+}
+
+body {
+  font-family: $font-family;
+  color: var(--text-dark);
+  line-height: $line-height-normal;
+  background-color: var(--bg-light);
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Typography
+h1, h2, h3, h4, h5, h6 {
+  font-weight: $font-weight-bold;
+  line-height: $line-height-tight;
+  margin-bottom: $spacing-md;
+  color: var(--text-dark);
+}
+
+h1 { font-size: $font-size-5xl; }
+h2 { font-size: $font-size-3xl; }
+h3 { font-size: $font-size-2xl; }
+h4 { font-size: $font-size-xl; }
+h5 { font-size: $font-size-lg; }
+h6 { font-size: $font-size-base; }
+
+p {
+  margin-bottom: $spacing-md;
+  line-height: $line-height-relaxed;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  @include transition(color);
+
+  &:hover {
+    color: var(--primary-dark);
+  }
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+// Container
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 $spacing-lg;
+
+  @include respond-to('lg') {
+    padding: 0 $spacing-xl;
+  }
+}
+
+// Utility Classes
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.mt-sm { margin-top: $spacing-sm; }
+.mt-md { margin-top: $spacing-md; }
+.mt-lg { margin-top: $spacing-lg; }
+.mt-xl { margin-top: $spacing-xl; }
+
+.mb-sm { margin-bottom: $spacing-sm; }
+.mb-md { margin-bottom: $spacing-md; }
+.mb-lg { margin-bottom: $spacing-lg; }
+.mb-xl { margin-bottom: $spacing-xl; }
+
+// Sections
+section {
+  padding: $spacing-5xl 0;
+}
+
+.section-title {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  text-align: center;
+  margin-bottom: $spacing-md;
+  color: var(--text-dark);
+}
+
+.section-subtitle {
+  text-align: center;
+  color: var(--text-light);
+  font-size: $font-size-lg;
+  max-width: 700px;
+  margin: 0 auto $spacing-3xl;
+  line-height: $line-height-relaxed;
+}
+
+// Global transitions for theme switching
+*,
+*::before,
+*::after {
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Override for elements with custom transitions
+.btn,
+.card,
+.principle-card,
+.benefit-item,
+.portfolio-card,
+.publication-card {
+  transition: all $transition-slow $easing-smooth;
+}
+
+// Smooth scroll
+html {
+  scroll-behavior: smooth;
+}
+
+// Responsive Typography
+@media (max-width: $breakpoint-md) {
+  h1 { font-size: $font-size-3xl; }
+  h2 { font-size: $font-size-2xl; }
+  h3 { font-size: $font-size-xl; }
+  
+  .section-title {
+    font-size: $font-size-3xl;
+  }
+  
+  .section-subtitle {
+    font-size: $font-size-base;
+  }
+  
+  section {
+    padding: $spacing-3xl 0;
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+  section {
+    padding: $spacing-2xl 0;
+  }
+  
+  .container {
+    padding: 0 $spacing-md;
+  }
+}
+
+
+.mt-1 { margin-top: $spacing-sm; }
+.mt-2 { margin-top: $spacing-md; }
+.mt-3 { margin-top: $spacing-lg; }
+.mb-1 { margin-bottom: $spacing-sm; }
+.mb-2 { margin-bottom: $spacing-md; }
+.mb-3 { margin-bottom: $spacing-lg; }
+
+.flex { display: flex; }
+.flex-center { @include flex-center; }
+.flex-between { @include flex-between; }
+
+.hidden { display: none; }
