@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@@300;400;500;600;700;800&family=JetBrains+Mono:wght@@400;500;600&display=swap" rel="stylesheet">
     
     <!-- Aplicar tema inmediatamente para evitar flash -->
     <script>
@@ -31,6 +31,19 @@
                 <a href="@routes.HomeController.publicaciones()" class="nav-link">Publicaciones</a>
                 <a href="@routes.HomeController.portafolio()" class="nav-link">Portafolio</a>
                 <a href="@routes.HomeController.index()#contact" class="nav-link">Contacto</a>
+                <a href="@routes.AuthController.loginPage()" class="nav-link" style="background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 6px;">🔐 Login</a>
+                <div class="navbar-clock" id="navbarClock">
+                    <div class="clock-display">
+                        <div class="clock-time">
+                            <span class="clock-hours" id="clockHours">00</span>
+                            <span class="clock-separator">:</span>
+                            <span class="clock-minutes" id="clockMinutes">00</span>
+                            <span class="clock-separator">:</span>
+                            <span class="clock-seconds" id="clockSeconds">00</span>
+                        </div>
+                        <div class="clock-date" id="clockDate">Cargando...</div>
+                    </div>
+                </div>
                 <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
                     <span class="theme-icon" id="theme-icon">🌙</span>
                 </button>
