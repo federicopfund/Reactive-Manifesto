@@ -1,0 +1,28 @@
+// ============================================
+// Main SCSS - Archivo de Entrada Principal
+// ============================================
+
+// 1. Configuración
+@import 'variables';
+@import 'mixins';
+
+// 2. Base
+@import 'base';
+
+// 3. Components
+@import 'components/navbar';
+@import 'components/buttons';
+@import 'components/forms';
+@import 'components/cards';
+@import 'components/alerts';
+@import 'components/hero';
+@import 'components/footer';
+@import 'components/sections';
+@import 'components/articles';
+@import 'components/portfolio';
+@import 'components/publications';
+@import 'components/graph-popup';
+
+// 4. Estilos personalizados adicionales
+// Aquí puedes agregar más componentes según sea necesario
+
