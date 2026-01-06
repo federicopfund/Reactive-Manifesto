@@ -1,0 +1,289 @@
+@(loginForm: Form[controllers.UserLoginForm])(implicit request: RequestHeader, flash: Flash)
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Reactive Manifesto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 100%;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+        
+        .login-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .login-body {
+            padding: 2.5rem 2rem;
+        }
+        
+        .tab-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .tab.active {
+            color: #667eea;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.875rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 1rem;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .flash-message {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .links {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 0.5rem;
+        }
+        
+        .links a:hover {
+            text-decoration: underline;
+        }
+        
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @@keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>🔐 Bienvenido</h1>
+            <p>Reactive Manifesto</p>
+        </div>
+        
+        <div class="login-body">
+            @if(flash.get("success").isDefined) {
+                <div class="flash-message flash-success">
+                    ✓ @flash.get("success").get
+                </div>
+            }
+            
+            @if(loginForm.hasGlobalErrors) {
+                <div class="error">
+                    @loginForm.globalErrors.map(_.message).mkString(", ")
+                </div>
+            }
+            
+            <div class="tab-container">
+                <button class="tab active" onclick="switchTab('user')">
+                    👤 Usuario
+                </button>
+                <button class="tab" onclick="switchTab('admin')">
+                    🛡️ Administrador
+                </button>
+            </div>
+            
+            <form method="POST" action="@routes.AuthController.login()" id="loginForm">
+                @helper.CSRF.formField
+                
+                <input type="hidden" name="loginType" id="loginType" value="user" />
+                
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        required 
+                        autofocus
+                        placeholder="Ingresa tu usuario"
+                        value="@loginForm("username").value.getOrElse("")"
+                    />
+                    @if(loginForm("username").hasErrors) {
+                        <div class="error">@loginForm("username").errors.map(_.message).mkString(", ")</div>
+                    }
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        required
+                        placeholder="Ingresa tu contraseña"
+                    />
+                    @if(loginForm("password").hasErrors) {
+                        <div class="error">@loginForm("password").errors.map(_.message).mkString(", ")</div>
+                    }
+                </div>
+                
+                <button type="submit" class="btn-login">Iniciar Sesión</button>
+            </form>
+            
+            <div class="links">
+                <a href="@routes.AuthController.registerPage()">¿No tienes cuenta? Regístrate</a>
+                <span>|</span>
+                <a href="@routes.HomeController.index()">Volver al inicio</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(type) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            if (type === 'user') {
+                tabs[0].classList.add('active');
+                document.getElementById('loginType').value = 'user';
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('loginType').value = 'admin';
+            }
+        }
+    </script>
+</body>
+</html>
