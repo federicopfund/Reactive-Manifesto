@@ -5,7 +5,7 @@ organization := "vortex"
 version := "1.0-SNAPSHOT"
 
 lazy val root = (project in file("."))
-  .enablePlugins(PlayScala)
+  .enablePlugins(PlayScala, SbtWeb)
 
 scalaVersion := "2.13.12"
 
@@ -21,6 +21,9 @@ libraryDependencies ++= Seq(
   
   // H2 Database (in-memory for development)
   "com.h2database" % "h2" % "2.2.224",
+
+  // BCrypt for password hashing
+  "org.mindrot" % "jbcrypt" % "0.4",
 
   // Testing
   "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test
