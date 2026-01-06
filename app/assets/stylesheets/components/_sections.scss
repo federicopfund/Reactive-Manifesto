@@ -1,0 +1,348 @@
+// ============================================
+// Components - Sections
+// ============================================
+
+// Principles Section
+.principles {
+  background: linear-gradient(135deg, var(--bg-white) 0%, var(--bg-light) 100%);
+  position: relative;
+  transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+  }
+}
+
+// Benefits Section
+.benefits {
+  background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+  position: relative;
+  transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+  }
+}
+
+.benefits-content {
+  display: grid;
+  gap: $spacing-xl;
+  margin-top: $spacing-3xl;
+}
+
+// Contact Section
+.contact {
+  background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-white) 100%);
+  position: relative;
+  transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--primary-light), transparent);
+  }
+}
+
+.contact-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-3xl;
+  margin-top: $spacing-3xl;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+// Publications Section
+.publications,
+.publications-section {
+  background: var(--bg-white);
+  padding: $spacing-5xl 0;
+  transition: background 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.publications-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: $spacing-xl;
+  margin-top: $spacing-3xl;
+}
+
+.publication-card {
+  background: var(--bg-light);
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  border: 2px solid var(--border-color);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 0;
+    background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+    transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary-light);
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15);
+
+    &::before {
+      height: 100%;
+    }
+  }
+
+  .publication-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-md;
+  }
+
+  .publication-category {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .publication-date {
+    color: var(--text-light);
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+  }
+
+  .publication-title {
+    font-size: $font-size-xl;
+    margin-bottom: $spacing-md;
+    color: var(--text-dark);
+    line-height: $line-height-tight;
+    font-weight: $font-weight-bold;
+    transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .publication-excerpt {
+    color: var(--text-light);
+    line-height: $line-height-relaxed;
+    margin-bottom: $spacing-lg;
+    font-size: $font-size-sm;
+    transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .publication-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &:hover {
+      color: var(--primary-dark);
+      gap: 0.75rem;
+    }
+  }
+}
+
+// Portfolio Section
+.portfolio-section {
+  background: var(--bg-light);
+  padding: $spacing-5xl 0;
+}
+
+.portfolio-filters {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-3xl;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  position: relative;
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg,
+                              rgba(255, 255, 255, 0.95) 0%,
+                              rgba(248, 250, 252, 0.98) 100%);
+  color: #475569;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  letter-spacing: 0.3px;
+  
+  // Subtle border effect
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50px;
+    padding: 2px;
+    background: linear-gradient(135deg,
+                                rgba(148, 163, 184, 0.3) 0%,
+                                rgba(203, 213, 225, 0.2) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  // Clean shadow
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06),
+              0 2px 6px rgba(0, 0, 0, 0.04);
+
+  &:hover {
+    color: #0891b2;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(8, 145, 178, 0.15),
+                0 4px 12px rgba(0, 0, 0, 0.08);
+    
+    &::before {
+      background: linear-gradient(135deg,
+                                  rgba(8, 145, 178, 0.4) 0%,
+                                  rgba(6, 182, 212, 0.3) 100%);
+    }
+  }
+
+  &.active {
+    background: linear-gradient(135deg, 
+                                #0891b2 0%,
+                                #06b6d4 50%,
+                                #22d3ee 100%);
+    background-size: 200% 200%;
+    color: white;
+    transform: translateY(-3px);
+    animation: gradientShift 3s ease infinite;
+    
+    &::before {
+      background: linear-gradient(135deg,
+                                  rgba(255, 255, 255, 0.3) 0%,
+                                  rgba(255, 255, 255, 0.1) 100%);
+    }
+    
+    // Active glow effect
+    box-shadow: 0 8px 30px rgba(8, 145, 178, 0.4),
+                0 4px 15px rgba(6, 182, 212, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(8, 145, 178, 0.5),
+                  0 6px 20px rgba(6, 182, 212, 0.4),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+  }
+  
+  // Active indicator dot
+  &.active::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  }
+}
+
+// Newsletter Section
+.newsletter-section {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: $spacing-3xl 0;
+  text-align: center;
+
+  .section-title {
+    color: white;
+  }
+
+  .section-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .newsletter-form {
+    display: flex;
+    gap: $spacing-md;
+    max-width: 500px;
+    margin: $spacing-xl auto 0;
+
+    .newsletter-input {
+      flex: 1;
+      padding: 0.875rem 1.25rem;
+      border: none;
+      border-radius: $border-radius-md;
+      font-size: $font-size-base;
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: $breakpoint-md) {
+  .contact-wrapper {
+    grid-template-columns: 1fr;
+    gap: $spacing-xl;
+  }
+
+  .newsletter-section .newsletter-form {
+    flex-direction: column;
+  }
+
+  .portfolio-filters {
+    gap: 0.5rem;
+  }
+
+  .filter-btn {
+    padding: 0.5rem 1rem;
+    font-size: $font-size-sm;
+  }
+}
