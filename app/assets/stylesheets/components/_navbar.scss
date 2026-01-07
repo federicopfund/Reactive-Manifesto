@@ -334,125 +334,6 @@ $hamburger-line-offset: 20px;
   animation: rotate-theme 0.6s ease-in-out;
 }
 
-// Navbar Clock
-.navbar-clock {
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
-  padding: 0.35rem 0.6rem;
-  border-radius: 6px;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  backdrop-filter: blur(10px);
-  transition: all $transition-base $easing-smooth;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    animation: shimmer 3s infinite;
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.2);
-    border-color: rgba(99, 102, 241, 0.4);
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: 0.3rem 0.5rem;
-    margin: 0;
-    width: auto;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-.clock-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-}
-
-.clock-time {
-  display: flex;
-  align-items: center;
-  font-family: $font-family-mono;
-  font-weight: 700;
-  font-size: 0.8rem;
-  color: var(--text-dark);
-  letter-spacing: 0.05em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.clock-hours,
-.clock-minutes,
-.clock-seconds {
-  display: inline-block;
-  min-width: 1.3em;
-  text-align: center;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  transition: transform 0.3s ease;
-}
-
-.clock-separator {
-  color: var(--primary-color);
-  animation: blink 1s infinite;
-  margin: 0 0.1em;
-}
-
-@keyframes blink {
-  0%, 49% {
-    opacity: 1;
-  }
-  50%, 100% {
-    opacity: 0.3;
-  }
-}
-
-.clock-date {
-  font-size: 0.55rem;
-  color: var(--text-light);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-// Animación de actualización de dígitos
-@keyframes digit-flip {
-  0% {
-    transform: rotateX(0deg);
-  }
-  50% {
-    transform: rotateX(90deg);
-  }
-  100% {
-    transform: rotateX(0deg);
-  }
-}
-
-.clock-hours.updating,
-.clock-minutes.updating,
-.clock-seconds.updating {
-  animation: digit-flip 0.6s ease;
-}
-
 // Responsive
 @media (max-width: $breakpoint-md) {
   .navbar-menu {
@@ -473,35 +354,10 @@ $hamburger-line-offset: 20px;
     height: 32px;
     font-size: 0.95rem;
   }
-
-  .navbar-clock {
-    padding: 0.35rem 0.65rem;
-    border-radius: 6px;
-  }
-
-  .clock-time {
-    font-size: 0.85rem;
-  }
-
-  .clock-date {
-    font-size: 0.55rem;
-  }
 }
 
 @media (max-width: 480px) {
   .navbar-brand h1 {
     font-size: $font-size-lg;
-  }
-
-  .navbar-clock {
-    padding: 0.3rem 0.6rem;
-  }
-
-  .clock-time {
-    font-size: 0.75rem;
-  }
-
-  .clock-date {
-    display: none;
   }
 }
