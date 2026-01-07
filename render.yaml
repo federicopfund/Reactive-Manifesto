@@ -4,8 +4,14 @@ services:
     name: reactive-manifesto
     env: java
     plan: free
-    buildCommand: sbt clean compile stage
-    startCommand: target/universal/stage/bin/web -Dhttp.port=$PORT -Dplay.http.secret.key=$APPLICATION_SECRET -Dslick.dbs.default.profile="slick.jdbc.PostgresProfile$" -Dslick.dbs.default.db.driver="org.postgresql.Driver" -Dslick.dbs.default.db.url=$DATABASE_URL
+    buildCommand: sbt compile stage
+    startCommand: >
+      target/universal/stage/bin/web
+      -Dhttp.port=$PORT
+      -Dplay.http.secret.key=$APPLICATION_SECRET
+      -Dslick.dbs.default.profile="slick.jdbc.PostgresProfile$"
+      -Dslick.dbs.default.db.driver="org.postgresql.Driver"
+      -Dslick.dbs.default.db.url=$DATABASE_URL
     envVars:
       - key: APPLICATION_SECRET
         generateValue: true
