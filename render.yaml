@@ -1,0 +1,25 @@
+services:
+  # Web Service - Play Framework Application
+  - type: web
+    name: reactive-manifesto
+    env: java
+    plan: free
+    buildCommand: sbt clean compile stage
+    startCommand: target/universal/stage/bin/web -Dhttp.port=$PORT -Dplay.http.secret.key=$APPLICATION_SECRET -Dslick.dbs.default.profile="slick.jdbc.PostgresProfile$" -Dslick.dbs.default.db.driver="org.postgresql.Driver" -Dslick.dbs.default.db.url=$DATABASE_URL
+    envVars:
+      - key: APPLICATION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: reactive-manifesto-db
+          property: connectionString
+      - key: JAVA_OPTS
+        value: "-Xmx512m -Xms256m"
+    healthCheckPath: /
+
+  # PostgreSQL Database
+  - type: pds
+    name: reactive-manifesto-db
+    plan: free
+    databaseName: reactive_manifesto
+    databaseUser: reactive_user
