@@ -1,0 +1,17 @@
+target/
+project/target/
+project/project/
+logs/
+.git/
+.gitignore
+*.log
+.DS_Store
+*.swp
+*.swo
+.bsp/
+.metals/
+.vscode/
+.idea/
+node_modules/
+*.md
+server.log

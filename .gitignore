@@ -7,5 +7,37 @@ target
 /.project
 /.settings
 /RUNNING_PID
-*.env.example
-*.vscode
+.vscode
+.metals/
+.bloop/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Production config with secrets
+application.prod.conf.local
+
+# Database files
+*.db
+*.db.trace.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Log files
+*.log
+server.log
+
+# Build artifacts
+dist/
+lib_managed/
+src_managed/
+

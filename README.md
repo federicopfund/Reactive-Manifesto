@@ -48,6 +48,42 @@ Esta aplicación web presenta los cuatro pilares fundamentales del Manifiesto Re
 
 ## 🚀 Instalación y Ejecución
 
+### Deployment en Producción
+
+**Para instrucciones completas de deployment, consulta: [DEPLOYMENT.md](DEPLOYMENT.md)**
+
+Esta aplicación se puede deployar en múltiples plataformas:
+- 🐳 **Docker / Docker Compose** - Containerizado
+- 🎯 **Heroku** - Deploy con un click
+- 🚂 **Railway** - Alternativa moderna a Heroku
+- 🎨 **Render** - Free tier generoso
+- ☁️ **Google Cloud Run** - Serverless
+- 🌐 **AWS ECS/Elastic Beanstalk** - Escalable
+
+#### Quick Deploy con Script Helper
+
+```bash
+# Ejecutar el script de deployment interactivo
+./deploy.sh
+```
+
+#### Quick Deploy con Docker
+
+```bash
+# Construir y ejecutar
+docker build -t reactive-manifesto .
+docker run -p 9000:9000 -e APPLICATION_SECRET="tu-secret-aqui" reactive-manifesto
+```
+
+#### Quick Deploy en Heroku
+
+```bash
+# Crear app y deployar
+heroku create mi-reactive-app
+heroku config:set APPLICATION_SECRET=$(openssl rand -base64 32)
+git push heroku main
+```
+
 ### Comandos Rápidos para Levantar la Aplicación
 
 #### 1️⃣ Liberar puerto 9000 (si está ocupado)
