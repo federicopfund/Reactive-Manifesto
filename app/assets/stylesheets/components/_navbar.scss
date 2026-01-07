@@ -67,6 +67,7 @@
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       overflow-y: auto;
       border-left: 2px solid var(--border-color);
+      z-index: $z-sticky;
 
       &.active {
         transform: translateX(0);
