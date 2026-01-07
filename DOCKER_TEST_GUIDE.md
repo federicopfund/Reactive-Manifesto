@@ -154,7 +154,7 @@ docker rm reactive-test-8080
 4. **Variables de Entorno en Render:**
    - `APPLICATION_SECRET`: Genera una clave segura (mínimo 32 caracteres)
      ```bash
-     # Genera una clave aleatoria:
+     # Genera una clave aleatoria (produce ~44 caracteres en base64, suficiente):
      openssl rand -base64 32
      ```
    - `PORT`: Render lo configura automáticamente, NO lo configures manualmente

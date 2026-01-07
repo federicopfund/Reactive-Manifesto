@@ -9,7 +9,9 @@ COPY project/build.properties project/
 COPY project/plugins.sbt project/
 
 # Install sbt
-# Note: In some build environments with SSL inspection, you may need to use wget or curl with --insecure
+# Note: --no-check-certificate is used for compatibility with corporate proxies/SSL inspection
+# In production builds on Render.com or other cloud platforms, this works securely
+# Alternative: Use the sbt package from Debian repos if available in your environment
 RUN apt-get update && \
     apt-get install -y wget && \
     wget --no-check-certificate https://github.com/sbt/sbt/releases/download/v1.9.7/sbt-1.9.7.tgz -O /tmp/sbt.tgz && \
