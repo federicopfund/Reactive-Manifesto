@@ -296,38 +296,57 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================
     // Theme Toggle
     // ============================================
-    const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = document.getElementById('theme-icon');
+    const themeToggleMobile = document.getElementById('theme-toggle');
+    const themeToggleDesktop = document.getElementById('theme-toggle-desktop');
+    const themeIconMobile = document.getElementById('theme-icon');
+    const themeIconDesktop = document.getElementById('theme-icon-desktop');
     const htmlElement = document.documentElement;
     
     // Obtener tema actual (ya aplicado por el script inline en head)
     const currentTheme = htmlElement.getAttribute('data-theme') || 'light';
     
-    // Sincronizar icono con el tema actual
-    if (themeIcon) {
-        themeIcon.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    // Sincronizar iconos con el tema actual
+    function updateThemeIcons(theme) {
+        const icon = theme === 'dark' ? '☀️' : '🌙';
+        if (themeIconMobile) themeIconMobile.textContent = icon;
+        if (themeIconDesktop) themeIconDesktop.textContent = icon;
     }
     
-    // Toggle theme con animación
-    if (themeToggle) {
-        themeToggle.addEventListener('click', function() {
-            const currentTheme = htmlElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            // Agregar clase de animación
-            themeToggle.classList.add('switching');
-            
-            // Cambiar tema
-            htmlElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            // Actualizar icono
-            themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-            
-            // Remover clase de animación
-            setTimeout(() => {
-                themeToggle.classList.remove('switching');
-            }, 600);
+    updateThemeIcons(currentTheme);
+    
+    // Función para cambiar el tema
+    function toggleTheme(button) {
+        const currentTheme = htmlElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        // Agregar clase de animación a ambos botones
+        if (themeToggleMobile) themeToggleMobile.classList.add('switching');
+        if (themeToggleDesktop) themeToggleDesktop.classList.add('switching');
+        
+        // Cambiar tema
+        htmlElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Actualizar iconos
+        updateThemeIcons(newTheme);
+        
+        // Remover clase de animación
+        setTimeout(() => {
+            if (themeToggleMobile) themeToggleMobile.classList.remove('switching');
+            if (themeToggleDesktop) themeToggleDesktop.classList.remove('switching');
+        }, 600);
+    }
+    
+    // Toggle theme con animación para ambos botones
+    if (themeToggleMobile) {
+        themeToggleMobile.addEventListener('click', function() {
+            toggleTheme(this);
+        });
+    }
+    
+    if (themeToggleDesktop) {
+        themeToggleDesktop.addEventListener('click', function() {
+            toggleTheme(this);
         });
     }
     
@@ -336,9 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!localStorage.getItem('theme')) {
             const newTheme = e.matches ? 'dark' : 'light';
             htmlElement.setAttribute('data-theme', newTheme);
-            if (themeIcon) {
-                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-            }
+            updateThemeIcons(newTheme);
         }
     });
 
