@@ -27,6 +27,19 @@
                 <h1>⚡ Reactive Manifesto</h1>
             </div>
             
+            <div class="navbar-menu" id="navbarMenu">
+                <a href="@routes.HomeController.index()" class="nav-link">Inicio</a>
+                <a href="@routes.HomeController.publicaciones()" class="nav-link">Publicaciones</a>
+                <a href="@routes.HomeController.portafolio()" class="nav-link">Portafolio</a>
+                <a href="@routes.HomeController.index()#contact" class="nav-link">Contacto</a>
+                <a href="@routes.AuthController.loginPage()" class="nav-link nav-link-login">🔐 Login</a>
+                
+                <!-- Theme Toggle (visible en desktop) -->
+                <button class="theme-toggle navbar-theme-toggle" id="theme-toggle-desktop" aria-label="Cambiar tema">
+                    <span class="theme-icon" id="theme-icon-desktop">🌙</span>
+                </button>
+            </div>
+            
             <!-- Mobile Controls (Theme + Hamburger) -->
             <div class="navbar-mobile-controls">
                 <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
@@ -38,15 +51,6 @@
                     <span class="hamburger-line"></span>
                 </button>
             </div>
-            
-            <div class="navbar-menu" id="navbarMenu">
-                <a href="@routes.HomeController.index()" class="nav-link">Inicio</a>
-                <a href="@routes.HomeController.publicaciones()" class="nav-link">Publicaciones</a>
-                <a href="@routes.HomeController.portafolio()" class="nav-link">Portafolio</a>
-                <a href="@routes.HomeController.index()#contact" class="nav-link">Contacto</a>
-                <a href="@routes.AuthController.loginPage()" class="nav-link nav-link-login">🔐 Login</a>
-            </div>
-        </div>
         
         <!-- Mobile Overlay -->
         <div class="mobile-overlay" id="mobileOverlay"></div>
