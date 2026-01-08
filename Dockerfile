@@ -29,8 +29,9 @@ COPY app app
 COPY conf conf
 COPY public public
 
-# Build the application using sbt: clean, compile, and stage
-RUN sbt clean compile stage
+# Build the application using sbt: clean, compile assets, and stage
+# IMPORTANT: 'assets' task compiles SASS/LESS files before staging
+RUN sbt clean compile assets stage
 
 # Stage 2: Runtime - Minimal image for running the application
 FROM eclipse-temurin:17-jre
