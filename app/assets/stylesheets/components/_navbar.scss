@@ -45,7 +45,6 @@
     gap: $spacing-md;
     align-items: center;
     margin-left: auto;
-    padding-left: $spacing-4xl;
 
     @media (min-width: $breakpoint-md) {
       gap: $spacing-lg;
@@ -79,8 +78,9 @@
   &-mobile-controls {
     display: none;
     align-items: center;
-    gap: $spacing-sm;
+    gap: $spacing-md;
     z-index: $z-sticky + 1;
+    margin-left: auto;
 
     @media (max-width: $breakpoint-md) {
       display: flex;
@@ -96,14 +96,15 @@ $hamburger-line-offset: 20px;
   display: none;
   flex-direction: column;
   justify-content: space-around;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 4px;
   z-index: $z-sticky + 1;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 
   @media (max-width: $breakpoint-md) {
     display: flex;
@@ -261,8 +262,8 @@ $hamburger-line-offset: 20px;
   background: var(--bg-light);
   border: 2px solid var(--border-color);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -270,7 +271,8 @@ $hamburger-line-offset: 20px;
   transition: all $transition-slow $easing-smooth;
   position: relative;
   overflow: hidden;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  flex-shrink: 0;
 
   &::before {
     content: '';
@@ -301,9 +303,9 @@ $hamburger-line-offset: 20px;
   }
 
   @media (max-width: $breakpoint-md) {
-    width: 32px;
-    height: 32px;
-    font-size: 0.9rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
   }
 }
 
@@ -311,6 +313,7 @@ $hamburger-line-offset: 20px;
   transition: transform $transition-slow $easing-default, 
               opacity $transition-base $easing-default;
   display: inline-block;
+  line-height: 1;
 }
 
 .theme-toggle:hover .theme-icon {
@@ -334,6 +337,13 @@ $hamburger-line-offset: 20px;
   animation: rotate-theme 0.6s ease-in-out;
 }
 
+// Desktop theme toggle (visible only on larger screens)
+.navbar-theme-toggle {
+  @media (max-width: $breakpoint-md) {
+    display: none !important;
+  }
+}
+
 // Responsive
 @media (max-width: $breakpoint-md) {
   .navbar-menu {
@@ -350,9 +360,9 @@ $hamburger-line-offset: 20px;
   }
 
   .theme-toggle {
-    width: 32px;
-    height: 32px;
-    font-size: 0.95rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
   }
 }
 
