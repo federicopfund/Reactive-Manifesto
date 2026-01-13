@@ -60,6 +60,14 @@ class AdminRepository @Inject()(
   }
 
   /**
+   * Actualiza la contraseña de un admin
+   */
+  def updatePassword(id: Long, newPasswordHash: String): Future[Int] = {
+    val query = admins.filter(_.id === id).map(_.passwordHash).update(newPasswordHash)
+    db.run(query)
+  }
+
+  /**
    * Verifica si existe al menos un admin
    */
   def hasAdmins(): Future[Boolean] = {
