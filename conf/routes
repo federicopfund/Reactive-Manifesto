@@ -5,6 +5,12 @@
 # Home page
 GET     /                           controllers.HomeController.index()
 
+# Setup Routes (Temporal - solo para desarrollo)
+GET     /setup/create-admin         controllers.SetupController.createInitialAdmin()
+GET     /setup/list-admins          controllers.SetupController.listAdmins()
+GET     /setup/update-password      controllers.SetupController.updatePassword(username: String, password: String)
+GET     /setup/test-login           controllers.SetupController.testLogin(username: String, password: String)
+
 # Publicaciones page
 GET     /publicaciones              controllers.HomeController.publicaciones()
 GET     /publicaciones/:slug        controllers.HomeController.publicacion(slug: String)
@@ -30,6 +36,11 @@ GET     /logout                     controllers.AuthController.logout()
 GET     /dashboard                  controllers.AuthController.userDashboard()
 GET     /profile                    controllers.AuthController.userProfile()
 
+# Email Verification Routes
+GET     /verify-email/:userId       controllers.AuthController.verifyEmailPage(userId: Long)
+POST    /verify-email               controllers.AuthController.verifyEmailCode()
+GET     /resend-code/:userId        controllers.AuthController.resendVerificationCode(userId: Long)
+
 # Admin Panel Routes (Legacy - mantener por compatibilidad)
 GET     /admin/login                controllers.AdminController.loginPage()
 POST    /admin/login                controllers.AdminController.login()
@@ -49,6 +60,45 @@ POST    /admin/contacts/:id/edit    controllers.AdminController.updateContact(id
 POST    /admin/contacts/:id/delete  controllers.AdminController.deleteContact(id: Long)
 POST    /admin/contacts/:id/status/:status  controllers.AdminController.updateStatus(id: Long, status: String)
 
+# ============================================
+# USER PUBLICATIONS ROUTES
+# ============================================
+
+# User Dashboard
+GET     /user/dashboard             controllers.UserPublicationController.dashboard()
+
+# Create Publications
+GET     /user/publications/new      controllers.UserPublicationController.newPublicationForm()
+POST    /user/publications/new      controllers.UserPublicationController.createPublication()
+
+# Edit Publications
+GET     /user/publications/:id/edit controllers.UserPublicationController.editPublicationForm(id: Long)
+POST    /user/publications/:id/edit controllers.UserPublicationController.updatePublication(id: Long)
+
+# View Publication (Preview)
+GET     /user/publications/:id      controllers.UserPublicationController.viewPublication(id: Long)
+
+# Publish Actions
+POST    /user/publications/:id/submit   controllers.UserPublicationController.submitForReview(id: Long)
+POST    /user/publications/:id/delete   controllers.UserPublicationController.deletePublication(id: Long)
+
+# API
+GET     /api/user/publications      controllers.UserPublicationController.listPublicationsJson()
+
+# ============================================
+# ADMIN PUBLICATION MANAGEMENT
+# ============================================
+
+# Review Publications
+GET     /admin/publications/pending controllers.AdminController.pendingPublications()
+GET     /admin/publications/:id     controllers.AdminController.reviewPublicationDetail(id: Long)
+
+# Approve/Reject
+POST    /admin/publications/:id/approve controllers.AdminController.approvePublication(id: Long)
+POST    /admin/publications/:id/reject  controllers.AdminController.rejectPublication(id: Long)
+
+# API
+GET     /api/admin/publications     controllers.AdminController.listAllPublicationsJson()
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
-
