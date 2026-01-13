@@ -1,199 +1,323 @@
 @(user: models.User)(implicit request: RequestHeader, flash: Flash)
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - @user.fullName</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-        }
-        
-        .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .navbar-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .navbar h1 {
-            font-size: 1.5rem;
-        }
-        
-        .navbar-menu {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-        
-        .navbar-menu a {
-            color: white;
-            text-decoration: none;
-            transition: opacity 0.3s;
-        }
-        
-        .navbar-menu a:hover {
-            opacity: 0.8;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-        
-        .welcome-card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-        }
-        
-        .welcome-card h2 {
-            color: #333;
-            margin-bottom: 1rem;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-        
-        .stat-card .icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .stat-card h3 {
-            color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-card .value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .flash-message {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 8px;
-            animation: slideDown 0.3s ease-out;
-        }
-        
-        .flash-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        @@keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="navbar-content">
-            <h1>👤 Dashboard de Usuario</h1>
-            <div class="navbar-menu">
-                <a href="@routes.AuthController.userProfile()">Mi Perfil</a>
-                <a href="@routes.HomeController.index()">Inicio</a>
-                <a href="@routes.AuthController.logout()">Cerrar Sesión</a>
+@main("Dashboard - " + user.fullName) {
+    <!-- Dashboard Hero Section -->
+    <section class="dashboard-hero">
+        <div class="container">
+            <div class="dashboard-welcome">
+                <div class="welcome-badge">
+                    <span class="badge-icon">🎯</span>
+                    <span class="badge-text">Centro de Control Personal</span>
+                </div>
+                <h1 class="dashboard-title-simple">
+                    <span class="title-greeting">¡Bienvenido de vuelta!</span>
+                    <span class="title-main-simple">@user.fullName</span>
+                </h1>
+                <p class="dashboard-subtitle">
+                    Tu espacio personal · Miembro @user.role · Acceso completo a contenido reactivo
+                </p>
             </div>
-        </div>
-    </nav>
-    
-    <div class="container">
-        @if(flash.get("success").isDefined) {
-            <div class="flash-message flash-success">
-                ✓ @flash.get("success").get
+
+            <!-- Quick Access Dashboard Cards -->
+            <div class="dashboard-grid">
+                <a href="@routes.UserPublicationController.dashboard()" class="dashboard-card card-create">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 20h9"/>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                            </svg>
+                        </div>
+                        <span class="card-badge">🔥 NUEVO</span>
+                    </div>
+                    <h3 class="card-title">Mis Publicaciones</h3>
+                    <p class="card-description">Crea y gestiona tus propios artículos, envíalos para revisión y publica contenido reactivo</p>
+                    <div class="card-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">✍️</span>
+                            <span class="stat-label">Crear</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">📝</span>
+                            <span class="stat-label">Gestionar</span>
+                        </div>
+                    </div>
+                    <div class="card-action">
+                        <span>Gestionar Publicaciones</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+
+                <a href="@routes.HomeController.portafolio()" class="dashboard-card card-portfolio">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                                <rect x="14" y="14" width="7" height="7" rx="1"/>
+                                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            </svg>
+                        </div>
+                        <span class="card-badge">Proyectos</span>
+                    </div>
+                    <h3 class="card-title">Portafolio</h3>
+                    <p class="card-description">Accede a aplicaciones reactivas, demos interactivos y repositorios completos</p>
+                    <div class="card-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">6+</span>
+                            <span class="stat-label">Proyectos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">100%</span>
+                            <span class="stat-label">Acceso</span>
+                        </div>
+                    </div>
+                    <div class="card-action">
+                        <span>Explorar Proyectos</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+
+                <a href="@routes.HomeController.publicaciones()" class="dashboard-card card-publications">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                        </div>
+                        <span class="card-badge">Conocimiento</span>
+                    </div>
+                    <h3 class="card-title">Publicaciones</h3>
+                    <p class="card-description">Artículos técnicos profundos sobre Akka, Play Framework y arquitecturas reactivas</p>
+                    <div class="card-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">7+</span>
+                            <span class="stat-label">Artículos</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">Deep</span>
+                            <span class="stat-label">Dive</span>
+                        </div>
+                    </div>
+                    <div class="card-action">
+                        <span>Leer Artículos</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+
+                <a href="@routes.HomeController.index()#contact" class="dashboard-card card-contact">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                        </div>
+                        <span class="card-badge">Conecta</span>
+                    </div>
+                    <h3 class="card-title">Contacto</h3>
+                    <p class="card-description">Envía mensajes al equipo mediante nuestro sistema reactivo Akka</p>
+                    <div class="card-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">24/7</span>
+                            <span class="stat-label">Disponible</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">⚡</span>
+                            <span class="stat-label">Async</span>
+                        </div>
+                    </div>
+                    <div class="card-action">
+                        <span>Enviar Mensaje</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
             </div>
-        }
-        
-        <div class="welcome-card">
-            <h2>¡Bienvenido, @user.fullName! 👋</h2>
-            <p style="color: #666;">Aquí puedes gestionar tu cuenta y acceder a contenido exclusivo.</p>
-        </div>
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="icon">📚</div>
-                <h3>Artículos Disponibles</h3>
-                <div class="value">6</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="icon">⭐</div>
-                <h3>Tu Rol</h3>
-                <div class="value" style="font-size: 1.5rem; text-transform: capitalize;">@user.role</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="icon">📅</div>
-                <h3>Miembro Desde</h3>
-                <div class="value" style="font-size: 1.2rem;">
-                    @{
-                        val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
-                        user.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
-                    }
+
+            <!-- Governance Bar -->
+            <div class="governance-bar">
+                <div class="governance-content">
+                    <div class="governance-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <div class="governance-text">
+                        <span class="governance-title">Cuenta Verificada</span>
+                        <span class="governance-subtitle">@user.email · Rol: @user.role · Registrado @{
+                            val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                            user.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
+                        }</span>
+                    </div>
+                    <div class="governance-status">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Activo</span>
+                    </div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Gráfico de Actividad -->
-        <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-top: 2rem;">
-            <h3 style="margin-bottom: 1.5rem; color: #333;">📈 Tu Actividad</h3>
-            <canvas id="activityChart" style="max-height: 300px;"></canvas>
+    <!-- Recursos Favoritos -->
+    <section class="favorites-section">
+        <div class="container">
+            <h2 class="section-title">⭐ Tus Recursos Favoritos</h2>
+            <p class="section-subtitle">Accesos directos a tus contenidos más consultados</p>
+            
+            <div class="favorites-grid">
+                <a href="@routes.HomeController.publicacion("akka-actors")" class="favorite-item favorite-primary">
+                    <span class="favorite-icon">📘</span>
+                    <span class="favorite-title">Akka Actors</span>
+                    <span class="favorite-views">125 visitas</span>
+                </a>
+                
+                <a href="@routes.HomeController.publicacion("akka-streams")" class="favorite-item favorite-success">
+                    <span class="favorite-icon">🌊</span>
+                    <span class="favorite-title">Akka Streams</span>
+                    <span class="favorite-views">98 visitas</span>
+                </a>
+                
+                <a href="@routes.HomeController.publicacion("play-async")" class="favorite-item favorite-warning">
+                    <span class="favorite-icon">⚡</span>
+                    <span class="favorite-title">Play Async</span>
+                    <span class="favorite-views">87 visitas</span>
+                </a>
+                
+                <a href="@routes.HomeController.publicacion("patrones-resiliencia")" class="favorite-item favorite-purple">
+                    <span class="favorite-icon">🛡️</span>
+                    <span class="favorite-title">Patrones Resiliencia</span>
+                    <span class="favorite-views">76 visitas</span>
+                </a>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Chart.js Library -->
+    <!-- User Statistics Section -->
+    <section class="user-stats-section">
+        <div class="container">
+            <h2 class="section-title">📊 Tu Actividad</h2>
+            <p class="section-subtitle">Seguimiento de tu interacción con la plataforma</p>
+
+            <div class="stats-cards-grid">
+                <div class="stat-card stat-primary">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-content">
+                        <span class="stat-value">7</span>
+                        <span class="stat-label">Artículos Disponibles</span>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-success">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-content">
+                        <span class="stat-value">6</span>
+                        <span class="stat-label">Proyectos Activos</span>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-warning">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-content">
+                        <span class="stat-value" style="text-transform: capitalize;">@user.role</span>
+                        <span class="stat-label">Tu Nivel de Acceso</span>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-info">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <span class="stat-value">
+                            @{
+                                val formatter = java.time.format.DateTimeFormatter.ofPattern("dd MMM")
+                                user.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
+                            }
+                        </span>
+                        <span class="stat-label">Fecha de Registro</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Chart -->
+            <div class="activity-chart-container">
+                <h3 class="chart-title">📈 Tendencia de Actividad</h3>
+                <canvas id="activityChart"></canvas>
+            </div>
+
+            <!-- Learning Progress -->
+            <div class="learning-progress">
+                <h3 class="progress-title">🎓 Tu Progreso de Aprendizaje</h3>
+                <div class="progress-grid">
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="progress-label">Fundamentos Reactivos</span>
+                            <span class="progress-percentage">85%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="progress-label">Akka Toolkit</span>
+                            <span class="progress-percentage">60%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-fill-success" style="width: 60%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span class="progress-label">Play Framework</span>
+                            <span class="progress-percentage">45%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-fill-warning" style="width: 45%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions-section">
+        <div class="container">
+            <h2 class="section-title">⚡ Acciones Rápidas</h2>
+            <div class="actions-grid">
+                <a href="@routes.HomeController.index()" class="action-item action-home">
+                    <span class="action-icon">🏠</span>
+                    <span class="action-text">Ir al Inicio</span>
+                </a>
+                <a href="@routes.AuthController.userProfile()" class="action-item action-profile">
+                    <span class="action-icon">👤</span>
+                    <span class="action-text">Editar Perfil</span>
+                </a>
+                <a href="@routes.HomeController.index()#contact" class="action-item action-contact">
+                    <span class="action-icon">✉️</span>
+                    <span class="action-text">Soporte</span>
+                </a>
+                <a href="@routes.AuthController.logout()" class="action-item action-danger">
+                    <span class="action-icon">🚪</span>
+                    <span class="action-text">Cerrar Sesión</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.1/dist/chart.umd.js"></script>
-    
     <script>
         const ctx = document.getElementById('activityChart').getContext('2d');
-        const createdAt = new Date('@user.createdAt');
-        const now = new Date();
-        const daysSinceRegistration = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
-        
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -201,25 +325,25 @@
                 datasets: [{
                     label: 'Visitas',
                     data: [12, 19, 15, 25, 22],
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     fill: true,
                     tension: 0.4,
                     pointRadius: 5,
                     pointHoverRadius: 7,
-                    pointBackgroundColor: '#667eea',
+                    pointBackgroundColor: '#3b82f6',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2
                 }, {
                     label: 'Artículos Leídos',
                     data: [5, 8, 6, 10, 9],
-                    borderColor: '#764ba2',
-                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
                     fill: true,
                     tension: 0.4,
                     pointRadius: 5,
                     pointHoverRadius: 7,
-                    pointBackgroundColor: '#764ba2',
+                    pointBackgroundColor: '#8b5cf6',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2
                 }]
@@ -233,7 +357,8 @@
                         position: 'bottom',
                         labels: {
                             padding: 15,
-                            font: { size: 12 }
+                            font: { size: 12 },
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#333'
                         }
                     }
                 },
@@ -241,16 +366,23 @@
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            precision: 0
+                            precision: 0,
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
                         }
                     }
                 }
             }
         });
-        
-        console.log('📊 Dashboard de usuario cargado');
-        console.log('Días desde registro:', daysSinceRegistration);
     </script>
-</body>
-</html>
-
+}
