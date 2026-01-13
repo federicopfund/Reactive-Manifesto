@@ -9,6 +9,7 @@ import play.api.i18n.I18nSupport
 import services.ReactiveContactAdapter
 import repositories.ContactRepository
 import core.{Contact, ContactSubmitted, ContactError}
+import actions.{OptionalAuthAction, OptionalAuthRequest}
 import scala.concurrent.{ExecutionContext, Future}
 
 // Form data case class (outside controller for Twirl template access)
@@ -18,7 +19,9 @@ case class ContactFormData(name: String, email: String, message: String)
 class HomeController @Inject()(
   val controllerComponents: ControllerComponents,
   adapter: ReactiveContactAdapter,
-  contactRepository: ContactRepository
+  contactRepository: ContactRepository,
+  publicationRepository: repositories.PublicationRepository,
+  optionalAuth: OptionalAuthAction
 )(implicit ec: ExecutionContext) extends BaseController with I18nSupport {
 
   // Form definition
@@ -35,24 +38,39 @@ class HomeController @Inject()(
     Ok(views.html.index(contactForm))
   }
 
-  def publicaciones() = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.publicaciones())
-  }
-
-  def publicacion(slug: String) = Action { implicit request: Request[AnyContent] =>
-    slug match {
-      case "akka-actors" => Ok(views.html.articulos.akkaActors())
-      case "patrones-resiliencia" => Ok(views.html.articulos.patronesResiliencia())
-      case "akka-streams" => Ok(views.html.articulos.akkaStreams())
-      case "play-async" => Ok(views.html.articulos.playAsync())
-      case "message-passing" => Ok(views.html.articulos.messagePassing())
-      case "testing-reactivo" => Ok(views.html.articulos.testingReactivo())
-      case _ => NotFound("Publicación no encontrada")
+  def publicaciones() = Action.async { implicit request: Request[AnyContent] =>
+    // Obtener publicaciones dinámicas aprobadas de usuarios
+    publicationRepository.findAllApproved(limit = 20).map { dynamicPublications =>
+      Ok(views.html.publicaciones(dynamicPublications))
     }
   }
 
-  def portafolio() = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.portafolio())
+  def publicacion(slug: String) = Action.async { implicit request: Request[AnyContent] =>
+    // Primero buscar en publicaciones dinámicas
+    publicationRepository.findBySlug(slug).map {
+      case Some(publication) if publication.status == "approved" =>
+        // Incrementar contador de vistas
+        publicationRepository.incrementViewCount(publication.id.get)
+        Ok(views.html.user.publicationPreview(publication, "Invitado"))
+      case _ =>
+        // Si no se encuentra, buscar en artículos estáticos
+        slug match {
+          case "akka-actors" => Ok(views.html.articulos.akkaActors())
+          case "patrones-resiliencia" => Ok(views.html.articulos.patronesResiliencia())
+          case "akka-streams" => Ok(views.html.articulos.akkaStreams())
+          case "play-async" => Ok(views.html.articulos.playAsync())
+          case "message-passing" => Ok(views.html.articulos.messagePassing())
+          case "testing-reactivo" => Ok(views.html.articulos.testingReactivo())
+          case _ => NotFound("Publicación no encontrada")
+        }
+    }
+  }
+
+  def portafolio() = optionalAuth { implicit request: OptionalAuthRequest[AnyContent] =>
+    // Pasar información de autenticación a la vista
+    val isAuthenticated = request.userInfo.isDefined
+    val username = request.userInfo.map(_._2)
+    Ok(views.html.portafolio(isAuthenticated, username))
   }
 
   def submitContact() = Action.async { implicit request: Request[AnyContent] =>
