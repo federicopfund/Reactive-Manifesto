@@ -1,0 +1,74 @@
+@(email: String, userId: Long, errorMessage: Option[String] = None)(implicit request: RequestHeader, messages: Messages)
+
+@main("Verificación de Email") {
+    <section class="verification-section">
+        <div class="container">
+            <div class="verification-container">
+                <div class="verification-card">
+                    <div class="verification-header">
+                        <div class="verification-icon">📧</div>
+                        <h1>Verificación de Email</h1>
+                        <p class="verification-subtitle">Hemos enviado un código de 3 dígitos a tu correo</p>
+                    </div>
+
+                    <div class="email-display">
+                        <span class="email-icon">✉️</span>
+                        <span class="email-text">@email</span>
+                    </div>
+
+                    @errorMessage.map { error =>
+                        <div class="alert alert-error">
+                            <span class="alert-icon">✗</span>
+                            <span class="alert-message">@error</span>
+                        </div>
+                    }
+
+                    <form method="POST" action="@routes.AuthController.verifyEmailCode()" class="verification-form">
+                        @helper.CSRF.formField
+                        <input type="hidden" name="userId" value="@userId">
+                        
+                        <div class="form-group">
+                            <label for="code" class="form-label">Código de Verificación</label>
+                            <input 
+                                type="text" 
+                                id="code" 
+                                name="code" 
+                                class="form-input code-input"
+                                placeholder="000"
+                                maxlength="3"
+                                pattern="[0-9]{3}"
+                                required
+                                autofocus
+                            >
+                            <p class="form-hint">Ingresa el código de 3 dígitos que recibiste por email</p>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            Verificar Código
+                        </button>
+                    </form>
+
+                    <div class="verification-footer">
+                        <p class="expiration-notice">⏱️ El código expira en 5 minutos</p>
+                        <div class="resend-section">
+                            <p>¿No recibiste el código?</p>
+                            <a href="@routes.AuthController.resendVerificationCode(userId)" class="btn btn-secondary btn-sm">
+                                Reenviar Código
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-card">
+                    <h3>💡 Consejos</h3>
+                    <ul>
+                        <li>Revisa tu bandeja de entrada y spam</li>
+                        <li>El código tiene 3 dígitos numéricos</li>
+                        <li>Tienes hasta 3 intentos para ingresar el código correcto</li>
+                        <li>Si el código expira, puedes solicitar uno nuevo</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+}
