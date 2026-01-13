@@ -11,5 +11,6 @@ case class User(
   role: String = "user",
   isActive: Boolean = true,
   createdAt: Instant = Instant.now(),
-  lastLogin: Option[Instant] = None
+  lastLogin: Option[Instant] = None,
+  emailVerified: Boolean = false
 )
