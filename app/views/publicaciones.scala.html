@@ -1,4 +1,4 @@
-@()(implicit request: RequestHeader, messages: Messages)
+@(dynamicPublications: List[models.PublicationWithAuthor])(implicit request: RequestHeader, messages: Messages)
 
 @main("Publicaciones") {
     <!-- Hero Section -->
@@ -129,6 +129,47 @@
                     <a href="@routes.HomeController.publicacion("testing-reactivo")" class="publication-link">Leer más →</a>
                 </article>
             </div>
+
+            <!-- Publicaciones de la Comunidad -->
+            @if(dynamicPublications.nonEmpty) {
+                <div class="community-publications-section">
+                    <h2 class="section-title">📚 Publicaciones de la Comunidad</h2>
+                    <p class="section-subtitle">Contenido creado y compartido por nuestra comunidad de desarrolladores</p>
+                    
+                    <div class="publications-grid">
+                        @for(pubWithAuthor <- dynamicPublications) {
+                            <article class="publication-card publication-community">
+                                <div class="publication-header">
+                                    <span class="publication-category">@pubWithAuthor.publication.category</span>
+                                    <span class="publication-date">@{
+                                        val formatter = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy")
+                                        pubWithAuthor.publication.publishedAt
+                                          .getOrElse(pubWithAuthor.publication.createdAt)
+                                          .atZone(java.time.ZoneId.systemDefault())
+                                          .format(formatter)
+                                    }</span>
+                                </div>
+                                <h3 class="publication-title">@pubWithAuthor.publication.title</h3>
+                                <p class="publication-excerpt">
+                                    @pubWithAuthor.publication.excerpt.getOrElse(pubWithAuthor.publication.content.take(200) + "...")
+                                </p>
+                                <div class="publication-meta">
+                                    <span class="publication-author">👤 @pubWithAuthor.authorUsername</span>
+                                    <span class="publication-views">👁️ @pubWithAuthor.publication.viewCount vistas</span>
+                                </div>
+                                @if(pubWithAuthor.publication.tags.isDefined) {
+                                    <div class="publication-tags">
+                                        @for(tag <- pubWithAuthor.publication.tags.get.split(",").take(3)) {
+                                            <span class="tag">@tag.trim</span>
+                                        }
+                                    </div>
+                                }
+                                <a href="@routes.HomeController.publicacion(pubWithAuthor.publication.slug)" class="publication-link">Leer más →</a>
+                            </article>
+                        }
+                    </div>
+                </div>
+            }
         </div>
     </section>
 
