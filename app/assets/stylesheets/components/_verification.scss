@@ -1,0 +1,193 @@
+// ============================================
+// Components - Email Verification
+// ============================================
+
+.verification-section {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: $spacing-5xl 0;
+  display: flex;
+  align-items: center;
+}
+
+.verification-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: $spacing-6;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+  }
+}
+
+.verification-card {
+  background: white;
+  border-radius: $border-radius-2xl;
+  padding: $spacing-8;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+
+  [data-theme="dark"] & {
+    background: rgba(30, 30, 30, 0.95);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.verification-header {
+  text-align: center;
+  margin-bottom: $spacing-6;
+}
+
+.verification-icon {
+  font-size: 4rem;
+  margin-bottom: $spacing-3;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.verification-header h1 {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
+  margin-bottom: $spacing-2;
+}
+
+.verification-subtitle {
+  font-size: $font-size-base;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.email-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  background: rgba(102, 126, 234, 0.1);
+  padding: $spacing-3 $spacing-4;
+  border-radius: $border-radius-lg;
+  margin-bottom: $spacing-5;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+
+  [data-theme="dark"] & {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.3);
+  }
+}
+
+.email-icon {
+  font-size: $font-size-xl;
+}
+
+.email-text {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: #667eea;
+  
+  [data-theme="dark"] & {
+    color: #8b9dfa;
+  }
+}
+
+.verification-form {
+  margin-bottom: $spacing-6;
+}
+
+.code-input {
+  text-align: center;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.5em;
+  font-family: 'JetBrains Mono', monospace;
+  padding: $spacing-4;
+  
+  &:focus {
+    letter-spacing: 0.5em;
+  }
+}
+
+.verification-footer {
+  text-align: center;
+}
+
+.expiration-notice {
+  font-size: $font-size-sm;
+  color: $warning-color;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-4;
+  padding: $spacing-2 $spacing-3;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: $border-radius-md;
+  display: inline-block;
+
+  [data-theme="dark"] & {
+    background: rgba(245, 158, 11, 0.15);
+  }
+}
+
+.resend-section {
+  margin-top: $spacing-4;
+  padding-top: $spacing-4;
+  border-top: 1px solid var(--border-color);
+
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
+    margin-bottom: $spacing-2;
+  }
+}
+
+.help-card {
+  background: white;
+  border-radius: $border-radius-2xl;
+  padding: $spacing-6;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+
+  [data-theme="dark"] & {
+    background: rgba(30, 30, 30, 0.95);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  @media (max-width: $breakpoint-md) {
+    display: none;
+  }
+
+  h3 {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin-bottom: $spacing-4;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      padding: $spacing-2 0;
+      font-size: $font-size-sm;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: $spacing-2;
+
+      &::before {
+        content: '✓';
+        color: $success-color;
+        font-weight: $font-weight-bold;
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
