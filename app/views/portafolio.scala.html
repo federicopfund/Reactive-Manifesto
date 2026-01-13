@@ -1,4 +1,4 @@
-@()(implicit request: RequestHeader, messages: Messages)
+@(isAuthenticated: Boolean, username: Option[String])(implicit request: RequestHeader, messages: Messages)
 
 @main("Portafolio") {
     <!-- Hero Section -->
@@ -7,6 +7,11 @@
             <div class="hero-content">
                 <h2 class="hero-title">Portafolio</h2>
                 <p class="hero-subtitle">Proyectos y soluciones construidas con arquitectura reactiva</p>
+                @if(isAuthenticated) {
+                    <p class="hero-welcome">👋 Bienvenido, <strong>@username.getOrElse("Usuario")</strong></p>
+                } else {
+                    <p class="hero-notice">🔒 <strong>Inicia sesión</strong> para acceder a demos, repositorios y papers</p>
+                }
             </div>
         </div>
     </section>
@@ -57,8 +62,8 @@
                             <span class="tech-badge">PostgreSQL</span>
                         </div>
                         <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Demo →</a>
-                            <a href="#" class="portfolio-link">GitHub →</a>
+                            <a href="https://demo-ecommerce.example.com" class="portfolio-link protected-link" data-type="demo" data-project="E-Commerce Reactivo" data-auth="@isAuthenticated">Ver Demo →</a>
+                            <a href="https://github.com/usuario/ecommerce-reactivo" class="portfolio-link protected-link" data-type="repo" data-project="E-Commerce Reactivo" data-auth="@isAuthenticated">GitHub →</a>
                         </div>
                     </div>
                 </div>
@@ -96,8 +101,8 @@
                             <span class="tech-badge">Docker</span>
                         </div>
                         <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Caso de Estudio →</a>
-                            <a href="#" class="portfolio-link">GitHub →</a>
+                            <a href="#" class="portfolio-link protected-link" data-type="paper" data-project="Microservicios Distribuido" data-auth="@isAuthenticated">Ver Caso de Estudio →</a>
+                            <a href="https://github.com/usuario/microservices-cluster" class="portfolio-link protected-link" data-type="repo" data-project="Microservicios Distribuido" data-auth="@isAuthenticated">GitHub →</a>
                         </div>
                     </div>
                 </div>
@@ -136,8 +141,8 @@
                             <span class="tech-badge">Grafana</span>
                         </div>
                         <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Demo →</a>
-                            <a href="#" class="portfolio-link">Documentación →</a>
+                            <a href="https://streaming-demo.example.com" class="portfolio-link protected-link" data-type="demo" data-project="Pipeline Streaming" data-auth="@isAuthenticated">Ver Demo →</a>
+                            <a href="#" class="portfolio-link protected-link" data-type="paper" data-project="Pipeline Streaming" data-auth="@isAuthenticated">Documentación →</a>
                         </div>
                     </div>
                 </div>
@@ -176,8 +181,8 @@
                             <span class="tech-badge">MongoDB</span>
                         </div>
                         <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Demo →</a>
-                            <a href="#" class="portfolio-link">GitHub →</a>
+                            <a href="https://chat-demo.example.com" class="portfolio-link protected-link" data-type="demo" data-project="Chat en Tiempo Real" data-auth="@isAuthenticated">Ver Demo →</a>
+                            <a href="https://github.com/usuario/realtime-chat" class="portfolio-link protected-link" data-type="repo" data-project="Chat en Tiempo Real" data-auth="@isAuthenticated">GitHub →</a>
                         </div>
                     </div>
                 </div>
@@ -216,8 +221,8 @@
                             <span class="tech-badge">EventStore</span>
                         </div>
                         <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Caso de Estudio →</a>
-                            <a href="#" class="portfolio-link">Whitepaper →</a>
+                            <a href="#" class="portfolio-link protected-link" data-type="paper" data-project="Sistema Bancario" data-auth="@isAuthenticated">Ver Caso de Estudio →</a>
+                            <a href="#" class="portfolio-link protected-link" data-type="paper" data-project="Sistema Bancario" data-auth="@isAuthenticated">Whitepaper →</a>
                         </div>
                     </div>
                 </div>
@@ -255,8 +260,8 @@
                             <span class="tech-badge">K8s</span>
                         </div>
                         <div class="portfolio-links">
-                            <a href="#" class="portfolio-link">Ver Demo →</a>
-                            <a href="#" class="portfolio-link">GitHub →</a>
+                            <a href="https://game-demo.example.com" class="portfolio-link protected-link" data-type="demo" data-project="Juego Multijugador" data-auth="@isAuthenticated">Ver Demo →</a>
+                            <a href="https://github.com/usuario/multiplayer-server" class="portfolio-link protected-link" data-type="repo" data-project="Juego Multijugador" data-auth="@isAuthenticated">GitHub →</a>
                         </div>
                     </div>
                 </div>
@@ -264,10 +269,125 @@
         </div>
     </section>
 
+    <!-- Modal de Autenticación -->
+    <div id="auth-modal" class="auth-modal" style="display: none;">
+        <div class="auth-modal-overlay"></div>
+        <div class="auth-modal-content">
+            <button class="auth-modal-close" aria-label="Cerrar">&times;</button>
+            
+            <div class="auth-modal-header">
+                <div class="auth-modal-icon">🔒</div>
+                <h3 class="auth-modal-title">Autenticación Requerida</h3>
+                <p class="auth-modal-subtitle">Inicia sesión o regístrate para acceder a este recurso</p>
+            </div>
+
+            <div class="auth-modal-body">
+                <div class="auth-modal-info">
+                    <p class="auth-modal-resource">
+                        <strong>Recurso solicitado:</strong><br>
+                        <span id="auth-modal-resource-name">-</span>
+                    </p>
+                    <p class="auth-modal-type">
+                        <strong>Tipo:</strong> <span id="auth-modal-resource-type">-</span>
+                    </p>
+                </div>
+
+                <div class="auth-modal-benefits">
+                    <h4>Con una cuenta gratuita podrás:</h4>
+                    <ul>
+                        <li>✅ Acceder a demos interactivas</li>
+                        <li>✅ Ver repositorios completos en GitHub</li>
+                        <li>✅ Descargar papers y documentación técnica</li>
+                        <li>✅ Comentar y hacer preguntas</li>
+                    </ul>
+                </div>
+
+                <div class="auth-modal-actions">
+                    <a href="@routes.AuthController.loginPage()" class="btn btn-primary btn-lg">
+                        🔓 Iniciar Sesión
+                    </a>
+                    <a href="@routes.AuthController.registerPage()" class="btn btn-outline btn-lg">
+                        ✨ Registrarse Gratis
+                    </a>
+                </div>
+
+                <div class="auth-modal-footer">
+                    <p>El registro es completamente <strong>gratuito</strong> y toma menos de un minuto</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de protección de enlaces
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('auth-modal');
+            const modalOverlay = modal.querySelector('.auth-modal-overlay');
+            const closeBtn = modal.querySelector('.auth-modal-close');
+            const resourceName = document.getElementById('auth-modal-resource-name');
+            const resourceType = document.getElementById('auth-modal-resource-type');
+
+            // Mapa de tipos de recursos
+            const resourceTypeMap = {
+                'demo': '🚀 Demo Interactiva',
+                'repo': '💻 Repositorio GitHub',
+                'paper': '📄 Paper/Documentación'
+            };
+
+            // Interceptar clics en enlaces protegidos
+            document.querySelectorAll('.protected-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    const isAuthenticated = this.dataset.auth === 'true';
+                    
+                    if (!isAuthenticated) {
+                        e.preventDefault();
+                        
+                        // Obtener información del recurso
+                        const projectName = this.dataset.project || 'Recurso';
+                        const type = this.dataset.type || 'recurso';
+                        
+                        // Actualizar modal
+                        resourceName.textContent = projectName;
+                        resourceType.textContent = resourceTypeMap[type] || type;
+                        
+                        // Mostrar modal
+                        modal.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                        
+                        // Animación de entrada
+                        setTimeout(() => {
+                            modal.classList.add('active');
+                        }, 10);
+                    }
+                    // Si está autenticado, el enlace funciona normalmente
+                });
+            });
+
+            // Cerrar modal
+            function closeModal() {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = '';
+                }, 300);
+            }
+
+            closeBtn.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', closeModal);
+
+            // Cerrar con ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal.style.display === 'flex') {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+
     <!-- CTA Section -->
     <section class="cta-section">
         <div class="container">
-            <div class=" ">
+            <div class="cta-content">
                 <h2 class="section-title">¿Tienes un proyecto en mente?</h2>
                 <p class="section-subtitle">Trabajemos juntos para construir soluciones reactivas escalables</p>
                 <div class="cta-buttons">
