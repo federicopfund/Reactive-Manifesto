@@ -1,26 +1,26 @@
 @(contact: models.ContactRecord)(implicit request: RequestHeader, flash: Flash)
 
 @admin.adminLayout("Detalle del Contacto") {
-    <div style="margin-bottom: 2rem;">
-        <a href="@routes.AdminController.dashboard(0, None)" style="color: #667eea; text-decoration: none;">
+    <div style="margin-bottom: 1.25rem;">
+        <a href="@routes.AdminController.dashboard(0, None)" style="color: #475569; text-decoration: none; font-size: 0.8125rem; font-weight: 500;">
             ← Volver al Dashboard
         </a>
     </div>
     
     <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h2 style="font-size: 1.8rem; color: #333;">Detalle del Contacto #@contact.id.getOrElse("-")</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.125rem; font-weight: 700; color: #1a202c;">Detalle del Contacto #@contact.id.getOrElse("-")</h2>
             <div style="display: flex; gap: 1rem;">
-                <a href="@routes.AdminController.editContactPage(contact.id.get)" class="btn btn-primary">
-                    ✏️ Editar
+                <a href="@routes.AdminController.editContactPage(contact.id.get)" class="btn btn-primary btn-sm">
+                    Editar
                 </a>
                 <form method="POST" 
                       action="@routes.AdminController.deleteContact(contact.id.get)" 
                       style="display: inline;"
                       onsubmit="return confirm('¿Estás seguro de eliminar este contacto?');">
                     @helper.CSRF.formField
-                    <button type="submit" class="btn btn-danger">
-                        🗑️ Eliminar
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        Eliminar
                     </button>
                 </form>
             </div>
@@ -28,45 +28,39 @@
         
         <div style="display: grid; gap: 1.5rem;">
             <div>
-                <label style="display: block; font-weight: 600; color: #666; margin-bottom: 0.5rem;">Nombre</label>
-                <p style="font-size: 1.1rem; color: #333;">@contact.name</p>
+                <label>Nombre</label>
+                <p style="font-size: 0.875rem; color: #374151;">@contact.name</p>
             </div>
             
             <div>
-                <label style="display: block; font-weight: 600; color: #666; margin-bottom: 0.5rem;">Email</label>
-                <p style="font-size: 1.1rem; color: #333;">
-                    <a href="mailto:@contact.email" style="color: #667eea; text-decoration: none;">@contact.email</a>
+                <label>Email</label>
+                <p style="font-size: 0.875rem; color: #374151;">
+                    <a href="mailto:@contact.email" style="color: #475569; text-decoration: none;">@contact.email</a>
                 </p>
             </div>
             
             <div>
-                <label style="display: block; font-weight: 600; color: #666; margin-bottom: 0.5rem;">Mensaje</label>
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; white-space: pre-wrap; line-height: 1.6;">
+                <label>Mensaje</label>
+                <div style="background: #f8fafc; padding: 1rem; border-radius: 6px; white-space: pre-wrap; line-height: 1.6; font-size: 0.875rem; color: #374151; border: 1px solid #edf0f4;">
                     @contact.message
                 </div>
             </div>
             
             <div>
-                <label style="display: block; font-weight: 600; color: #666; margin-bottom: 0.5rem;">Estado</label>
-                <span style="padding: 0.5rem 1rem; border-radius: 20px; font-size: 1rem; font-weight: 500; display: inline-block;
+                <label>Estado</label>
+                <span class="badge @{contact.status match { case "pending" => "badge-pending"; case "processed" => "badge-processed"; case "archived" => "badge-archived"; case _ => "badge-draft" }}">
                     @contact.status match {
-                        case "pending" => { background: #fff3cd; color: #856404; }
-                        case "processed" => { background: #d1ecf1; color: #0c5460; }
-                        case "archived" => { background: #d4edda; color: #155724; }
-                        case _ => { background: #f8d7da; color: #721c24; }
-                    }">
-                    @contact.status match {
-                        case "pending" => { 🕐 Pendiente }
-                        case "processed" => { ✓ Procesado }
-                        case "archived" => { 📁 Archivado }
+                        case "pending" => { Pendiente }
+                        case "processed" => { Procesado }
+                        case "archived" => { Archivado }
                         case _ => { @contact.status }
                     }
                 </span>
             </div>
             
             <div>
-                <label style="display: block; font-weight: 600; color: #666; margin-bottom: 0.5rem;">Fecha de Creación</label>
-                <p style="font-size: 1.1rem; color: #333;">
+                <label>Fecha de Creación</label>
+                <p style="font-size: 0.875rem; color: #374151;">
                     @{
                         val formatter = java.time.format.DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy 'a las' HH:mm", java.util.Locale.forLanguageTag("es"))
                         contact.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
@@ -75,9 +69,9 @@
             </div>
         </div>
         
-        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e9ecef;">
-            <h3 style="margin-bottom: 1rem; color: #333;">Cambiar Estado Rápidamente</h3>
-            <div style="display: flex; gap: 1rem;">
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e8ecf0;">
+            <h3 style="margin-bottom: 0.75rem; color: #374151; font-size: 0.875rem; font-weight: 600;">Cambiar Estado</h3>
+            <div style="display: flex; gap: 0.5rem;">
                 <form method="POST" action="@routes.AdminController.updateContact(contact.id.get)" style="display: inline;">
                     @helper.CSRF.formField
                     <input type="hidden" name="id" value="@contact.id.get" />
@@ -85,8 +79,8 @@
                     <input type="hidden" name="email" value="@contact.email" />
                     <input type="hidden" name="message" value="@contact.message" />
                     <input type="hidden" name="status" value="pending" />
-                    <button type="submit" class="btn btn-secondary" style="background: #ffc107; color: #000;">
-                        🕐 Marcar Pendiente
+                    <button type="submit" class="btn btn-warning btn-sm">
+                        Pendiente
                     </button>
                 </form>
                 
@@ -97,8 +91,8 @@
                     <input type="hidden" name="email" value="@contact.email" />
                     <input type="hidden" name="message" value="@contact.message" />
                     <input type="hidden" name="status" value="processed" />
-                    <button type="submit" class="btn btn-secondary" style="background: #17a2b8; color: white;">
-                        ✓ Marcar Procesado
+                    <button type="submit" class="btn btn-success btn-sm">
+                        Procesado
                     </button>
                 </form>
                 
@@ -109,8 +103,8 @@
                     <input type="hidden" name="email" value="@contact.email" />
                     <input type="hidden" name="message" value="@contact.message" />
                     <input type="hidden" name="status" value="archived" />
-                    <button type="submit" class="btn btn-secondary" style="background: #28a745; color: white;">
-                        📁 Archivar
+                    <button type="submit" class="btn btn-secondary btn-sm">
+                        Archivar
                     </button>
                 </form>
             </div>

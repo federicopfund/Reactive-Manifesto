@@ -1,0 +1,61 @@
+/* Admin layout animations */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes cmdFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes cmdSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive navbar — collapse links on small screens */
+@media (max-width: 768px) {
+    .nav-links { display: none !important; }
+    .cmd-trigger kbd { display: none; }
+    .navbar { padding: 0 1rem; }
+    .main-container { padding: 0 1rem; }
+}
+
+/* User layout animations */
+@keyframes uCmdFade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes uCmdSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* User layout responsive */
+@media (max-width: 768px) {
+    .u-nav { display: none !important; }
+    .u-cmd-trigger kbd { display: none; }
+    .u-user-chip span:not(.u-avatar-sm) { display: none; }
+    .u-navbar-inner { padding: 0 1rem; }
+    .u-main { padding: 1.25rem 1rem; }
+}

@@ -2,54 +2,10 @@ package repositories
 
 import javax.inject.{Inject, Singleton}
 import models.{Publication, PublicationWithAuthor}
-import slick.jdbc.H2Profile.api._
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.JdbcProfile
-
-/**
- * Tabla de publicaciones para Slick
- */
-class PublicationsTable(tag: Tag) extends Table[Publication](tag, "publications") {
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def userId = column[Long]("user_id")
-  def title = column[String]("title")
-  def slug = column[String]("slug")
-  def content = column[String]("content")
-  def excerpt = column[Option[String]]("excerpt")
-  def coverImage = column[Option[String]]("cover_image")
-  def category = column[String]("category")
-  def tags = column[Option[String]]("tags")
-  def status = column[String]("status")
-  def viewCount = column[Int]("view_count")
-  def createdAt = column[Instant]("created_at")
-  def updatedAt = column[Instant]("updated_at")
-  def publishedAt = column[Option[Instant]]("published_at")
-  def reviewedBy = column[Option[Long]]("reviewed_by")
-  def reviewedAt = column[Option[Instant]]("reviewed_at")
-  def rejectionReason = column[Option[String]]("rejection_reason")
-
-  def * = (
-    id.?,
-    userId,
-    title,
-    slug,
-    content,
-    excerpt,
-    coverImage,
-    category,
-    tags,
-    status,
-    viewCount,
-    createdAt,
-    updatedAt,
-    publishedAt,
-    reviewedBy,
-    reviewedAt,
-    rejectionReason
-  ).mapTo[Publication]
-}
 
 @Singleton
 class PublicationRepository @Inject()(
@@ -57,7 +13,54 @@ class PublicationRepository @Inject()(
 )(implicit ec: ExecutionContext) {
 
   private val dbConfig = dbConfigProvider.get[JdbcProfile]
-  private val db = dbConfig.db
+  import dbConfig._
+  import profile.api._
+  
+  /**
+   * Tabla de publicaciones para Slick
+   */
+  private class PublicationsTable(tag: Tag) extends Table[Publication](tag, "publications") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def userId = column[Long]("user_id")
+    def title = column[String]("title")
+    def slug = column[String]("slug")
+    def content = column[String]("content")
+    def excerpt = column[Option[String]]("excerpt")
+    def coverImage = column[Option[String]]("cover_image")
+    def category = column[String]("category")
+    def tags = column[Option[String]]("tags")
+    def status = column[String]("status")
+    def viewCount = column[Int]("view_count")
+    def createdAt = column[Instant]("created_at")
+    def updatedAt = column[Instant]("updated_at")
+    def publishedAt = column[Option[Instant]]("published_at")
+    def reviewedBy = column[Option[Long]]("reviewed_by")
+    def reviewedAt = column[Option[Instant]]("reviewed_at")
+    def rejectionReason = column[Option[String]]("rejection_reason")
+    def adminNotes = column[Option[String]]("admin_notes")
+
+    def * = (
+      id.?,
+      userId,
+      title,
+      slug,
+      content,
+      excerpt,
+      coverImage,
+      category,
+      tags,
+      status,
+      viewCount,
+      createdAt,
+      updatedAt,
+      publishedAt,
+      reviewedBy,
+      reviewedAt,
+      rejectionReason,
+      adminNotes
+    ).mapTo[Publication]
+  }
+
   private val publications = TableQuery[PublicationsTable]
   
   // Implicit GetResult para mapear JOIN con usuarios
@@ -81,7 +84,8 @@ class PublicationRepository @Inject()(
         publishedAt = r.nextTimestampOption().map(_.toInstant),
         reviewedBy = r.nextLongOption(),
         reviewedAt = r.nextTimestampOption().map(_.toInstant),
-        rejectionReason = r.nextStringOption()
+        rejectionReason = r.nextStringOption(),
+        adminNotes = r.nextStringOption()
       ),
       authorUsername = r.nextString(),
       authorFullName = r.nextString()
@@ -213,6 +217,17 @@ class PublicationRepository @Inject()(
   }
 
   /**
+   * Eliminar publicación como administrador (sin restricciones de usuario)
+   */
+  def deleteAsAdmin(id: Long): Future[Boolean] = {
+    db.run(
+      publications
+        .filter(_.id === id)
+        .delete
+    ).map(_ > 0)
+  }
+
+  /**
    * Incrementar contador de vistas
    */
   def incrementViewCount(id: Long): Future[Unit] = {
@@ -261,4 +276,93 @@ class PublicationRepository @Inject()(
     
     db.run(query.result).map(_.toMap)
   }
+
+  /**
+   * Guardar notas del admin para una publicación
+   */
+  def saveAdminNotes(id: Long, notes: Option[String]): Future[Boolean] = {
+    val query = publications
+      .filter(_.id === id)
+      .map(_.adminNotes)
+      .update(notes)
+    
+    db.run(query).map(_ > 0)
+  }
+
+  /**
+   * Obtener todas las publicaciones para el admin (filtrada por estado)
+   */
+  def findAllByStatus(status: Option[String] = None): Future[List[PublicationWithAuthor]] = {
+    val query = status match {
+      case Some(s) =>
+        sql"""
+          SELECT p.*, u.username, u.full_name
+          FROM publications p
+          JOIN users u ON p.user_id = u.id
+          WHERE p.status = $s
+          ORDER BY p.updated_at DESC
+        """.as[PublicationWithAuthor]
+      case None =>
+        sql"""
+          SELECT p.*, u.username, u.full_name
+          FROM publications p
+          JOIN users u ON p.user_id = u.id
+          ORDER BY p.updated_at DESC
+        """.as[PublicationWithAuthor]
+    }
+    
+    db.run(query).map(_.toList)
+  }
+
+  /**
+   * Buscar publicaciones por IDs
+   */
+  def findByIds(ids: Seq[Long]): Future[List[Publication]] = {
+    if (ids.isEmpty) Future.successful(Nil)
+    else db.run(publications.filter(_.id.inSet(ids)).sortBy(_.createdAt.desc).result).map(_.toList)
+  }
+
+  /**
+   * Publicaciones aprobadas de un usuario
+   */
+  def findApprovedByUserId(userId: Long): Future[List[Publication]] = {
+    db.run(
+      publications
+        .filter(p => p.userId === userId && p.status === "approved")
+        .sortBy(_.publishedAt.desc)
+        .result
+    ).map(_.toList)
+  }
+
+  /**
+   * Search approved publications by keyword
+   */
+  def searchApproved(query: String, category: Option[String], limit: Int = 50): Future[List[PublicationWithAuthor]] = {
+    val like = s"%${query.toLowerCase}%"
+    val sqlQuery = category match {
+      case Some(cat) =>
+        sql"""
+          SELECT p.*, u.username, u.full_name
+          FROM publications p
+          JOIN users u ON p.user_id = u.id
+          WHERE p.status = 'approved'
+            AND (LOWER(p.title) LIKE $like OR LOWER(p.content) LIKE $like OR LOWER(COALESCE(p.tags,'')) LIKE $like)
+            AND p.category = $cat
+          ORDER BY p.published_at DESC
+          LIMIT $limit
+        """.as[PublicationWithAuthor]
+      case None =>
+        sql"""
+          SELECT p.*, u.username, u.full_name
+          FROM publications p
+          JOIN users u ON p.user_id = u.id
+          WHERE p.status = 'approved'
+            AND (LOWER(p.title) LIKE $like OR LOWER(p.content) LIKE $like OR LOWER(COALESCE(p.tags,'')) LIKE $like)
+          ORDER BY p.published_at DESC
+          LIMIT $limit
+        """.as[PublicationWithAuthor]
+    }
+    db.run(sqlQuery).map(_.toList)
+  }
+
 }

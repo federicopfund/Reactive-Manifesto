@@ -1,128 +1,194 @@
-@(publication: models.Publication, username: String)(implicit request: RequestHeader)
+@(publication: models.Publication, username: String, feedbacks: List[models.PublicationFeedbackWithAdmin], reactions: Map[String, Int] = Map.empty, userReactions: Set[String] = Set.empty, comments: List[models.CommentWithAuthor] = List.empty, isBookmarked: Boolean = false, currentUserId: Option[Long] = None)(implicit request: RequestHeader, flash: Flash)
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@publication.title - Preview</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f9fafb;
-            min-height: 100vh;
-        }
-        
-        .navbar {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .navbar a {
-            color: #2563eb;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        
-        .container {
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-        
-        .article-card {
-            background: white;
-            border-radius: 12px;
-            padding: 3rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .article-title {
-            font-size: 2.5rem;
-            color: #1f2937;
-            margin-bottom: 1rem;
-            line-height: 1.2;
-        }
-        
-        .article-meta {
-            display: flex;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            padding-bottom: 2rem;
-            border-bottom: 2px solid #e5e7eb;
-            color: #6b7280;
-        }
-        
-        .status-badge {
-            padding: 0.375rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-        
-        .status-draft {
-            background: #f3f4f6;
-            color: #4b5563;
-        }
-        
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        
-        .status-approved {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .status-rejected {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .article-content {
-            font-size: 1.125rem;
-            line-height: 1.8;
-            color: #374151;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar">
-        <h1>📄 Vista Previa</h1>
-        <a href="@routes.UserPublicationController.dashboard()">← Volver al Dashboard</a>
-    </nav>
-    
-    <div class="container">
-        <article class="article-card">
-            <h1 class="article-title">@publication.title</h1>
-            
-            <div class="article-meta">
-                <span>📂 @publication.category</span>
-                <span>📅 @publication.createdAt.toString.substring(0, 10)</span>
-                <span class="status-badge status-@publication.status">@publication.status</span>
+@user.userLayout("Vista Previa", username) {
+    <div style="max-width: 800px; width: 100%; box-sizing: border-box;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+            <a href="@routes.UserPublicationController.dashboard()" class="u-btn u-btn-secondary u-btn-sm" style="text-decoration:none;">&larr; Volver</a>
+            <h2 style="font-size: 1.125rem; font-weight: 700; color: #1a202c;">Vista Previa</h2>
+            <span style="font-size: 0.75rem; color: #94a3b8; margin-left: auto;">~@{Math.max(1, publication.content.split("\\s+").length / 200)} min de lectura</span>
+        </div>
+
+        <div class="u-card" style="overflow: hidden; word-wrap: break-word; overflow-wrap: break-word;">
+            <h1 style="font-size: 1.75rem; font-weight: 700; color: #1a202c; line-height: 1.25; margin-bottom: 0.75rem; word-break: break-word; overflow-wrap: break-word;">@publication.title</h1>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1.25rem; color: #94a3b8; font-size: 0.8125rem;">
+                <span>@publication.category</span>
+                <span>@publication.createdAt.toString.substring(0, 10)</span>
+                <span class="u-badge u-badge-@publication.status">@publication.status</span>
+                <span>👁️ @publication.viewCount vistas</span>
             </div>
-            
+
             @if(publication.excerpt.isDefined) {
-                <div style="background: #f0f9ff; padding: 1.5rem; border-left: 4px solid #2563eb; margin-bottom: 2rem; border-radius: 8px;">
+                <div style="background: #f8fafc; padding: 1rem; border-left: 3px solid #94a3b8; margin-bottom: 1.25rem; border-radius: 4px; font-size: 0.875rem; color: #475569;">
                     @publication.excerpt.get
                 </div>
             }
-            
-            <div class="article-content">
+
+            @if(publication.status == "rejected" && publication.rejectionReason.isDefined) {
+                <div style="background: #fef8f0; padding: 1rem; border-left: 3px solid #d4a853; margin-bottom: 1.25rem; border-radius: 4px; font-size: 0.8125rem; color: #7c6a2e;">
+                    <strong>Motivo de rechazo:</strong>
+                    <div style="margin-top: 0.375rem;">@Html(publication.rejectionReason.get.replaceAll("\n", "<br/>"))</div>
+                </div>
+            }
+
+            <div style="font-size: 1rem; line-height: 1.75; color: #374151; word-break: break-word; overflow-wrap: break-word;">
                 @Html(publication.content.replaceAll("\n", "<br/>"))
             </div>
-        </article>
+
+            @if(publication.tags.isDefined) {
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; gap: 0.375rem;">
+                    @for(tag <- publication.tags.get.split(",").map(_.trim)) {
+                        <span style="background: #f1f5f9; color: #64748b; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">#@tag</span>
+                    }
+                </div>
+            }
+        </div>
+
+        @* ============================================ *@
+        @* REACTIONS & BOOKMARK                         *@
+        @* ============================================ *@
+        @if(publication.status == "approved") {
+            <div class="u-card" style="margin-top: 1rem; padding: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                    <!-- Reactions -->
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        @for((rType, emoji, label) <- Seq(("like", "👍", "Útil"), ("excellent", "🔥", "Excelente"), ("learned", "💡", "Aprendí"))) {
+                            @if(currentUserId.isDefined) {
+                                <form method="POST" action="@routes.UserPublicationController.toggleReaction(publication.id.get)" style="margin:0; display:inline;">
+                                    @helper.CSRF.formField
+                                    <input type="hidden" name="reactionType" value="@rType">
+                                    <button type="submit" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.375rem 0.75rem; border: 1px solid @if(userReactions.contains(rType)){#6b8caa}else{#e2e8f0}; border-radius: 20px; background: @if(userReactions.contains(rType)){#eef4fa}else{#ffffff}; cursor: pointer; font-size: 0.8125rem; color: @if(userReactions.contains(rType)){#5a7892}else{#64748b}; transition: all 0.15s;" title="@label">
+                                        @emoji <span style="font-weight: 600;">@reactions.getOrElse(rType, 0)</span>
+                                    </button>
+                                </form>
+                            } else {
+                                <span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.375rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 20px; background: #ffffff; font-size: 0.8125rem; color: #64748b;">
+                                    @emoji <span style="font-weight: 600;">@reactions.getOrElse(rType, 0)</span>
+                                </span>
+                            }
+                        }
+                    </div>
+
+                    <!-- Bookmark -->
+                    @if(currentUserId.isDefined) {
+                        <form method="POST" action="@routes.UserPublicationController.toggleBookmark(publication.id.get)" style="margin:0;">
+                            @helper.CSRF.formField
+                            <button type="submit" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.375rem 0.75rem; border: 1px solid @if(isBookmarked){#6b8caa}else{#e2e8f0}; border-radius: 6px; background: @if(isBookmarked){#eef4fa}else{#ffffff}; cursor: pointer; font-size: 0.8125rem; color: @if(isBookmarked){#5a7892}else{#64748b}; transition: all 0.15s;" title="@if(isBookmarked){Quitar de favoritos}else{Guardar en favoritos}">
+                                @if(isBookmarked){🔖 Guardado}else{📑 Guardar}
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+
+        @* ============================================ *@
+        @* COMMENTS SECTION                             *@
+        @* ============================================ *@
+        @if(publication.status == "approved") {
+            <div class="u-card" style="margin-top: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="font-size: 1rem;">💬</span>
+                    <h3 style="font-size: 0.9375rem; font-weight: 700; color: #1a202c; margin: 0;">
+                        Comentarios
+                        <span style="font-weight: 400; color: #94a3b8; font-size: 0.8125rem;">(@comments.size)</span>
+                    </h3>
+                </div>
+
+                @* Comment form *@
+                @if(currentUserId.isDefined) {
+                    <form method="POST" action="@routes.UserPublicationController.addComment(publication.id.get)" style="margin-bottom: 1.25rem;">
+                        @helper.CSRF.formField
+                        <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #64748b; flex-shrink: 0;">
+                                @username.substring(0, 1).toUpperCase
+                            </div>
+                            <div style="flex: 1;">
+                                <textarea name="content" rows="2" placeholder="Escribe un comentario..." required minlength="3" maxlength="2000"
+                                    style="width: 100%; padding: 0.625rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.8125rem; font-family: inherit; color: #1a202c; resize: vertical; box-sizing: border-box; transition: border-color 0.15s;"
+                                    onfocus="this.style.borderColor='#6b8caa'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 0.375rem;">
+                                    <button type="submit" class="u-btn u-btn-primary u-btn-sm">Comentar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                } else {
+                    <p style="font-size: 0.8125rem; color: #94a3b8; margin-bottom: 1rem;">
+                        <a href="@routes.AuthController.loginPage()" style="color: #6b8caa;">Inicia sesión</a> para comentar
+                    </p>
+                }
+
+                @* Comments list *@
+                @if(comments.isEmpty) {
+                    <p style="text-align: center; color: #94a3b8; font-size: 0.8125rem; padding: 1rem 0;">Sin comentarios aún. ¡Sé el primero!</p>
+                } else {
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        @for(c <- comments) {
+                            <div style="display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.875rem; background: #f8fafc; border-radius: 8px;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #64748b; flex-shrink: 0;">
+                                    @c.authorUsername.substring(0, 1).toUpperCase
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                        <a href="@routes.UserPublicationController.publicProfile(c.authorUsername)" style="font-size: 0.8125rem; font-weight: 600; color: #1a202c; text-decoration: none;">@c.authorFullName</a>
+                                        <span style="font-size: 0.6875rem; color: #94a3b8;">@c.comment.createdAt.toString.substring(0, 10)</span>
+                                    </div>
+                                    <p style="font-size: 0.8125rem; color: #475569; line-height: 1.5; word-break: break-word;">@c.comment.content</p>
+                                    @if(currentUserId.contains(c.comment.userId)) {
+                                        <form method="POST" action="@routes.UserPublicationController.deleteComment(c.comment.id.get)" style="margin-top: 0.25rem;">
+                                            @helper.CSRF.formField
+                                            <button type="submit" onclick="return confirm('¿Eliminar este comentario?')" style="background: none; border: none; color: #ef4444; font-size: 0.6875rem; cursor: pointer; padding: 0;">Eliminar</button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @* ============================================ *@
+        @* FEEDBACK DEL EQUIPO EDITORIAL               *@
+        @* ============================================ *@
+        @if(feedbacks.nonEmpty) {
+            <div class="u-card" style="margin-top: 1.25rem; border-left: 3px solid #6b8caa;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="font-size: 1.125rem;">📋</span>
+                    <h3 style="font-size: 0.9375rem; font-weight: 700; color: #1a202c; margin: 0;">
+                        Feedback del Equipo Editorial
+                        <span style="font-weight: 400; color: #94a3b8; font-size: 0.8125rem; margin-left: 0.375rem;">(@feedbacks.size)</span>
+                    </h3>
+                </div>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 1rem;">
+                    Estas observaciones buscan ayudarte a mejorar tu publicación.
+                </p>
+
+                @for(fb <- feedbacks) {
+                    <div style="padding: 0.875rem; border-radius: 8px; margin-bottom: 0.625rem; background: #f8fafc; border-left: 3px solid @{fb.feedback.feedbackType match { case "content_quality" => "#6b8caa"; case "structure" => "#8b8c6b"; case "relevance" => "#8c6b8a"; case "writing_style" => "#6b8c7a"; case _ => "#94a3b8" }};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.375rem;">
+                            <span style="font-weight: 700; color: #374151; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px;">
+                                @models.FeedbackType.icon(fb.feedback.feedbackType) @models.FeedbackType.label(fb.feedback.feedbackType)
+                            </span>
+                            <span style="font-size: 0.6875rem; color: #94a3b8;">
+                                @fb.feedback.createdAt.toString.substring(0, 10)
+                            </span>
+                        </div>
+                        <div style="color: #475569; font-size: 0.8125rem; line-height: 1.6; word-break: break-word;">
+                            @Html(fb.feedback.message.replaceAll("\n", "<br/>"))
+                        </div>
+                    </div>
+                }
+
+                @if(publication.status == "rejected" || publication.status == "draft" || publication.status == "pending") {
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #f1f5f9; text-align: center;">
+                        <a href="@routes.UserPublicationController.editPublicationForm(publication.id.get)" class="u-btn u-btn-primary u-btn-sm" style="text-decoration: none;">
+                            ✏️ Editar y Mejorar publicación
+                        </a>
+                    </div>
+                }
+            </div>
+        }
     </div>
-</body>
-</html>
+}

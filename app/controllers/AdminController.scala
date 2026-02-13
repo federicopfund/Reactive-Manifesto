@@ -6,8 +6,8 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json._
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{ContactRepository, AdminRepository, UserRepository, PublicationRepository}
-import models.{ContactRecord, Admin}
+import repositories.{ContactRepository, AdminRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository}
+import models.{ContactRecord, Admin, PublicationFeedback, UserNotification, FeedbackType}
 import actions.{AdminOnlyAction, AuthRequest}
 import org.mindrot.jbcrypt.BCrypt
 import java.time.Instant
@@ -24,6 +24,9 @@ class AdminController @Inject()(
   adminRepository: AdminRepository,
   userRepository: UserRepository,
   publicationRepository: PublicationRepository,
+  feedbackRepository: PublicationFeedbackRepository,
+  notificationRepository: UserNotificationRepository,
+  newsletterRepository: NewsletterRepository,
   adminAction: AdminOnlyAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) {
 
@@ -97,7 +100,36 @@ class AdminController @Inject()(
    * Logout
    */
   def logout(): Action[AnyContent] = Action { implicit request =>
-    Redirect(routes.AuthController.loginPage()).withNewSession.flashing("success" -> "Sesión cerrada")
+    Redirect(routes.AuthController.loginPage())
+      .withNewSession
+      .withHeaders(
+        "Cache-Control" -> "no-cache, no-store, must-revalidate",
+        "Pragma" -> "no-cache",
+        "Expires" -> "0"
+      )
+  }
+
+  /**
+   * Endpoint de debug: Listar todos los administradores
+   * Ruta: GET /debug/admins
+   * (TODO: Proteger este endpoint en producción)
+   */
+  def listAllAdmins(): Action[AnyContent] = Action.async { implicit request =>
+    adminRepository.listAll().map { admins =>
+      Ok(Json.obj(
+        "total" -> admins.length,
+        "admins" -> Json.toJson(admins.map { admin =>
+          Json.obj(
+            "id" -> admin.id,
+            "username" -> admin.username,
+            "email" -> admin.email,
+            "role" -> admin.role,
+            "createdAt" -> admin.createdAt.toString,
+            "lastLogin" -> admin.lastLogin.map(_.toString)
+          )
+        })
+      ))
+    }
   }
 
   /**
@@ -107,6 +139,7 @@ class AdminController @Inject()(
     for {
       contacts <- contactRepository.listAll()
       totalCount <- contactRepository.count()
+      pendingPublications <- publicationRepository.findPending()
     } yield {
       val filteredContacts = search match {
         case Some(query) if query.nonEmpty =>
@@ -123,7 +156,7 @@ class AdminController @Inject()(
       val paginatedContacts = filteredContacts.slice(offset, offset + pageSize)
       val totalPages = Math.ceil(filteredContacts.length.toDouble / pageSize).toInt
       
-      Ok(views.html.admin.dashboard(paginatedContacts, request.username, page, totalPages, search))
+      Ok(views.html.admin.dashboard(paginatedContacts, request.username, page, totalPages, search, pendingPublications.length))
     }
   }
 
@@ -396,14 +429,25 @@ class AdminController @Inject()(
   }
 
   /**
+   * Listar todas las publicaciones con filtros
+   */
+  def allPublications(status: Option[String] = None) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    publicationRepository.findAllByStatus(status).map { publications =>
+      Ok(views.html.admin.publicationsList(publications, status))
+    }
+  }
+
+  /**
    * Ver detalle de una publicación para revisión
    */
   def reviewPublicationDetail(id: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
-    publicationRepository.findById(id).map {
+    publicationRepository.findById(id).flatMap {
       case Some(publication) =>
-        Ok(views.html.admin.publicationDetail(publication))
+        feedbackRepository.findByPublicationId(id).map { feedbacks =>
+          Ok(views.html.admin.publicationDetail(publication, feedbacks))
+        }
       case None =>
-        NotFound("Publicación no encontrada")
+        Future.successful(NotFound("Publicación no encontrada"))
     }
   }
 
@@ -412,7 +456,19 @@ class AdminController @Inject()(
    */
   def approvePublication(id: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
     val adminId = request.userId
-    publicationRepository.changeStatus(id, "approved", adminId).map { success =>
+    for {
+      pubOpt <- publicationRepository.findById(id)
+      success <- publicationRepository.changeStatus(id, "approved", adminId)
+      _ <- if (success && pubOpt.isDefined) {
+        notificationRepository.create(UserNotification(
+          userId = pubOpt.get.userId,
+          notificationType = "publication_approved",
+          title = "Publicación aprobada",
+          message = s"Tu publicación '${pubOpt.get.title.take(80)}' ha sido aprobada y ya está visible públicamente.",
+          publicationId = Some(id)
+        ))
+      } else Future.successful(0L)
+    } yield {
       if (success) {
         Redirect(routes.AdminController.pendingPublications())
           .flashing("success" -> "Publicación aprobada exitosamente")
@@ -432,12 +488,56 @@ class AdminController @Inject()(
       .getOrElse("No cumple con los estándares de calidad")
     
     val adminId = request.userId
-    publicationRepository.changeStatus(id, "rejected", adminId, Some(rejectionReason)).map { success =>
+    for {
+      pubOpt <- publicationRepository.findById(id)
+      success <- publicationRepository.changeStatus(id, "rejected", adminId, Some(rejectionReason))
+      _ <- if (success && pubOpt.isDefined) {
+        notificationRepository.create(UserNotification(
+          userId = pubOpt.get.userId,
+          notificationType = "publication_rejected",
+          title = "Publicación rechazada",
+          message = s"Tu publicación '${pubOpt.get.title.take(80)}' necesita mejoras. Motivo: ${rejectionReason.take(150)}",
+          publicationId = Some(id)
+        ))
+      } else Future.successful(0L)
+    } yield {
       if (success) {
         Redirect(routes.AdminController.pendingPublications())
           .flashing("success" -> "Publicación rechazada")
       } else {
         BadRequest("Error al rechazar la publicación")
+      }
+    }
+  }
+
+  /**
+   * Eliminar una publicación (solo para admins)
+   */
+  def deletePublication(id: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    publicationRepository.deleteAsAdmin(id).map { success =>
+      if (success) {
+        Redirect(routes.AdminController.pendingPublications())
+          .flashing("success" -> "Publicación eliminada exitosamente")
+      } else {
+        BadRequest("Error al eliminar la publicación")
+      }
+    }
+  }
+
+  /**
+   * Guardar notas de admin sobre una publicación
+   */
+  def saveAdminNotes(id: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    val notes = request.body.asFormUrlEncoded
+      .flatMap(_.get("adminNotes"))
+      .flatMap(_.headOption)
+    
+    publicationRepository.saveAdminNotes(id, notes).map { success =>
+      if (success) {
+        Redirect(routes.AdminController.reviewPublicationDetail(id))
+          .flashing("success" -> "Notas guardadas exitosamente")
+      } else {
+        BadRequest("Error al guardar las notas")
       }
     }
   }
@@ -458,6 +558,122 @@ class AdminController @Inject()(
           "updatedAt" -> pubWithAuthor.publication.updatedAt.toString
         )
       }))
+    }
+  }
+
+  // ============================================
+  // FEEDBACK ESTRUCTURADO (Admin → Usuario)
+  // ============================================
+
+  /**
+   * Agregar feedback a una publicación
+   */
+  def addFeedback(publicationId: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    val form = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+    val feedbackType = form.get("feedbackType").flatMap(_.headOption).getOrElse("general")
+    val message = form.get("feedbackMessage").flatMap(_.headOption).getOrElse("")
+    val sendNow = form.get("sendToUser").flatMap(_.headOption).contains("true")
+
+    if (message.trim.isEmpty) {
+      Future.successful(
+        Redirect(routes.AdminController.reviewPublicationDetail(publicationId))
+          .flashing("error" -> "El mensaje de feedback no puede estar vacío")
+      )
+    } else {
+      val feedback = PublicationFeedback(
+        publicationId = publicationId,
+        adminId = request.userId,
+        feedbackType = feedbackType,
+        message = message.trim,
+        sentToUser = sendNow
+      )
+      for {
+        feedbackId <- feedbackRepository.create(feedback)
+        pubOpt <- publicationRepository.findById(publicationId)
+        _ <- if (sendNow && pubOpt.isDefined) {
+          val pub = pubOpt.get
+          val typeLabel = FeedbackType.label(feedbackType)
+          notificationRepository.create(UserNotification(
+            userId = pub.userId,
+            notificationType = "feedback_sent",
+            title = s"Nuevo feedback: $typeLabel",
+            message = message.trim.take(200),
+            publicationId = Some(publicationId),
+            feedbackId = Some(feedbackId)
+          ))
+        } else Future.successful(0L)
+      } yield {
+        val flashMsg = if (sendNow) "Feedback enviado al usuario" else "Feedback guardado (borrador)"
+        Redirect(routes.AdminController.reviewPublicationDetail(publicationId))
+          .flashing("success" -> flashMsg)
+      }
+    }
+  }
+
+  /**
+   * Enviar un feedback existente al usuario (marcar como visible + crear notificación)
+   */
+  def sendFeedbackToUser(feedbackId: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    val publicationId = request.body.asFormUrlEncoded
+      .flatMap(_.get("publicationId"))
+      .flatMap(_.headOption)
+      .map(_.toLong)
+      .getOrElse(0L)
+
+    for {
+      sent <- feedbackRepository.markAsSent(feedbackId)
+      pubOpt <- if (sent) publicationRepository.findById(publicationId) else Future.successful(None)
+      fbList <- if (sent) feedbackRepository.findByPublicationId(publicationId) else Future.successful(List.empty)
+      _ <- {
+        val fbOpt = fbList.find(_.feedback.id.contains(feedbackId))
+        if (sent && pubOpt.isDefined && fbOpt.isDefined) {
+          val pub = pubOpt.get
+          val fb = fbOpt.get.feedback
+          val typeLabel = FeedbackType.label(fb.feedbackType)
+          notificationRepository.create(UserNotification(
+            userId = pub.userId,
+            notificationType = "feedback_sent",
+            title = s"Nuevo feedback: $typeLabel",
+            message = fb.message.take(200),
+            publicationId = Some(publicationId),
+            feedbackId = Some(feedbackId)
+          ))
+        } else Future.successful(0L)
+      }
+    } yield {
+      if (sent) {
+        Redirect(routes.AdminController.reviewPublicationDetail(publicationId))
+          .flashing("success" -> "Feedback enviado al usuario")
+      } else {
+        BadRequest("Error al enviar el feedback")
+      }
+    }
+  }
+
+  /**
+   * Eliminar un feedback
+   */
+  def deleteFeedback(feedbackId: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    val publicationId = request.body.asFormUrlEncoded
+      .flatMap(_.get("publicationId"))
+      .flatMap(_.headOption)
+      .map(_.toLong)
+      .getOrElse(0L)
+
+    feedbackRepository.delete(feedbackId).map { success =>
+      if (success) {
+        Redirect(routes.AdminController.reviewPublicationDetail(publicationId))
+          .flashing("success" -> "Feedback eliminado")
+      } else {
+        BadRequest("Error al eliminar el feedback")
+      }
+    }
+  }
+
+  // Newsletter subscribers management
+  def newsletterSubscribers() = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    newsletterRepository.findAll().map { subscribers =>
+      Ok(views.html.admin.newsletterSubscribers(subscribers))
     }
   }
 }

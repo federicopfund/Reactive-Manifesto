@@ -12,5 +12,9 @@ case class User(
   isActive: Boolean = true,
   createdAt: Instant = Instant.now(),
   lastLogin: Option[Instant] = None,
-  emailVerified: Boolean = false
+  emailVerified: Boolean = false,
+  bio: String = "",
+  avatarUrl: String = "",
+  website: String = "",
+  location: String = ""
 )

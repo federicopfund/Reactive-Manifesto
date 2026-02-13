@@ -1,24 +1,11 @@
 package repositories
 
 import models.Admin
-import slick.jdbc.H2Profile.api._
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.JdbcProfile
-
-class AdminsTable(tag: Tag) extends Table[Admin](tag, "admins") {
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def username = column[String]("username")
-  def email = column[String]("email")
-  def passwordHash = column[String]("password_hash")
-  def role = column[String]("role")
-  def createdAt = column[Instant]("created_at")
-  def lastLogin = column[Option[Instant]]("last_login")
-
-  def * = (id.?, username, email, passwordHash, role, createdAt, lastLogin).mapTo[Admin]
-}
 
 @Singleton
 class AdminRepository @Inject()(
@@ -26,7 +13,21 @@ class AdminRepository @Inject()(
 )(implicit ec: ExecutionContext) {
 
   private val dbConfig = dbConfigProvider.get[JdbcProfile]
-  private val db = dbConfig.db
+  import dbConfig._
+  import profile.api._
+
+  private class AdminsTable(tag: Tag) extends Table[Admin](tag, "admins") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def username = column[String]("username")
+    def email = column[String]("email")
+    def passwordHash = column[String]("password_hash")
+    def role = column[String]("role")
+    def createdAt = column[Instant]("created_at")
+    def lastLogin = column[Option[Instant]]("last_login")
+
+    def * = (id.?, username, email, passwordHash, role, createdAt, lastLogin).mapTo[Admin]
+  }
+
   private val admins = TableQuery[AdminsTable]
 
   /**

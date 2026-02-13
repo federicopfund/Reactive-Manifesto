@@ -37,6 +37,7 @@
                 
                 <form method="POST" id="loginForm">
                     @helper.CSRF.formField
+                    <input type="hidden" id="loginType" name="loginType" value="user">
                     
                     <div class="form-group">
                         <label for="username">Usuario</label>
@@ -96,11 +97,13 @@
             if (type === 'user') {
                 userTab.classList.add('active');
                 adminTab.classList.remove('active');
-                loginForm.action = '@routes.AuthController.login()';
+                    loginForm.action = '@routes.AuthController.login()';
+                    document.getElementById('loginType').value = 'user';
             } else {
                 adminTab.classList.add('active');
                 userTab.classList.remove('active');
-                loginForm.action = '@routes.AdminController.login()';
+                    loginForm.action = '@routes.AuthController.login()';
+                    document.getElementById('loginType').value = 'admin';
             }
         }
     </script>

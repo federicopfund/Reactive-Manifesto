@@ -1,27 +1,11 @@
 package repositories
 
 import models.User
-import slick.jdbc.H2Profile.api._
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.JdbcProfile
-
-class UsersTable(tag: Tag) extends Table[User](tag, "users") {
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def username = column[String]("username")
-  def email = column[String]("email")
-  def passwordHash = column[String]("password_hash")
-  def fullName = column[String]("full_name")
-  def role = column[String]("role")
-  def isActive = column[Boolean]("is_active")
-  def createdAt = column[Instant]("created_at")
-  def lastLogin = column[Option[Instant]]("last_login")
-  def emailVerified = column[Boolean]("email_verified")
-
-  def * = (id.?, username, email, passwordHash, fullName, role, isActive, createdAt, lastLogin, emailVerified).mapTo[User]
-}
 
 @Singleton
 class UserRepository @Inject()(
@@ -29,7 +13,28 @@ class UserRepository @Inject()(
 )(implicit ec: ExecutionContext) {
 
   private val dbConfig = dbConfigProvider.get[JdbcProfile]
-  private val db = dbConfig.db
+  import dbConfig._
+  import profile.api._
+
+  private class UsersTable(tag: Tag) extends Table[User](tag, "users") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def username = column[String]("username")
+    def email = column[String]("email")
+    def passwordHash = column[String]("password_hash")
+    def fullName = column[String]("full_name")
+    def role = column[String]("role")
+    def isActive = column[Boolean]("is_active")
+    def createdAt = column[Instant]("created_at")
+    def lastLogin = column[Option[Instant]]("last_login")
+    def emailVerified = column[Boolean]("email_verified")
+    def bio = column[String]("bio")
+    def avatarUrl = column[String]("avatar_url")
+    def website = column[String]("website")
+    def location = column[String]("location")
+
+    def * = (id.?, username, email, passwordHash, fullName, role, isActive, createdAt, lastLogin, emailVerified, bio, avatarUrl, website, location).mapTo[User]
+  }
+
   private val users = TableQuery[UsersTable]
 
   /**
@@ -153,6 +158,16 @@ class UserRepository @Inject()(
    */
   def updateEmailVerified(id: Long, verified: Boolean): Future[Int] = {
     val query = users.filter(_.id === id).map(_.emailVerified).update(verified)
+    db.run(query)
+  }
+
+  /**
+   * Actualiza el perfil del usuario (bio, avatar, website, location)
+   */
+  def updateProfile(id: Long, bio: String, avatarUrl: String, website: String, location: String): Future[Int] = {
+    val query = users.filter(_.id === id)
+      .map(u => (u.bio, u.avatarUrl, u.website, u.location))
+      .update((bio, avatarUrl, website, location))
     db.run(query)
   }
 }

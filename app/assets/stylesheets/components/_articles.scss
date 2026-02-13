@@ -17,11 +17,11 @@
 // Article Header - Coherente con Hero Principal
 .article-header {
   background: linear-gradient(135deg, 
-                              #0f172a 0%,
-                              #1e3a8a 20%,
-                              #0891b2 50%,
-                              #06b6d4 75%,
-                              #22d3ee 100%);
+                              $gray-900 0%,
+                              $responsive-dark 20%,
+                              $accent-dark 50%,
+                              $accent-primary 75%,
+                              $accent-light 100%);
   background-size: 400% 400%;
   padding: $spacing-5xl 0 $spacing-4xl;
   text-align: center;
@@ -39,9 +39,9 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 30%, rgba(34, 211, 238, 0.35) 0%, transparent 40%),
-      radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.3) 0%, transparent 40%),
-      radial-gradient(circle at 50% 50%, rgba(8, 145, 178, 0.25) 0%, transparent 50%);
+      radial-gradient(circle at 20% 30%, rgba($accent-light, 0.35) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba($accent-primary, 0.3) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba($accent-dark, 0.25) 0%, transparent 50%);
     pointer-events: none;
     opacity: 0.7;
     animation: lightPulse 8s ease-in-out infinite;
@@ -72,10 +72,10 @@
   [data-theme="dark"] & {
     background: linear-gradient(135deg, 
                                 #020617 0%,
-                                #1e293b 25%,
-                                #0e7490 50%,
-                                #0891b2 75%,
-                                #06b6d4 100%);
+                                $gray-800 25%,
+                                $accent-darker 50%,
+                                $accent-dark 75%,
+                                $accent-primary 100%);
     
     &::before {
       background: 
@@ -106,8 +106,8 @@
 
   .article-category {
     background: linear-gradient(135deg,
-                                rgba(8, 145, 178, 0.3) 0%,
-                                rgba(6, 182, 212, 0.25) 100%);
+                                rgba($accent-dark, 0.3) 0%,
+                                rgba($accent-primary, 0.25) 100%);
     padding: 0.5rem 1.25rem;
     border-radius: 25px;
     font-weight: $font-weight-bold;
@@ -115,7 +115,7 @@
     letter-spacing: 1px;
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 4px 15px rgba(8, 145, 178, 0.2),
+    box-shadow: 0 4px 15px rgba($accent-dark, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
@@ -147,8 +147,8 @@
     
     // Enhanced shadow for depth
     filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.4))
-            drop-shadow(0 2px 12px rgba(6, 182, 212, 0.5))
-            drop-shadow(0 0 40px rgba(34, 211, 238, 0.3));
+            drop-shadow(0 2px 12px rgba($accent-primary, 0.5))
+            drop-shadow(0 0 40px rgba($accent-light, 0.3));
     
     // Subtle animation
     animation: titleFocus 4s ease-in-out infinite;
@@ -164,25 +164,25 @@
 
     .tag {
       background: linear-gradient(135deg,
-                                  rgba(6, 182, 212, 0.15) 0%,
-                                  rgba(34, 211, 238, 0.1) 100%);
+                                  rgba($accent-primary, 0.15) 0%,
+                                  rgba($accent-light, 0.1) 100%);
       padding: 0.4rem 1rem;
       border-radius: 20px;
       font-size: $font-size-xs;
       font-weight: 600;
-      border: 1.5px solid rgba(103, 232, 249, 0.3);
+      border: 1.5px solid rgba($accent-lighter, 0.3);
       backdrop-filter: blur(10px);
       transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       color: rgba(255, 255, 255, 0.95);
 
       &:hover {
         background: linear-gradient(135deg,
-                                    rgba(8, 145, 178, 0.4) 0%,
-                                    rgba(6, 182, 212, 0.35) 100%);
-        border-color: rgba(103, 232, 249, 0.5);
+                                    rgba($accent-dark, 0.4) 0%,
+                                    rgba($accent-primary, 0.35) 100%);
+        border-color: rgba($accent-lighter, 0.5);
         transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3),
-                    0 0 20px rgba(34, 211, 238, 0.2);
+        box-shadow: 0 6px 20px rgba($accent-primary, 0.3),
+                    0 0 20px rgba($accent-light, 0.2);
       }
     }
   }
@@ -250,7 +250,7 @@
     h3 {
       font-size: $font-size-2xl;
       font-weight: 600;
-      color: #6366f1;
+      color: $accent-primary;
       margin-top: $spacing-xl;
       margin-bottom: $spacing-md;
       letter-spacing: -0.02em;
@@ -258,7 +258,7 @@
     }
 
     [data-theme="dark"] & h3 {
-      color: #818cf8;
+      color: $accent-light;
     }
 
     h4 {
@@ -343,7 +343,7 @@
     position: relative;
 
     &:hover {
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+      box-shadow: 0 2px 8px rgba($accent-primary, 0.08);
       border-left-color: var(--primary-dark);
     }
 
@@ -462,7 +462,7 @@
 
   // Info Boxes
   .info-box {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.02) 100%);
+    background: linear-gradient(135deg, rgba($accent-primary, 0.05) 0%, rgba($accent-primary, 0.02) 100%);
     border: 2px solid var(--primary-light);
     border-radius: $border-radius-lg;
     padding: $spacing-xl;
@@ -482,7 +482,7 @@
 
     &:hover {
       border-color: var(--primary-color);
-      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+      box-shadow: 0 4px 20px rgba($accent-primary, 0.15);
     }
 
     p {
@@ -577,7 +577,7 @@
     transition: border-top-color 0.3s ease, box-shadow 0.3s ease;
 
     &:hover {
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+      box-shadow: 0 4px 12px rgba($accent-primary, 0.1);
       border-top-color: var(--primary-dark);
     }
 
@@ -665,7 +665,7 @@
                 0 0 0 1px rgba(255, 255, 255, 0.05);
 
     &:hover {
-      box-shadow: 0 12px 48px rgba(99, 102, 241, 0.5),
+      box-shadow: 0 12px 48px rgba($accent-primary, 0.5),
                   0 0 0 1px var(--primary-color);
     }
 

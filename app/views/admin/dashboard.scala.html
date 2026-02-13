@@ -1,15 +1,34 @@
-@(contacts: Seq[models.ContactRecord], username: String, currentPage: Int, totalPages: Int, searchQuery: Option[String])(implicit request: RequestHeader, flash: Flash)
+@(contacts: Seq[models.ContactRecord], username: String, currentPage: Int, totalPages: Int, searchQuery: Option[String], pendingPublicationsCount: Int)(implicit request: RequestHeader, flash: Flash)
 
 @admin.adminLayout("Dashboard") {
-    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <div>
-            <h2 style="font-size: 2rem; color: #333; margin-bottom: 0.5rem;">Dashboard de Contactos</h2>
-            <p style="color: #666;">Bienvenido, <strong>@username</strong></p>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #1a202c; margin-bottom: 0.25rem;">Dashboard</h2>
+            <p style="font-size: 0.8125rem; color: #64748b;">Bienvenido, <strong>@username</strong></p>
         </div>
-        <a href="@routes.AdminController.createContactPage()" class="btn btn-primary">
-            ➕ Nuevo Contacto
-        </a>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="@routes.AdminController.pendingPublications()" class="btn btn-success">
+                Publicaciones Pendientes
+            </a>
+            <a href="@routes.AdminController.createContactPage()" class="btn btn-secondary">
+                Nuevo Contacto
+            </a>
+        </div>
     </div>
+
+    @if(pendingPublicationsCount > 0) {
+        <div style="background: #fff8f0; border: 1px solid #e8ddd0; padding: 1.25rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #8a7035;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 1rem; font-weight: 700; color: #1a202c; margin-bottom: 0.25rem;">Publicaciones pendientes de revisión</h3>
+                    <p style="font-size: 0.8125rem; color: #64748b;">Tienes <strong>@pendingPublicationsCount</strong> publicación(es) esperando aprobación</p>
+                </div>
+                <a href="@routes.AdminController.pendingPublications()" class="btn btn-warning" style="white-space: nowrap;">
+                    Revisar ahora
+                </a>
+            </div>
+        </div>
+    }
 
     @defining({
         val allContacts = contacts
@@ -19,51 +38,46 @@
         val archived = allContacts.count(_.status == "archived")
         (total, pending, processed, archived)
     }) { case (total, pending, processed, archived) =>
-        <!-- Tarjetas de Estadísticas -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 0.5rem;">📊</div>
-                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">@total</div>
-                <div style="opacity: 0.9;">Total Contactos</div>
+        <!-- Tarjetas de Estadísticas de Contactos -->
+        <h3 style="font-size: 0.8125rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Estadísticas de Contactos</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div class="card" style="border-left: 3px solid #94a3b8; padding: 1.25rem;">
+                <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Total</div>
+                <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@total</div>
             </div>
             
-            <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 0.5rem;">🕐</div>
-                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">@pending</div>
-                <div style="opacity: 0.9;">Pendientes</div>
+            <div class="card" style="border-left: 3px solid #d4a853; padding: 1.25rem;">
+                <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Pendientes</div>
+                <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@pending</div>
             </div>
             
-            <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 0.5rem;">✓</div>
-                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">@processed</div>
-                <div style="opacity: 0.9;">Procesados</div>
+            <div class="card" style="border-left: 3px solid #6b8f71; padding: 1.25rem;">
+                <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Procesados</div>
+                <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@processed</div>
             </div>
             
-            <div class="card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 0.5rem;">📁</div>
-                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">@archived</div>
-                <div style="opacity: 0.9;">Archivados</div>
+            <div class="card" style="border-left: 3px solid #8b9fad; padding: 1.25rem;">
+                <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Archivados</div>
+                <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@archived</div>
             </div>
         </div>
 
         <!-- Gráficos -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-            <!-- Gráfico de Pastel - Estados -->
             <div class="card">
-                <h3 style="margin-bottom: 1.5rem; color: #333;">📊 Distribución por Estado</h3>
+                <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Distribución por Estado</h3>
                 <canvas id="statusChart" style="max-height: 300px;"></canvas>
             </div>
             
-            <!-- Gráfico de Barras - Resumen -->
             <div class="card">
-                <h3 style="margin-bottom: 1.5rem; color: #333;">📈 Resumen General</h3>
+                <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Resumen General</h3>
                 <canvas id="summaryChart" style="max-height: 300px;"></canvas>
             </div>
         </div>
 
-        <!-- Gráfico de Línea - Tendencia Temporal -->
-        <div class="card" style="margin-bottom: 2rem;">
-            <h3 style="margin-bottom: 1.5rem; color: #333;">📅 Actividad Temporal</h3>
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Actividad Temporal</h3>
             <canvas id="timelineChart" style="max-height: 250px;"></canvas>
         </div>
     }
@@ -76,84 +90,68 @@
                     name="search" 
                     placeholder="Buscar por nombre, email o mensaje..." 
                     value="@searchQuery.getOrElse("")"
-                    style="flex: 1; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
+                    style="flex: 1;"
                 />
-                <button type="submit" class="btn btn-primary">🔍 Buscar</button>
+                <button type="submit" class="btn btn-primary">Buscar</button>
                 @if(searchQuery.isDefined) {
-                    <a href="@routes.AdminController.dashboard(0, None)" class="btn btn-secondary">✕ Limpiar</a>
+                    <a href="@routes.AdminController.dashboard(0, None)" class="btn btn-secondary">Limpiar</a>
                 }
             </form>
         </div>
         
         @if(contacts.isEmpty) {
-            <div style="text-align: center; padding: 3rem; color: #666;">
-                <p style="font-size: 1.2rem;">No hay contactos registrados</p>
+            <div style="text-align: center; padding: 3rem; color: #64748b;">
+                <p style="font-size: 0.875rem;">No hay contactos registrados</p>
             </div>
         } else {
             <div class="table-responsive" style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                            <th style="padding: 1rem; text-align: left; font-weight: 600;">ID</th>
-                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Nombre</th>
-                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Email</th>
-                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Mensaje</th>
-                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Estado</th>
-                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Fecha</th>
-                            <th style="padding: 1rem; text-align: center; font-weight: 600;">Acciones</th>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Mensaje</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th style="text-align: center;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @for(contact <- contacts) {
-                            <tr style="border-bottom: 1px solid #e9ecef;">
-                                <td style="padding: 1rem;">@contact.id.getOrElse("-")</td>
-                                <td style="padding: 1rem; font-weight: 500;">@contact.name</td>
-                                <td style="padding: 1rem;">@contact.email</td>
-                                <td style="padding: 1rem; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <tr>
+                                <td>@contact.id.getOrElse("-")</td>
+                                <td style="font-weight: 500;">@contact.name</td>
+                                <td>@contact.email</td>
+                                <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     @contact.message.take(50)@if(contact.message.length > 50) { ... }
                                 </td>
-                                <td style="padding: 1rem;">
-                                    <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 500; 
+                                <td>
+                                    <span class="badge @{contact.status match { case "pending" => "badge-pending"; case "processed" => "badge-processed"; case "archived" => "badge-archived"; case _ => "badge-draft" }}">
                                         @contact.status match {
-                                            case "pending" => { background: #fff3cd; color: #856404; }
-                                            case "processed" => { background: #d1ecf1; color: #0c5460; }
-                                            case "archived" => { background: #d4edda; color: #155724; }
-                                            case _ => { background: #f8d7da; color: #721c24; }
-                                        }">
-                                        @contact.status match {
-                                            case "pending" => { 🕐 Pendiente }
-                                            case "processed" => { ✓ Procesado }
-                                            case "archived" => { 📁 Archivado }
+                                            case "pending" => { Pendiente }
+                                            case "processed" => { Procesado }
+                                            case "archived" => { Archivado }
                                             case _ => { @contact.status }
                                         }
                                     </span>
                                 </td>
-                                <td style="padding: 1rem; font-size: 0.9rem; color: #666;">
+                                <td style="font-size: 0.8125rem; color: #64748b;">
                                     @{
                                         val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
                                         contact.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
                                     }
                                 </td>
-                                <td style="padding: 1rem; text-align: center;">
-                                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                                        <a href="@routes.AdminController.viewContact(contact.id.get)" 
-                                           class="btn btn-secondary" 
-                                           style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
-                                            👁️ Ver
-                                        </a>
-                                        <a href="@routes.AdminController.editContactPage(contact.id.get)" 
-                                           class="btn btn-primary" 
-                                           style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
-                                            ✏️ Editar
-                                        </a>
+                                <td style="text-align: center;">
+                                    <div style="display: flex; gap: 0.375rem; justify-content: center;">
+                                        <a href="@routes.AdminController.viewContact(contact.id.get)" class="btn btn-secondary btn-sm">Ver</a>
+                                        <a href="@routes.AdminController.editContactPage(contact.id.get)" class="btn btn-primary btn-sm">Editar</a>
                                         <form method="POST" 
                                               action="@routes.AdminController.deleteContact(contact.id.get)" 
                                               style="display: inline;"
                                               onsubmit="return confirm('¿Estás seguro de eliminar este contacto?');">
                                             @helper.CSRF.formField
-                                            <button type="submit" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
-                                                🗑️ Eliminar
-                                            </button>
+                                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
                                         </form>
                                     </div>
                                 </td>
@@ -171,7 +169,7 @@
                         </a>
                     }
                     
-                    <span style="padding: 0.6rem 1rem; color: #666;">
+                    <span style="padding: 0.5rem 1rem; color: #64748b; font-size: 0.8125rem;">
                         Página @{currentPage + 1} de @totalPages
                     </span>
                     
@@ -187,21 +185,24 @@
 
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.1/dist/chart.umd.js"></script>
-    
-    <!-- Datos generados dinámicamente por Twirl (Scala Template Engine) -->
+
+    <!-- Datos del servidor inyectados como JSON (evita warnings del IDE) -->
+    <div id="chartData" style="display:none"
+         data-pending="@{contacts.count(_.status == "pending")}"
+         data-processed="@{contacts.count(_.status == "processed")}"
+         data-archived="@{contacts.count(_.status == "archived")}"
+         data-total="@{contacts.length}">
+    </div>
+    <script id="contactsJson" type="application/json">@Html(play.api.libs.json.Json.toJson(contacts.map(c => play.api.libs.json.Json.obj("createdAt" -> c.createdAt.toString(), "status" -> c.status))).toString())</script>
+
     <script>
-        const pending = @{contacts.count(_.status == "pending")};
-        const processed = @{contacts.count(_.status == "processed")};
-        const archived = @{contacts.count(_.status == "archived")};
-        const total = @{contacts.length};
-        
-        // Calcular contactos temporales
-        const allContacts = @Html(play.api.libs.json.Json.toJson(contacts.map(c => 
-            play.api.libs.json.Json.obj(
-                "createdAt" -> c.createdAt.toString(),
-                "status" -> c.status
-            )
-        )).toString());
+        const dataEl = document.getElementById('chartData');
+        const pending = parseInt(dataEl.dataset.pending);
+        const processed = parseInt(dataEl.dataset.processed);
+        const archived = parseInt(dataEl.dataset.archived);
+        const total = parseInt(dataEl.dataset.total);
+
+        const allContacts = JSON.parse(document.getElementById('contactsJson').textContent);
         
         const now = new Date();
         const today = allContacts.filter(c => {
@@ -220,12 +221,12 @@
             return cDate.getMonth() === now.getMonth() && cDate.getFullYear() === now.getFullYear();
         }).length;
 
-        // Colores del tema
+        // Colores del tema (paleta neutra)
         const colors = {
-            pending: '#f5576c',
-            processed: '#00f2fe',
-            archived: '#38f9d7',
-            primary: '#667eea'
+            pending: '#d4a853',
+            processed: '#6b8f71',
+            archived: '#8b9fad',
+            primary: '#64748b'
         };
 
         // Configuración común

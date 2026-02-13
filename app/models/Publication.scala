@@ -34,7 +34,8 @@ case class Publication(
   publishedAt: Option[Instant] = None,
   reviewedBy: Option[Long] = None,
   reviewedAt: Option[Instant] = None,
-  rejectionReason: Option[String] = None
+  rejectionReason: Option[String] = None,
+  adminNotes: Option[String] = None
 )
 
 case class PublicationWithAuthor(

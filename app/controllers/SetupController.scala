@@ -42,7 +42,7 @@ class SetupController @Inject()(
       id = None,
       username = "federico",
       email = "federico@reactivemanifesto.com",
-      passwordHash = "$2a$10$So8GceVpZX3J2ZX4ARqViuj9ldnk3uupjDGWGk9kReFufCpup3m1C",
+      passwordHash = "$2a$10$xUJSs00Gvmh9ulFo0iqZdOjESiWlpEdnNr9tTXTIiBPjoLrJf6UyS",
       role = "admin",
       createdAt = java.time.Instant.now(),
       lastLogin = None

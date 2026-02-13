@@ -32,9 +32,9 @@
     border-radius: $border-radius-xl;
     padding: 2px;
     background: linear-gradient(135deg, 
-      rgba(99, 102, 241, 0.6) 0%,
-      rgba(244, 114, 182, 0.6) 50%,
-      rgba(99, 102, 241, 0.6) 100%);
+      rgba($accent-primary, 0.6) 0%,
+      rgba($secondary-color, 0.6) 50%,
+      rgba($accent-primary, 0.6) 100%);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -52,7 +52,7 @@
     width: 200%;
     height: 200%;
     background: radial-gradient(circle at center, 
-      rgba(99, 102, 241, 0.15) 0%,
+      rgba($accent-primary, 0.15) 0%,
       transparent 70%);
     opacity: 0;
     transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -62,11 +62,11 @@
   &:hover {
     transform: translateY(-12px) scale(1.02);
     box-shadow: 
-      0 20px 60px rgba(99, 102, 241, 0.25),
-      0 10px 30px rgba(99, 102, 241, 0.15),
-      0 0 40px rgba(99, 102, 241, 0.1),
+      0 20px 60px rgba($accent-primary, 0.25),
+      0 10px 30px rgba($accent-primary, 0.15),
+      0 0 40px rgba($accent-primary, 0.1),
       inset 0 1px 0 rgba(255, 255, 255, 1);
-    border-color: rgba(99, 102, 241, 0.3);
+    border-color: rgba($accent-primary, 0.3);
 
     &::before {
       opacity: 1;
@@ -85,7 +85,7 @@
     }
 
     .portfolio-title {
-      background: linear-gradient(135deg, #6366f1, #ec4899);
+      background: linear-gradient(135deg, $accent-primary, $secondary-color);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -104,9 +104,9 @@
     &:hover {
       background: rgba(30, 41, 59, 0.8);
       box-shadow: 
-        0 20px 60px rgba(99, 102, 241, 0.4),
-        0 10px 30px rgba(99, 102, 241, 0.25),
-        0 0 40px rgba(99, 102, 241, 0.2),
+        0 20px 60px rgba($accent-primary, 0.4),
+        0 10px 30px rgba($accent-primary, 0.25),
+        0 0 40px rgba($accent-primary, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
   }
@@ -126,8 +126,8 @@
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, 
-      rgba(99, 102, 241, 0.1) 0%,
-      rgba(244, 114, 182, 0.1) 100%);
+      rgba($accent-primary, 0.1) 0%,
+      rgba($secondary-color, 0.1) 100%);
     position: relative;
     overflow: hidden;
 
@@ -137,7 +137,7 @@
       position: absolute;
       inset: 0;
       background-image: 
-        repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(99, 102, 241, 0.03) 20px, rgba(99, 102, 241, 0.03) 40px);
+        repeating-linear-gradient(45deg, transparent, transparent 20px, rgba($accent-primary, 0.03) 20px, rgba($accent-primary, 0.03) 40px);
       animation: slidePattern 20s linear infinite;
     }
   }
@@ -147,17 +147,8 @@
     display: block;
     position: relative;
     z-index: 1;
-    filter: drop-shadow(0 4px 12px rgba(99, 102, 241, 0.3));
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-}
-
-@keyframes slidePattern {
-  0% {
-    transform: translateX(0) translateY(0);
-  }
-  100% {
-    transform: translateX(40px) translateY(40px);
+    filter: drop-shadow(0 4px 12px rgba($accent-primary, 0.3));
+    transition: transform $transition-slow $easing-smooth;
   }
 }
 
@@ -171,11 +162,11 @@
 .portfolio-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1a202c;
+  color: $gray-900;
   margin-bottom: $spacing-md;
   line-height: 1.3;
   letter-spacing: -0.025em;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all $transition-slow $easing-smooth;
 
   [data-theme="dark"] & {
     color: #f9fafb;
@@ -196,15 +187,15 @@
 
 // Stack Section - Collapsible
 .portfolio-stack {
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba($accent-primary, 0.05);
   border-left: 3px solid var(--primary-color);
   border-radius: $border-radius-md;
   padding: $spacing-md $spacing-lg;
   margin: $spacing-lg 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all $transition-base $easing-smooth;
 
   &:hover {
-    background: rgba(99, 102, 241, 0.08);
+    background: rgba($accent-primary, 0.08);
     border-left-width: 4px;
   }
 
@@ -262,7 +253,7 @@
   }
 
   [data-theme="dark"] & {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba($accent-primary, 0.1);
   }
 }
 
@@ -279,15 +270,15 @@
   align-items: center;
   padding: 0.375rem 0.875rem;
   background: linear-gradient(135deg, 
-    rgba(99, 102, 241, 0.1) 0%,
-    rgba(99, 102, 241, 0.05) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+    rgba($accent-primary, 0.1) 0%,
+    rgba($accent-primary, 0.05) 100%);
+  border: 1px solid rgba($accent-primary, 0.2);
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #6366f1;
+  color: $accent-primary;
   letter-spacing: 0.025em;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all $transition-base $easing-smooth;
   position: relative;
   overflow: hidden;
 
@@ -307,11 +298,11 @@
 
   &:hover {
     background: linear-gradient(135deg, 
-      rgba(99, 102, 241, 0.2) 0%,
-      rgba(99, 102, 241, 0.15) 100%);
-    border-color: rgba(99, 102, 241, 0.4);
+      rgba($accent-primary, 0.2) 0%,
+      rgba($accent-primary, 0.15) 100%);
+    border-color: rgba($accent-primary, 0.4);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 4px 12px rgba($accent-primary, 0.2);
 
     &::before {
       left: 100%;
@@ -320,15 +311,15 @@
 
   [data-theme="dark"] & {
     background: linear-gradient(135deg, 
-      rgba(99, 102, 241, 0.15) 0%,
-      rgba(99, 102, 241, 0.1) 100%);
-    color: #a5b4fc;
-    border-color: rgba(99, 102, 241, 0.3);
+      rgba($accent-primary, 0.15) 0%,
+      rgba($accent-primary, 0.1) 100%);
+    color: $accent-light;
+    border-color: rgba($accent-primary, 0.3);
 
     &:hover {
       background: linear-gradient(135deg, 
-        rgba(99, 102, 241, 0.25) 0%,
-        rgba(99, 102, 241, 0.2) 100%);
+        rgba($accent-primary, 0.25) 0%,
+        rgba($accent-primary, 0.2) 100%);
     }
   }
 }
@@ -375,7 +366,7 @@
     color: white;
     border-color: var(--primary-dark);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 6px 20px rgba($accent-primary, 0.3);
 
     &::before {
       width: 100%;
@@ -406,8 +397,8 @@
     right: 0;
     bottom: 0;
     background-image: 
-      linear-gradient(90deg, rgba(8, 145, 178, 0.03) 1px, transparent 1px),
-      linear-gradient(rgba(8, 145, 178, 0.03) 1px, transparent 1px);
+      linear-gradient(90deg, rgba($accent-dark, 0.03) 1px, transparent 1px),
+      linear-gradient(rgba($accent-dark, 0.03) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
   }
@@ -421,8 +412,8 @@
     right: 0;
     bottom: 0;
     background: 
-      radial-gradient(circle at 20% 80%, rgba(8, 145, 178, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 50%);
+      radial-gradient(circle at 20% 80%, rgba($accent-dark, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba($accent-primary, 0.06) 0%, transparent 50%);
     pointer-events: none;
   }
 
@@ -442,7 +433,7 @@
       transform: translateX(-50%);
       font-size: 3rem;
       opacity: 0.15;
-      animation: pulse 3s ease-in-out infinite;
+      animation: pulseFade 3s ease-in-out infinite;
     }
   }
 
@@ -458,7 +449,7 @@
     background: linear-gradient(135deg, 
                                 #1e293b 0%,
                                 #334155 50%,
-                                #0891b2 100%);
+                                $accent-dark 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -477,7 +468,7 @@
       height: 4px;
       background: linear-gradient(90deg, 
                                   transparent 0%,
-                                  #0891b2 50%,
+                                  $accent-dark 50%,
                                   transparent 100%);
       border-radius: 2px;
     }
@@ -535,20 +526,20 @@
     
     .btn-primary {
       background: linear-gradient(135deg, 
-                                  #0891b2 0%,
-                                  #06b6d4 100%);
+                                  $accent-dark 0%,
+                                  $accent-primary 100%);
       color: white;
       border: none;
-      box-shadow: 0 4px 20px rgba(8, 145, 178, 0.25),
-                  0 8px 30px rgba(8, 145, 178, 0.15);
+      box-shadow: 0 4px 20px rgba($accent-dark, 0.25),
+                  0 8px 30px rgba($accent-dark, 0.15);
       
       // Icon animation
       position: relative;
       
       &:hover {
         transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 8px 30px rgba(8, 145, 178, 0.35),
-                    0 12px 45px rgba(8, 145, 178, 0.2);
+        box-shadow: 0 8px 30px rgba($accent-dark, 0.35),
+                    0 12px 45px rgba($accent-dark, 0.2);
       }
       
       &:active {
@@ -558,9 +549,9 @@
     
     .btn-outline {
       background: white;
-      color: #0891b2;
-      border: 2px solid #0891b2;
-      box-shadow: 0 4px 15px rgba(8, 145, 178, 0.12);
+      color: $accent-dark;
+      border: 2px solid $accent-dark;
+      box-shadow: 0 4px 15px rgba($accent-dark, 0.12);
       
       &::after {
         content: '';
@@ -570,8 +561,8 @@
         right: 0;
         bottom: 0;
         background: linear-gradient(135deg, 
-                                    rgba(8, 145, 178, 0.05) 0%,
-                                    rgba(6, 182, 212, 0.08) 100%);
+                                    rgba($accent-dark, 0.05) 0%,
+                                    rgba($accent-primary, 0.08) 100%);
         border-radius: 12px;
         opacity: 0;
         transition: opacity 0.35s ease;
@@ -579,10 +570,10 @@
       }
       
       &:hover {
-        border-color: #06b6d4;
-        color: #06b6d4;
+        border-color: $accent-primary;
+        color: $accent-primary;
         transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 8px 25px rgba(8, 145, 178, 0.2);
+        box-shadow: 0 8px 25px rgba($accent-dark, 0.2);
         
         &::after {
           opacity: 1;
@@ -602,21 +593,21 @@
     
     &::before {
       background-image: 
-        linear-gradient(90deg, rgba(34, 211, 238, 0.05) 1px, transparent 1px),
-        linear-gradient(rgba(34, 211, 238, 0.05) 1px, transparent 1px);
+        linear-gradient(90deg, rgba($accent-light, 0.05) 1px, transparent 1px),
+        linear-gradient(rgba($accent-light, 0.05) 1px, transparent 1px);
     }
     
     &::after {
       background: 
-        radial-gradient(circle at 20% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%);
+        radial-gradient(circle at 20% 80%, rgba($accent-light, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba($accent-primary, 0.08) 0%, transparent 50%);
     }
     
     .section-title {
       background: linear-gradient(135deg, 
                                   #f1f5f9 0%,
                                   #cbd5e1 50%,
-                                  #22d3ee 100%);
+                                  $accent-light 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -624,7 +615,7 @@
       &::after {
         background: linear-gradient(90deg, 
                                     transparent 0%,
-                                    #22d3ee 50%,
+                                    $accent-light 50%,
                                     transparent 100%);
       }
     }
@@ -635,26 +626,15 @@
     
     .btn-outline {
       background: transparent;
-      border-color: #22d3ee;
-      color: #22d3ee;
+      border-color: $accent-light;
+      color: $accent-light;
       
       &:hover {
-        background: rgba(34, 211, 238, 0.1);
-        border-color: #67e8f9;
-        color: #67e8f9;
+        background: rgba($accent-light, 0.1);
+        border-color: $accent-lighter;
+        color: $accent-lighter;
       }
     }
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.1;
-    transform: translateX(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.2;
-    transform: translateX(-50%) scale(1.1);
   }
 }
 
@@ -757,7 +737,7 @@
   border-radius: $border-radius-xl;
   box-shadow: 
     0 25px 50px -12px rgba(0, 0, 0, 0.5),
-    0 0 120px rgba(59, 130, 246, 0.4),
+    0 0 120px rgba($accent-primary, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.1);
   transform: scale(0.9) translateY(20px);
   opacity: 0;
@@ -767,7 +747,7 @@
 
   [data-theme="dark"] & {
     background: #1e293b;
-    border: 1px solid rgba(59, 130, 246, 0.4);
+    border: 1px solid rgba($accent-primary, 0.4);
   }
 
   @media (max-width: $breakpoint-sm) {
@@ -784,9 +764,9 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6);
+    background: linear-gradient(90deg, $responsive-primary, $accent-primary, $message-primary);
     background-size: 200% 100%;
-    animation: gradientShift 3s ease infinite;
+    animation: gradientFlow 3s ease infinite;
   }
 }
 
@@ -846,19 +826,8 @@
 .auth-modal-icon {
   font-size: clamp(2.5rem, 8vw, 3.5rem);
   margin-bottom: $spacing-2;
-  filter: drop-shadow(0 4px 12px rgba(245, 158, 11, 0.3));
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
+  filter: drop-shadow(0 4px 12px rgba($elastic-primary, 0.3));
+  animation: pulseScale 2s ease-in-out infinite;
 }
 
 .auth-modal-title {
@@ -1109,17 +1078,17 @@
   padding: $spacing-3 $spacing-4;
   background: linear-gradient(135deg, 
     rgba(16, 185, 129, 0.1) 0%, 
-    rgba(6, 182, 212, 0.1) 100%);
+    rgba($accent-primary, 0.1) 100%);
   border-radius: $border-radius-lg;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba($resilient-primary, 0.2);
   color: var(--text-primary);
   font-size: $font-size-base;
 
   [data-theme="dark"] & {
     background: linear-gradient(135deg, 
       rgba(16, 185, 129, 0.15) 0%, 
-      rgba(6, 182, 212, 0.15) 100%);
-    border-color: rgba(16, 185, 129, 0.3);
+      rgba($accent-primary, 0.15) 100%);
+    border-color: rgba($resilient-primary, 0.3);
   }
 
   strong {

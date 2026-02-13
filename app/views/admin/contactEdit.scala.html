@@ -1,14 +1,14 @@
 @(form: Form[controllers.ContactUpdateForm], contact: models.ContactRecord)(implicit request: RequestHeader, flash: Flash)
 
 @admin.adminLayout("Editar Contacto") {
-    <div style="margin-bottom: 2rem;">
-        <a href="@routes.AdminController.dashboard(0, None)" style="color: #667eea; text-decoration: none;">
+    <div style="margin-bottom: 1.25rem;">
+        <a href="@routes.AdminController.dashboard(0, None)" style="color: #475569; text-decoration: none; font-size: 0.8125rem; font-weight: 500;">
             ← Volver al Dashboard
         </a>
     </div>
     
-    <div class="card" style="max-width: 800px;">
-        <h2 style="font-size: 1.8rem; color: #333; margin-bottom: 2rem;">
+    <div class="card" style="max-width: 640px;">
+        <h2 style="font-size: 1.125rem; font-weight: 700; color: #1a202c; margin-bottom: 1.5rem;">
             Editar Contacto #@contact.id.getOrElse("-")
         </h2>
         
@@ -16,9 +16,9 @@
             @helper.CSRF.formField
             <input type="hidden" name="id" value="@contact.id.get" />
             
-            <div style="margin-bottom: 1.5rem;">
-                <label for="name" style="display: block; font-weight: 600; color: #333; margin-bottom: 0.5rem;">
-                    Nombre <span style="color: #dc3545;">*</span>
+            <div style="margin-bottom: 1.25rem;">
+                <label for="name">
+                    Nombre <span style="color: #8b4c4c;">*</span>
                 </label>
                 <input 
                     type="text" 
@@ -26,18 +26,17 @@
                     name="name" 
                     required
                     value="@form("name").value.getOrElse(contact.name)"
-                    style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
                 />
                 @if(form("name").hasErrors) {
-                    <div style="color: #dc3545; margin-top: 0.5rem; font-size: 0.9rem;">
+                    <div style="color: #8b4c4c; margin-top: 0.375rem; font-size: 0.8125rem;">
                         @form("name").errors.map(_.message).mkString(", ")
                     </div>
                 }
             </div>
             
-            <div style="margin-bottom: 1.5rem;">
-                <label for="email" style="display: block; font-weight: 600; color: #333; margin-bottom: 0.5rem;">
-                    Email <span style="color: #dc3545;">*</span>
+            <div style="margin-bottom: 1.25rem;">
+                <label for="email">
+                    Email <span style="color: #8b4c4c;">*</span>
                 </label>
                 <input 
                     type="email" 
@@ -45,66 +44,63 @@
                     name="email" 
                     required
                     value="@form("email").value.getOrElse(contact.email)"
-                    style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
                 />
                 @if(form("email").hasErrors) {
-                    <div style="color: #dc3545; margin-top: 0.5rem; font-size: 0.9rem;">
+                    <div style="color: #8b4c4c; margin-top: 0.375rem; font-size: 0.8125rem;">
                         @form("email").errors.map(_.message).mkString(", ")
                     </div>
                 }
             </div>
             
-            <div style="margin-bottom: 1.5rem;">
-                <label for="message" style="display: block; font-weight: 600; color: #333; margin-bottom: 0.5rem;">
-                    Mensaje <span style="color: #dc3545;">*</span>
+            <div style="margin-bottom: 1.25rem;">
+                <label for="message">
+                    Mensaje <span style="color: #8b4c4c;">*</span>
                 </label>
                 <textarea 
                     id="message" 
                     name="message" 
                     rows="6"
                     required
-                    style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; resize: vertical;"
                 >@form("message").value.getOrElse(contact.message)</textarea>
                 @if(form("message").hasErrors) {
-                    <div style="color: #dc3545; margin-top: 0.5rem; font-size: 0.9rem;">
+                    <div style="color: #8b4c4c; margin-top: 0.375rem; font-size: 0.8125rem;">
                         @form("message").errors.map(_.message).mkString(", ")
                     </div>
                 }
             </div>
             
-            <div style="margin-bottom: 1.5rem;">
-                <label for="status" style="display: block; font-weight: 600; color: #333; margin-bottom: 0.5rem;">
-                    Estado <span style="color: #dc3545;">*</span>
+            <div style="margin-bottom: 1.25rem;">
+                <label for="status">
+                    Estado <span style="color: #8b4c4c;">*</span>
                 </label>
                 <select 
                     id="status" 
                     name="status" 
                     required
-                    style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
                 >
                     <option value="pending" @if(form("status").value.getOrElse(contact.status) == "pending") { selected }>
-                        🕐 Pendiente
+                        Pendiente
                     </option>
                     <option value="processed" @if(form("status").value.getOrElse(contact.status) == "processed") { selected }>
-                        ✓ Procesado
+                        Procesado
                     </option>
                     <option value="archived" @if(form("status").value.getOrElse(contact.status) == "archived") { selected }>
-                        📁 Archivado
+                        Archivado
                     </option>
                 </select>
                 @if(form("status").hasErrors) {
-                    <div style="color: #dc3545; margin-top: 0.5rem; font-size: 0.9rem;">
+                    <div style="color: #8b4c4c; margin-top: 0.375rem; font-size: 0.8125rem;">
                         @form("status").errors.map(_.message).mkString(", ")
                     </div>
                 }
             </div>
             
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
                 <button type="submit" class="btn btn-primary">
-                    💾 Actualizar Contacto
+                    Actualizar Contacto
                 </button>
                 <a href="@routes.AdminController.viewContact(contact.id.get)" class="btn btn-secondary">
-                    ✕ Cancelar
+                    Cancelar
                 </a>
             </div>
         </form>

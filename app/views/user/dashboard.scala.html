@@ -1,473 +1,132 @@
-@(username: String, publications: List[models.Publication], stats: Map[String, Int])(implicit request: RequestHeader, flash: Flash)
+@(username: String, publications: List[models.Publication], stats: Map[String, Int], feedbackCounts: Map[Long, Int], badges: List[models.UserBadge] = List.empty)(implicit request: RequestHeader, flash: Flash)
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Mis Publicaciones</title>
-    <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f9fafb;
-            min-height: 100vh;
-        }
-        
-        .navbar {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .navbar h1 {
-            font-size: 1.5rem;
-            color: #1f2937;
-        }
-        
-        .navbar-links {
-            display: flex;
-            gap: 1.5rem;
-            align-items: center;
-        }
-        
-        .navbar-links a {
-            color: #6b7280;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        
-        .navbar-links a:hover {
-            color: #2563eb;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .stat-card h3 {
-            font-size: 0.875rem;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-card .value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #1f2937;
-        }
-        
-        .stat-card.draft .value { color: #6b7280; }
-        .stat-card.pending .value { color: #f59e0b; }
-        .stat-card.approved .value { color: #10b981; }
-        .stat-card.rejected .value { color: #ef4444; }
-        
-        .welcome-banner {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-        
-        .welcome-content h2 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .welcome-content p {
-            opacity: 0.9;
-            font-size: 1.125rem;
-        }
-        
-        .welcome-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        
-        .header-row h2 {
-            font-size: 1.875rem;
-            color: #1f2937;
-        }
-        
-        .btn-primary {
-            background: white;
-            color: #2563eb;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s;
-            border: 2px solid white;
-            font-size: 1.125rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-            background: #f0f9ff;
-        }
-        
-        .btn-secondary {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.25);
-        }
-        
-        .publications-table {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        thead {
-            background: #f9fafb;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        
-        th {
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: #374151;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-        }
-        
-        td {
-            padding: 1rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        tbody tr:hover {
-            background: #f9fafb;
-        }
-        
-        .status-badge {
-            padding: 0.375rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            display: inline-block;
-        }
-        
-        .status-draft {
-            background: #f3f4f6;
-            color: #4b5563;
-        }
-        
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        
-        .status-approved {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .status-rejected {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .btn-sm {
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-        
-        .btn-edit {
-            background: #3b82f6;
-            color: white;
-        }
-        
-        .btn-edit:hover {
-            background: #2563eb;
-        }
-        
-        .btn-submit {
-            background: #10b981;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .btn-submit:hover {
-            background: #059669;
-        }
-        
-        .btn-delete {
-            background: #ef4444;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .btn-delete:hover {
-            background: #dc2626;
-        }
-        
-        .flash-message {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-        }
-        
-        .flash-success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #6ee7b7;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: #6b7280;
-        }
-        
-        .empty-state .icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-        
-        .empty-state h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.75rem;
-            color: #374151;
-        }
-        
-        .empty-state p {
-            margin-bottom: 1.5rem;
-            font-size: 1.125rem;
-        }
-        
-        .empty-state .btn-primary {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.125rem;
-        }
-        
-        .empty-state .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar">
-        <h1>📝 Mis Publicaciones</h1>
-        <div class="navbar-links">
-            <span>Bienvenido, <strong>@username</strong></span>
-            <a href="@routes.HomeController.index()">Inicio</a>
-            <a href="@routes.AuthController.logout()">Cerrar Sesión</a>
+@user.userLayout("Mis Publicaciones", username) {
+    <!-- Welcome + Actions -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+            <h2 style="font-size: 1.125rem; font-weight: 700; color: #1a202c; margin-bottom: 0.25rem;">Mis Publicaciones</h2>
+            <p style="font-size: 0.8125rem; color: #94a3b8;">Gestiona tus artículos y crea nuevo contenido</p>
         </div>
-    </nav>
-    
-    <div class="container">
-        @if(flash.get("success").isDefined) {
-            <div class="flash-message flash-success">
-                ✓ @flash.get("success").get
-            </div>
-        }
-        
-        <div class="welcome-banner">
-            <div class="welcome-content">
-                <h2>👋 Hola, @username</h2>
-                <p>Gestiona tus publicaciones y crea nuevo contenido</p>
-            </div>
-            <div class="welcome-actions">
-                <a href="@routes.UserPublicationController.newPublicationForm()" class="btn-primary">
-                    ✍️ Crear Nueva Publicación
-                </a>
-                <a href="@routes.AuthController.userProfile()" class="btn-secondary">
-                    👤 Mi Perfil
-                </a>
-            </div>
+        <a href="@routes.UserPublicationController.newPublicationForm()" class="u-btn u-btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nueva Publicación
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+        <div class="u-card" style="padding: 1rem; margin-bottom: 0; border-left: 3px solid #94a3b8;">
+            <div style="font-size: 0.6875rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem;">Borradores</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c;">@stats.getOrElse("draft", 0)</div>
         </div>
-        
-        <div class="stats-grid">
-            <div class="stat-card draft">
-                <h3>Borradores</h3>
-                <div class="value">@stats.getOrElse("draft", 0)</div>
-            </div>
-            <div class="stat-card pending">
-                <h3>Pendientes</h3>
-                <div class="value">@stats.getOrElse("pending", 0)</div>
-            </div>
-            <div class="stat-card approved">
-                <h3>Aprobadas</h3>
-                <div class="value">@stats.getOrElse("approved", 0)</div>
-            </div>
-            <div class="stat-card rejected">
-                <h3>Rechazadas</h3>
-                <div class="value">@stats.getOrElse("rejected", 0)</div>
-            </div>
+        <div class="u-card" style="padding: 1rem; margin-bottom: 0; border-left: 3px solid #d4a853;">
+            <div style="font-size: 0.6875rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem;">Pendientes</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c;">@stats.getOrElse("pending", 0)</div>
         </div>
-        
-        <div class="header-row">
-            <h2>📚 Mis Publicaciones (@publications.size)</h2>
+        <div class="u-card" style="padding: 1rem; margin-bottom: 0; border-left: 3px solid #6b8f71;">
+            <div style="font-size: 0.6875rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem;">Aprobadas</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c;">@stats.getOrElse("approved", 0)</div>
         </div>
-        
-        <div class="publications-table">
-            @if(publications.isEmpty) {
-                <div class="empty-state">
-                    <div class="icon">📝</div>
-                    <h3>No tienes publicaciones aún</h3>
-                    <p>Comienza creando tu primera publicación y comparte tu conocimiento</p>
-                    <a href="@routes.UserPublicationController.newPublicationForm()" class="btn-primary">
-                        ✍️ Crear Mi Primera Publicación
-                    </a>
-                </div>
-            } else {
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Título</th>
-                            <th>Categoría</th>
-                            <th>Estado</th>
-                            <th>Vistas</th>
-                            <th>Fecha</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for(pub <- publications) {
-                            <tr>
-                                <td><strong>@pub.title</strong></td>
-                                <td>@pub.category</td>
-                                <td>
-                                    <span class="status-badge status-@pub.status">
-                                        @pub.status match {
-                                            case "draft" => { Borrador }
-                                            case "pending" => { Pendiente }
-                                            case "approved" => { Aprobada }
-                                            case "rejected" => { Rechazada }
-                                            case _ => { @pub.status }
-                                        }
-                                    </span>
-                                </td>
-                                <td>@pub.viewCount</td>
-                                <td>@pub.createdAt.toString.substring(0, 10)</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="@routes.UserPublicationController.viewPublication(pub.id.get)" class="btn-sm btn-view" title="Ver publicación">
-                                            👁️ Ver
-                                        </a>
-                                        @if(pub.status == "draft") {
-                                            <a href="@routes.UserPublicationController.editPublicationForm(pub.id.get)" class="btn-sm btn-edit" title="Editar borrador">
-                                                ✏️ Editar
-                                            </a>
-                                            <form method="POST" action="@routes.UserPublicationController.submitForReview(pub.id.get)" style="display: inline;">
-                                                @helper.CSRF.formField
-                                                <button type="submit" class="btn-sm btn-submit" title="Enviar para revisión de admin">
-                                                    📤 Enviar a Revisión
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="@routes.UserPublicationController.deletePublication(pub.id.get)" style="display: inline;"
-                                                  onsubmit="return confirm('¿Estás seguro de eliminar esta publicación?');">
-                                                @helper.CSRF.formField
-                                                <button type="submit" class="btn-sm btn-delete" title="Eliminar publicación">
-                                                    🗑️ Eliminar
-                                                </button>
-                                            </form>
-                                        }
-                                        @if(pub.status == "rejected") {
-                                            <a href="@routes.UserPublicationController.editPublicationForm(pub.id.get)" class="btn-sm btn-edit" title="Editar y reenviar">
-                                                ✏️ Editar
-                                            </a>
-                                            @if(pub.rejectionReason.isDefined) {
-                                                <button class="btn-sm" style="background: #f59e0b;" onclick="alert('Razón de rechazo: @pub.rejectionReason.get')" title="Ver razón de rechazo">
-                                                    ℹ️ Razón
-                                                </button>
-                                            }
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
+        <div class="u-card" style="padding: 1rem; margin-bottom: 0; border-left: 3px solid #8b4c4c;">
+            <div style="font-size: 0.6875rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem;">Rechazadas</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c;">@stats.getOrElse("rejected", 0)</div>
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Badges Section -->
+    @if(badges.nonEmpty) {
+        <div class="u-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h3 style="font-size: 0.9375rem; font-weight: 700; color: #1a202c; margin: 0;">🏆 Mis Insignias</h3>
+                <a href="@routes.UserPublicationController.publicProfile(username)" style="font-size: 0.75rem; color: #6b8caa; text-decoration: none;">Ver perfil →</a>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                @for(badge <- badges) {
+                    @defining(models.BadgeDefinition.get(badge.badgeKey)) { defnOpt =>
+                        @defnOpt.map { defn =>
+                            <span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.3rem 0.625rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.75rem; color: #475569;" title="@defn.description">
+                                @defn.icon @defn.name
+                            </span>
+                        }
+                    }
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Publications Table -->
+    <div class="u-card" style="padding: 0; overflow: hidden;">
+        @if(publications.isEmpty) {
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+                <p style="font-size: 1.5rem; margin-bottom: 0.75rem;">&#9998;</p>
+                <h3 style="font-size: 1rem; font-weight: 600; color: #1a202c; margin-bottom: 0.375rem;">Sin publicaciones</h3>
+                <p style="color: #94a3b8; font-size: 0.8125rem; margin-bottom: 1.25rem;">Crea tu primer artículo y comparte tu conocimiento</p>
+                <a href="@routes.UserPublicationController.newPublicationForm()" class="u-btn u-btn-primary">Nueva Publicación</a>
+            </div>
+        } else {
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Categoría</th>
+                        <th>Estado</th>
+                        <th>Vistas</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for(pub <- publications) {
+                        <tr>
+                            <td style="font-weight: 600; color: #1a202c;">@pub.title</td>
+                            <td>@pub.category</td>
+                            <td>
+                                <span class="u-badge u-badge-@pub.status">
+                                    @pub.status match {
+                                        case "draft" => { Borrador }
+                                        case "pending" => { Pendiente }
+                                        case "approved" => { Aprobada }
+                                        case "rejected" => { Rechazada }
+                                        case _ => { @pub.status }
+                                    }
+                                </span>
+                            </td>
+                            <td>@pub.viewCount</td>
+                            <td style="white-space: nowrap;">@pub.createdAt.toString.substring(0, 10)</td>
+                            <td>
+                                <div style="display: flex; gap: 0.375rem; flex-wrap: wrap; align-items: center;">
+                                    <a href="@routes.UserPublicationController.viewPublication(pub.id.get)" class="u-btn u-btn-secondary u-btn-sm">Ver</a>
+                                    @if(feedbackCounts.getOrElse(pub.id.get, 0) > 0) {
+                                        <a href="@routes.UserPublicationController.viewPublication(pub.id.get)" class="u-btn u-btn-sm" style="background:#eef4fa; color:#5a7892; border:1px solid #c8d9e6; text-decoration:none; display:inline-flex; align-items:center; gap:0.25rem;" title="Feedback del equipo editorial">
+                                            💬 @feedbackCounts(pub.id.get)
+                                        </a>
+                                    }
+                                    @if(pub.status == "draft") {
+                                        <a href="@routes.UserPublicationController.editPublicationForm(pub.id.get)" class="u-btn u-btn-secondary u-btn-sm">Editar</a>
+                                        <form method="POST" action="@routes.UserPublicationController.submitForReview(pub.id.get)" style="display:inline;">
+                                            @helper.CSRF.formField
+                                            <button type="submit" class="u-btn u-btn-success u-btn-sm">Enviar</button>
+                                        </form>
+                                        <form method="POST" action="@routes.UserPublicationController.deletePublication(pub.id.get)" style="display:inline;" onsubmit="return confirm('Eliminar esta publicación?');">
+                                            @helper.CSRF.formField
+                                            <button type="submit" class="u-btn u-btn-danger u-btn-sm">Eliminar</button>
+                                        </form>
+                                    }
+                                    @if(pub.status == "pending") {
+                                        <a href="@routes.UserPublicationController.editPublicationForm(pub.id.get)" class="u-btn u-btn-secondary u-btn-sm">✏️ Editar</a>
+                                    }
+                                    @if(pub.status == "rejected") {
+                                        <a href="@routes.UserPublicationController.editPublicationForm(pub.id.get)" class="u-btn u-btn-secondary u-btn-sm">Editar</a>
+                                        @if(pub.rejectionReason.isDefined) {
+                                            <button class="u-btn u-btn-sm" style="background:#fbf3db;color:#7c6a2e;border:1px solid #f0e4b8;" onclick="alert('Motivo: @pub.rejectionReason.get')">Motivo</button>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}

@@ -1,23 +1,11 @@
 package repositories
 
 import models.ContactRecord
-import slick.jdbc.H2Profile.api._
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.JdbcProfile
-
-class ContactsTable(tag: Tag) extends Table[ContactRecord](tag, "contacts") {
-  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def name = column[String]("name")
-  def email = column[String]("email")
-  def message = column[String]("message")
-  def createdAt = column[Instant]("created_at")
-  def status = column[String]("status")
-
-  def * = (id.?, name, email, message, createdAt, status).mapTo[ContactRecord]
-}
 
 @Singleton
 class ContactRepository @Inject()(
@@ -25,7 +13,20 @@ class ContactRepository @Inject()(
 )(implicit ec: ExecutionContext) {
 
   private val dbConfig = dbConfigProvider.get[JdbcProfile]
-  private val db = dbConfig.db
+  import dbConfig._
+  import profile.api._
+
+  private class ContactsTable(tag: Tag) extends Table[ContactRecord](tag, "contacts") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def name = column[String]("name")
+    def email = column[String]("email")
+    def message = column[String]("message")
+    def createdAt = column[Instant]("created_at")
+    def status = column[String]("status")
+
+    def * = (id.?, name, email, message, createdAt, status).mapTo[ContactRecord]
+  }
+
   private val contacts = TableQuery[ContactsTable]
 
   /**

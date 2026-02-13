@@ -5,48 +5,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@title - Reactive Manifesto</title>
+    <meta name="description" content="Plataforma sobre sistemas reactivos: Responsive, Resilient, Elastic, Message-Driven. Construida con Play Framework y Akka.">
+    <link rel="icon" type="image/svg+xml" href="@routes.Assets.versioned("favicon.svg")">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="@title - Reactive Manifesto">
+    <meta property="og:description" content="Plataforma sobre sistemas reactivos construida con Play Framework y Akka.">
+    <meta property="og:site_name" content="Reactive Manifesto">
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="@title - Reactive Manifesto">
+    <meta name="twitter:description" content="Plataforma sobre sistemas reactivos construida con Play Framework y Akka.">
     <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")">
+    <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/admin.css")">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@@300;400;500;600;700;800&family=JetBrains+Mono:wght@@400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Aplicar tema inmediatamente para evitar flash -->
+
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', theme);
+            var s = localStorage.getItem('theme');
+            var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', s || (d ? 'dark' : 'light'));
         })();
     </script>
 </head>
 <body>
-    <nav class="navbar">
+    <!-- ── NAVBAR ── -->
+    <nav class="navbar" id="mainNavbar">
         <div class="container">
             <div class="navbar-brand">
-                <h1>⚡ Reactive Manifesto</h1>
+                <h1>Reactive Manifesto</h1>
             </div>
-            
+
+            <div class="navbar-sep"></div>
+
+            <!-- Desktop links -->
             <div class="navbar-menu" id="navbarMenu">
                 <a href="@routes.HomeController.index()" class="nav-link">Inicio</a>
                 <a href="@routes.HomeController.publicaciones()" class="nav-link">Publicaciones</a>
                 <a href="@routes.HomeController.portafolio()" class="nav-link">Portafolio</a>
                 <a href="@routes.HomeController.index()#contact" class="nav-link">Contacto</a>
                 @if(request.session.get("userId").isDefined) {
-                    <a href="@routes.AuthController.userDashboard()" class="nav-link nav-link-dashboard">👤 Dashboard</a>
-                    <a href="@routes.UserPublicationController.dashboard()" class="nav-link nav-link-publications">📝 Mis Publicaciones</a>
-                    <a href="@routes.AuthController.logout()" class="nav-link nav-link-logout">🚪 Logout</a>
+                    <div class="nav-dropdown" id="navAccountDrop">
+                        <button class="nav-link nav-dropdown-toggle" onclick="toggleAccountDrop(event)" aria-expanded="false" aria-haspopup="true">
+                            Mi Cuenta
+                            <svg class="nav-dd-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <div class="nav-dropdown-menu">
+                            <a href="@routes.AuthController.userDashboard()" class="nav-dd-item">
+                                <span class="nav-dd-icon">⌂</span> Dashboard
+                            </a>
+                            <a href="@routes.UserPublicationController.dashboard()" class="nav-dd-item">
+                                <span class="nav-dd-icon">✎</span> Mis Publicaciones
+                            </a>
+                            <div class="nav-dd-sep"></div>
+                            <a href="@routes.AuthController.logout()" class="nav-dd-item nav-dd-item-logout">
+                                <span class="nav-dd-icon">⏻</span> Cerrar sesión
+                            </a>
+                        </div>
+                    </div>
                 } else {
-                    <a href="@routes.AuthController.loginPage()" class="nav-link nav-link-login">🔐 Login</a>
+                    <a href="@routes.AuthController.loginPage()" class="nav-link nav-link-login">Iniciar sesión</a>
                 }
-                
-                <!-- Theme Toggle (visible en desktop) -->
+            </div>
+
+            <!-- Right cluster: Command + Theme (desktop) -->
+            <div class="navbar-right">
+                <button class="cmd-trigger-main" id="cmdTriggerMain" aria-label="Buscar rápido">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Buscar...
+                    <kbd>⌘K</kbd>
+                </button>
                 <button class="theme-toggle navbar-theme-toggle" id="theme-toggle-desktop" aria-label="Cambiar tema">
                     <span class="theme-icon" id="theme-icon-desktop">🌙</span>
                 </button>
             </div>
-            
-            <!-- Mobile Controls (Theme + Hamburger) -->
+
+            <!-- Mobile controls -->
             <div class="navbar-mobile-controls">
                 <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
                     <span class="theme-icon" id="theme-icon">🌙</span>
@@ -57,10 +93,69 @@
                     <span class="hamburger-line"></span>
                 </button>
             </div>
-        
-        <!-- Mobile Overlay -->
+        </div>
         <div class="mobile-overlay" id="mobileOverlay"></div>
     </nav>
+
+    <!-- ── COMMAND PALETTE ── -->
+    <div class="cmd-overlay-main" id="cmdOverlayMain">
+        <div class="cmd-palette-main" role="dialog" aria-label="Búsqueda rápida">
+            <div class="cmd-search-row-main">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="cmd-input-main" id="cmdInputMain" placeholder="Buscar página o acción..." autocomplete="off" />
+                <span class="cmd-esc-main">ESC</span>
+            </div>
+            <div class="cmd-list-main" id="cmdListMain">
+                <div class="cmd-group-main">Navegación</div>
+                <a class="cmd-item-main" href="@routes.HomeController.index()">
+                    <span class="cmd-item-main-icon">🏠</span>
+                    <div class="cmd-item-main-text"><span>Inicio</span><small>Página principal</small></div>
+                </a>
+                <a class="cmd-item-main" href="@routes.HomeController.publicaciones()">
+                    <span class="cmd-item-main-icon">📰</span>
+                    <div class="cmd-item-main-text"><span>Publicaciones</span><small>Artículos publicados</small></div>
+                </a>
+                <a class="cmd-item-main" href="@routes.HomeController.portafolio()">
+                    <span class="cmd-item-main-icon">💼</span>
+                    <div class="cmd-item-main-text"><span>Portafolio</span><small>Proyectos y trabajos</small></div>
+                </a>
+                <a class="cmd-item-main" href="@routes.HomeController.index()#contact">
+                    <span class="cmd-item-main-icon">✉️</span>
+                    <div class="cmd-item-main-text"><span>Contacto</span><small>Enviar un mensaje</small></div>
+                </a>
+
+                @if(request.session.get("userId").isDefined) {
+                <div class="cmd-group-main">Mi cuenta</div>
+                <a class="cmd-item-main" href="@routes.AuthController.userDashboard()">
+                    <span class="cmd-item-main-icon">📊</span>
+                    <div class="cmd-item-main-text"><span>Dashboard</span><small>Panel de usuario</small></div>
+                </a>
+                <a class="cmd-item-main" href="@routes.UserPublicationController.dashboard()">
+                    <span class="cmd-item-main-icon">✏️</span>
+                    <div class="cmd-item-main-text"><span>Mis Publicaciones</span><small>Gestionar artículos</small></div>
+                </a>
+                <a class="cmd-item-main" href="@routes.AuthController.userProfile()">
+                    <span class="cmd-item-main-icon">👤</span>
+                    <div class="cmd-item-main-text"><span>Perfil</span><small>Configuración de cuenta</small></div>
+                </a>
+                <a class="cmd-item-main" href="@routes.AuthController.logout()">
+                    <span class="cmd-item-main-icon">🚪</span>
+                    <div class="cmd-item-main-text"><span>Cerrar sesión</span><small>Salir de la cuenta</small></div>
+                </a>
+                } else {
+                <div class="cmd-group-main">Cuenta</div>
+                <a class="cmd-item-main" href="@routes.AuthController.loginPage()">
+                    <span class="cmd-item-main-icon">🔑</span>
+                    <div class="cmd-item-main-text"><span>Iniciar sesión</span><small>Acceder a tu cuenta</small></div>
+                </a>
+                <a class="cmd-item-main" href="@routes.AuthController.registerPage()">
+                    <span class="cmd-item-main-icon">📝</span>
+                    <div class="cmd-item-main-text"><span>Registrarse</span><small>Crear una cuenta nueva</small></div>
+                </a>
+                }
+            </div>
+        </div>
+    </div>
 
     <main>
         @content
@@ -68,11 +163,155 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2026 Reactive Manifesto. Construido con Play Framework y Akka.</p>
-            <p class="footer-subtitle">Responsive • Resilient • Elastic • Message-Driven</p>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>Reactive Manifesto</h3>
+                    <p>Plataforma educativa sobre sistemas reactivos, construida con Play Framework y Akka.</p>
+                    <div class="footer-principles">
+                        <span>Responsive</span>
+                        <span>Resilient</span>
+                        <span>Elastic</span>
+                        <span>Message-Driven</span>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Navegación</h4>
+                    <a href="@routes.HomeController.index()">Inicio</a>
+                    <a href="@routes.HomeController.publicaciones()">Publicaciones</a>
+                    <a href="@routes.HomeController.portafolio()">Portafolio</a>
+                    <a href="@routes.HomeController.index()#contact">Contacto</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Plataforma</h4>
+                    <a href="@routes.AuthController.loginPage()">Iniciar sesión</a>
+                    <a href="@routes.AuthController.registerPage()">Registrarse</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="#">Política de privacidad</a>
+                    <a href="#">Términos de uso</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Reactive Manifesto. Construido con Play Framework y Akka.</p>
+            </div>
         </div>
     </footer>
 
+    <!-- BACK TO TOP -->
+    <button class="back-to-top" id="backToTop" aria-label="Volver arriba" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+
     <script src="@routes.Assets.versioned("javascripts/main.js")"></script>
+    <script>
+    (function(){
+        // ── Command Palette ──
+        var overlay = document.getElementById('cmdOverlayMain');
+        var trigger = document.getElementById('cmdTriggerMain');
+        var input   = document.getElementById('cmdInputMain');
+        var list    = document.getElementById('cmdListMain');
+        var items   = [];
+        var idx     = -1;
+
+        function openPalette() {
+            overlay.classList.add('open');
+            input.value = '';
+            filterItems('');
+            setTimeout(function(){ input.focus(); }, 60);
+        }
+        function closePalette() {
+            overlay.classList.remove('open');
+            idx = -1;
+        }
+
+        if (trigger) trigger.addEventListener('click', openPalette);
+        if (overlay) overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closePalette();
+        });
+
+        function filterItems(q) {
+            var all = list.querySelectorAll('.cmd-item-main, .cmd-group-main');
+            var lower = q.toLowerCase();
+            var lastGroupVisible = false;
+            items = [];
+
+            all.forEach(function(el) {
+                if (el.classList.contains('cmd-group-main')) {
+                    el.style.display = 'none';
+                    lastGroupVisible = false;
+                    el._group = el;
+                    return;
+                }
+                var txt = el.textContent.toLowerCase();
+                var show = !q || txt.indexOf(lower) !== -1;
+                el.style.display = show ? '' : 'none';
+                el.classList.remove('cmd-active-main');
+                if (show) {
+                    items.push(el);
+                    // Show preceding group
+                    var prev = el.previousElementSibling;
+                    while (prev) {
+                        if (prev.classList.contains('cmd-group-main')) {
+                            prev.style.display = '';
+                            break;
+                        }
+                        prev = prev.previousElementSibling;
+                    }
+                }
+            });
+
+            idx = items.length > 0 ? 0 : -1;
+            if (idx >= 0) items[0].classList.add('cmd-active-main');
+        }
+
+        if (input) input.addEventListener('input', function() { filterItems(this.value); });
+
+        document.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                overlay.classList.contains('open') ? closePalette() : openPalette();
+            }
+            if (!overlay.classList.contains('open')) return;
+
+            if (e.key === 'Escape') { closePalette(); return; }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!items.length) return;
+                if (idx >= 0) items[idx].classList.remove('cmd-active-main');
+                idx = e.key === 'ArrowDown'
+                    ? (idx + 1) % items.length
+                    : (idx - 1 + items.length) % items.length;
+                items[idx].classList.add('cmd-active-main');
+                items[idx].scrollIntoView({ block: 'nearest' });
+            }
+            if (e.key === 'Enter' && idx >= 0 && items[idx]) {
+                e.preventDefault();
+                items[idx].click();
+            }
+        });
+
+        // ── Account Dropdown ──
+        window.toggleAccountDrop = function(e) {
+            e.stopPropagation();
+            var dd = document.getElementById('navAccountDrop');
+            if (dd) dd.classList.toggle('open');
+        };
+        document.addEventListener('click', function() {
+            var dd = document.getElementById('navAccountDrop');
+            if (dd) dd.classList.remove('open');
+        });
+
+        // ── Scroll shadow + Back to top ──
+        var navbar = document.getElementById('mainNavbar');
+        var btt = document.getElementById('backToTop');
+        if (navbar) {
+            window.addEventListener('scroll', function() {
+                navbar.classList.toggle('scrolled', window.scrollY > 2);
+                if (btt) btt.classList.toggle('visible', window.scrollY > 400);
+            }, { passive: true });
+        }
+    })();
+    </script>
 </body>
 </html>

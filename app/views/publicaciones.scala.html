@@ -1,22 +1,73 @@
-@(dynamicPublications: List[models.PublicationWithAuthor])(implicit request: RequestHeader, messages: Messages)
+@(dynamicPublications: List[models.PublicationWithAuthor], searchQuery: String = "", searchCategory: Option[String] = None)(implicit request: RequestHeader, messages: Messages)
 
 @main("Publicaciones") {
-    <!-- Hero Section -->
+    <!-- Hero + Unified Search -->
     <section class="hero hero-secondary">
         <div class="container">
             <div class="hero-content">
                 <h2 class="hero-title">Publicaciones</h2>
                 <p class="hero-subtitle">Artículos, tutoriales y recursos sobre programación reactiva</p>
             </div>
+            <!-- Search bar integrated into hero -->
+            <div class="pub-search-bar">
+                <form action="@routes.HomeController.searchPublicaciones()" method="GET" class="pub-search-form" id="pubSearchForm">
+                    <div class="pub-search-field">
+                        <svg class="pub-search-icon" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+                        </svg>
+                        <input type="text" name="q" value="@searchQuery" placeholder="Buscar por título, contenido o tags..." class="pub-search-input" id="pubSearchInput" autocomplete="off">
+                        @if(searchQuery.nonEmpty) {
+                            <a href="@routes.HomeController.publicaciones()" class="pub-search-clear" title="Limpiar búsqueda">&times;</a>
+                        }
+                    </div>
+                    <div class="pub-search-actions">
+                        <select name="category" class="pub-search-select" id="pubCategorySelect">
+                            <option value="">Todas</option>
+                            <option value="Tutorial" @if(searchCategory.contains("Tutorial")){selected}>Tutorial</option>
+                            <option value="Artículo" @if(searchCategory.contains("Artículo")){selected}>Artículo</option>
+                            <option value="Guía" @if(searchCategory.contains("Guía")){selected}>Guía</option>
+                            <option value="Caso de Estudio" @if(searchCategory.contains("Caso de Estudio")){selected}>Caso de Estudio</option>
+                            <option value="Recurso" @if(searchCategory.contains("Recurso")){selected}>Recurso</option>
+                        </select>
+                        <button type="submit" class="pub-search-btn">
+                            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+                            </svg>
+                            Buscar
+                        </button>
+                    </div>
+                </form>
+                @if(searchQuery.nonEmpty) {
+                    <p class="pub-search-results-info">
+                        @{dynamicPublications.size + 6} resultados para "<strong>@searchQuery</strong>"
+                        @searchCategory.map { cat => en <strong>@cat</strong> }
+                    </p>
+                }
+            </div>
         </div>
     </section>
+
+    <!-- Category pills (quick filters) -->
+    <nav class="pub-category-nav">
+        <div class="container">
+            <div class="pub-category-pills" id="pubCategoryPills">
+                <button class="pub-pill active" data-category="all">Todas</button>
+                <button class="pub-pill" data-category="Tutorial">Tutorial</button>
+                <button class="pub-pill" data-category="Artículo">Artículo</button>
+                <button class="pub-pill" data-category="Guía">Guía</button>
+                <button class="pub-pill" data-category="Caso de Estudio">Caso de Estudio</button>
+                <button class="pub-pill" data-category="Recurso">Recurso</button>
+            </div>
+            <div class="pub-results-count" id="pubResultsCount"></div>
+        </div>
+    </nav>
 
     <!-- Publications Grid -->
     <section class="publications-section">
         <div class="container">
             <div class="publications-grid">
                 <!-- Publication 1 -->
-                <article class="publication-card">
+                <article class="publication-card pub-filterable" data-category="Tutorial" data-searchable="introducción akka actors actores concurrentes resilientes modelo">
                     <div class="publication-header">
                         <span class="publication-category">Tutorial</span>
                         <span class="publication-date">15 Dic 2025</span>
@@ -31,11 +82,11 @@
                         <span class="tag">Scala</span>
                         <span class="tag">Concurrencia</span>
                     </div>
-                    <a href="@routes.HomeController.publicacion("akka-actors")" class="publication-link">Leer más →</a>
+                    <a href="@routes.HomeController.publicacion("akka-actors")" class="publication-link">Leer más</a>
                 </article>
 
                 <!-- Publication 2 -->
-                <article class="publication-card">
+                <article class="publication-card pub-filterable" data-category="Artículo" data-searchable="patrones resiliencia circuit breakers bulkheads recuperación arquitectura">
                     <div class="publication-header">
                         <span class="publication-category">Artículo</span>
                         <span class="publication-date">8 Dic 2025</span>
@@ -50,11 +101,11 @@
                         <span class="tag">Resiliencia</span>
                         <span class="tag">Arquitectura</span>
                     </div>
-                    <a href="@routes.HomeController.publicacion("patrones-resiliencia")" class="publication-link">Leer más →</a>
+                    <a href="@routes.HomeController.publicacion("patrones-resiliencia")" class="publication-link">Leer más</a>
                 </article>
 
                 <!-- Publication 3 -->
-                <article class="publication-card">
+                <article class="publication-card pub-filterable" data-category="Guía" data-searchable="streams reactivos akka streams backpressure procesamiento asíncrono flujos">
                     <div class="publication-header">
                         <span class="publication-category">Guía</span>
                         <span class="publication-date">1 Dic 2025</span>
@@ -69,11 +120,11 @@
                         <span class="tag">Reactive Streams</span>
                         <span class="tag">Backpressure</span>
                     </div>
-                    <a href="@routes.HomeController.publicacion("akka-streams")" class="publication-link">Leer más →</a>
+                    <a href="@routes.HomeController.publicacion("akka-streams")" class="publication-link">Leer más</a>
                 </article>
 
                 <!-- Publication 4 -->
-                <article class="publication-card">
+                <article class="publication-card pub-filterable" data-category="Tutorial" data-searchable="play framework programación asíncrona web alto rendimiento">
                     <div class="publication-header">
                         <span class="publication-category">Tutorial</span>
                         <span class="publication-date">25 Nov 2025</span>
@@ -88,11 +139,11 @@
                         <span class="tag">Async</span>
                         <span class="tag">Web</span>
                     </div>
-                    <a href="@routes.HomeController.publicacion("play-async")" class="publication-link">Leer más →</a>
+                    <a href="@routes.HomeController.publicacion("play-async")" class="publication-link">Leer más</a>
                 </article>
 
                 <!-- Publication 5 -->
-                <article class="publication-card">
+                <article class="publication-card pub-filterable" data-category="Caso de Estudio" data-searchable="escalabilidad message passing mensajería distribución sistemas distribuidos">
                     <div class="publication-header">
                         <span class="publication-category">Caso de Estudio</span>
                         <span class="publication-date">18 Nov 2025</span>
@@ -107,11 +158,11 @@
                         <span class="tag">Distribución</span>
                         <span class="tag">Escalabilidad</span>
                     </div>
-                    <a href="@routes.HomeController.publicacion("message-passing")" class="publication-link">Leer más →</a>
+                    <a href="@routes.HomeController.publicacion("message-passing")" class="publication-link">Leer más</a>
                 </article>
 
                 <!-- Publication 6 -->
-                <article class="publication-card">
+                <article class="publication-card pub-filterable" data-category="Recurso" data-searchable="testing sistemas reactivos testkit property-based qa">
                     <div class="publication-header">
                         <span class="publication-category">Recurso</span>
                         <span class="publication-date">10 Nov 2025</span>
@@ -126,7 +177,7 @@
                         <span class="tag">Akka TestKit</span>
                         <span class="tag">QA</span>
                     </div>
-                    <a href="@routes.HomeController.publicacion("testing-reactivo")" class="publication-link">Leer más →</a>
+                    <a href="@routes.HomeController.publicacion("testing-reactivo")" class="publication-link">Leer más</a>
                 </article>
             </div>
 
@@ -138,7 +189,7 @@
                     
                     <div class="publications-grid">
                         @for(pubWithAuthor <- dynamicPublications) {
-                            <article class="publication-card publication-community">
+                            <article class="publication-card publication-community pub-filterable" data-category="@pubWithAuthor.publication.category" data-searchable="@pubWithAuthor.publication.title.toLowerCase @pubWithAuthor.publication.excerpt.getOrElse("") @pubWithAuthor.publication.tags.getOrElse("") @pubWithAuthor.authorUsername">
                                 <div class="publication-header">
                                     <span class="publication-category">@pubWithAuthor.publication.category</span>
                                     <span class="publication-date">@{
@@ -156,6 +207,7 @@
                                 <div class="publication-meta">
                                     <span class="publication-author">👤 @pubWithAuthor.authorUsername</span>
                                     <span class="publication-views">👁️ @pubWithAuthor.publication.viewCount vistas</span>
+                                    <span class="publication-views">⏱️ ~@{Math.max(1, pubWithAuthor.publication.content.split("\\s+").length / 200)} min</span>
                                 </div>
                                 @if(pubWithAuthor.publication.tags.isDefined) {
                                     <div class="publication-tags">
@@ -164,7 +216,7 @@
                                         }
                                     </div>
                                 }
-                                <a href="@routes.HomeController.publicacion(pubWithAuthor.publication.slug)" class="publication-link">Leer más →</a>
+                                <a href="@routes.HomeController.publicacion(pubWithAuthor.publication.slug)" class="publication-link">Leer más</a>
                             </article>
                         }
                     </div>
@@ -179,11 +231,103 @@
             <div class="newsletter-content">
                 <h2 class="section-title">Suscríbete a Nuestro Newsletter</h2>
                 <p class="section-subtitle">Recibe las últimas publicaciones y recursos directamente en tu correo</p>
-                <form class="newsletter-form">
-                    <input type="email" placeholder="Tu email" class="newsletter-input" required>
+                @request.flash.get("success").map { msg =>
+                    <div class="newsletter-alert newsletter-alert-success">@msg</div>
+                }
+                @request.flash.get("info").map { msg =>
+                    <div class="newsletter-alert newsletter-alert-info">@msg</div>
+                }
+                @request.flash.get("error").map { msg =>
+                    <div class="newsletter-alert newsletter-alert-error">@msg</div>
+                }
+                <form class="newsletter-form" action="@routes.HomeController.subscribeNewsletter()" method="POST">
+                    @views.html.helper.CSRF.formField
+                    <input type="email" name="email" placeholder="Tu email" class="newsletter-input" required>
                     <button type="submit" class="btn btn-primary">Suscribirse</button>
                 </form>
             </div>
         </div>
     </section>
+
+    <script>
+    (function() {
+        var pills = document.querySelectorAll('.pub-pill');
+        var cards = document.querySelectorAll('.pub-filterable');
+        var input = document.getElementById('pubSearchInput');
+        var counter = document.getElementById('pubResultsCount');
+        var activeCategory = 'all';
+
+        function normalize(s) {
+            var diacritics = new RegExp('[' + String.fromCharCode(0x0300) + '-' + String.fromCharCode(0x036f) + ']', 'g');
+            return (s || '').toLowerCase().normalize('NFD').replace(diacritics, '');
+        }
+
+        function filterCards() {
+            var q = normalize(input ? input.value : '');
+            var visible = 0;
+            cards.forEach(function(card) {
+                var cat = card.getAttribute('data-category') || '';
+                var text = normalize(
+                    (card.getAttribute('data-searchable') || '') + ' ' +
+                    card.textContent
+                );
+                var catMatch = activeCategory === 'all' || cat === activeCategory;
+                var textMatch = !q || text.indexOf(q) !== -1;
+                if (catMatch && textMatch) {
+                    card.style.display = '';
+                    visible++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            if (counter) {
+                counter.textContent = visible + ' publicacion' + (visible !== 1 ? 'es' : '');
+            }
+        }
+
+        pills.forEach(function(pill) {
+            pill.addEventListener('click', function(e) {
+                e.preventDefault();
+                pills.forEach(function(p) { p.classList.remove('active'); });
+                pill.classList.add('active');
+                activeCategory = pill.getAttribute('data-category');
+                filterCards();
+            });
+        });
+
+        if (input) {
+            var debounce;
+            input.addEventListener('input', function() {
+                clearTimeout(debounce);
+                debounce = setTimeout(filterCards, 150);
+            });
+        }
+
+        filterCards();
+
+        // ── Hide filter bar on scroll down, show on scroll up ──
+        var nav = document.querySelector('.pub-category-nav');
+        if (nav) {
+            var lastY = window.scrollY;
+            var threshold = 120;
+            var ticking = false;
+
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    window.requestAnimationFrame(function() {
+                        var currentY = window.scrollY;
+                        if (currentY > threshold && currentY > lastY) {
+                            nav.classList.add('nav-hidden');
+                        } else {
+                            nav.classList.remove('nav-hidden');
+                        }
+                        lastY = currentY;
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, { passive: true });
+        }
+    })();
+    </script>
 }

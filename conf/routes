@@ -11,8 +11,12 @@ GET     /setup/list-admins          controllers.SetupController.listAdmins()
 GET     /setup/update-password      controllers.SetupController.updatePassword(username: String, password: String)
 GET     /setup/test-login           controllers.SetupController.testLogin(username: String, password: String)
 
+# Debug endpoint: Listar todos los admins (JSON)
+GET     /debug/admins               controllers.AdminController.listAllAdmins()
+
 # Publicaciones page
 GET     /publicaciones              controllers.HomeController.publicaciones()
+GET     /publicaciones/buscar       controllers.HomeController.searchPublicaciones(q: String ?= "", category: Option[String] ?= None)
 GET     /publicaciones/:slug        controllers.HomeController.publicacion(slug: String)
 
 # Portafolio page
@@ -20,6 +24,9 @@ GET     /portafolio                 controllers.HomeController.portafolio()
 
 # Contact form
 POST    /contact                    controllers.HomeController.submitContact()
+
+# Newsletter
+POST    /newsletter/subscribe       controllers.HomeController.subscribeNewsletter()
 
 # Admin endpoints (opcional - proteger en producción)
 GET     /api/contacts               controllers.HomeController.listContacts(page: Int ?= 0)
@@ -82,6 +89,27 @@ GET     /user/publications/:id      controllers.UserPublicationController.viewPu
 POST    /user/publications/:id/submit   controllers.UserPublicationController.submitForReview(id: Long)
 POST    /user/publications/:id/delete   controllers.UserPublicationController.deletePublication(id: Long)
 
+# Notifications
+GET     /user/notifications             controllers.UserPublicationController.notifications()
+GET     /api/user/notifications/unread   controllers.UserPublicationController.unreadCount()
+
+# Bookmarks
+GET     /user/bookmarks                 controllers.UserPublicationController.bookmarks()
+
+# Profile
+GET     /user/profile/edit              controllers.UserPublicationController.editProfileForm()
+POST    /user/profile/edit              controllers.UserPublicationController.updateProfile()
+GET     /profile/:username              controllers.UserPublicationController.publicProfile(username: String)
+
+# Reactions / Comments / Bookmarks
+POST    /publications/:id/react         controllers.UserPublicationController.toggleReaction(id: Long)
+POST    /publications/:id/comment       controllers.UserPublicationController.addComment(id: Long)
+POST    /comments/:id/delete            controllers.UserPublicationController.deleteComment(id: Long)
+POST    /publications/:id/bookmark      controllers.UserPublicationController.toggleBookmark(id: Long)
+
+# Badges API
+GET     /api/user/badges                controllers.UserPublicationController.userBadges()
+
 # API
 GET     /api/user/publications      controllers.UserPublicationController.listPublicationsJson()
 
@@ -91,11 +119,22 @@ GET     /api/user/publications      controllers.UserPublicationController.listPu
 
 # Review Publications
 GET     /admin/publications/pending controllers.AdminController.pendingPublications()
+GET     /admin/publications         controllers.AdminController.allPublications(status: Option[String] ?= None)
 GET     /admin/publications/:id     controllers.AdminController.reviewPublicationDetail(id: Long)
 
 # Approve/Reject
 POST    /admin/publications/:id/approve controllers.AdminController.approvePublication(id: Long)
 POST    /admin/publications/:id/reject  controllers.AdminController.rejectPublication(id: Long)
+POST    /admin/publications/:id/delete  controllers.AdminController.deletePublication(id: Long)
+POST    /admin/publications/:id/notes   controllers.AdminController.saveAdminNotes(id: Long)
+
+# Feedback estructurado
+POST    /admin/publications/:id/feedback        controllers.AdminController.addFeedback(id: Long)
+POST    /admin/feedback/:feedbackId/send         controllers.AdminController.sendFeedbackToUser(feedbackId: Long)
+POST    /admin/feedback/:feedbackId/delete       controllers.AdminController.deleteFeedback(feedbackId: Long)
+
+# Newsletter subscribers management
+GET     /admin/newsletter           controllers.AdminController.newsletterSubscribers()
 
 # API
 GET     /api/admin/publications     controllers.AdminController.listAllPublicationsJson()

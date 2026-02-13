@@ -11,7 +11,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all $transition-slow $easing-smooth;
   border: none;
   cursor: pointer;
   font-size: $font-size-base;
@@ -30,7 +30,7 @@
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.2);
     transform: translate(-50%, -50%);
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.6s $easing-smooth, height 0.6s $easing-smooth;
     z-index: -1;
   }
 
@@ -50,12 +50,12 @@
 
   // Primary Button con efectos premium - Contexto Cyan/Teal
   &-primary {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+    background: linear-gradient(135deg, $accent-primary 0%, $accent-dark 50%, $accent-darker 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.5),
-                0 2px 8px rgba(8, 145, 178, 0.4),
+    box-shadow: 0 4px 15px rgba($accent-primary, 0.5),
+                0 2px 8px rgba($accent-dark, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                0 0 30px rgba(34, 211, 238, 0.3);
+                0 0 30px rgba($accent-light, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.2);
     font-weight: 700;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -64,9 +64,9 @@
       content: '';
       position: absolute;
       inset: -4px;
-      background: radial-gradient(circle at center, rgba(34, 211, 238, 0.7), transparent 70%);
+      background: radial-gradient(circle at center, rgba($accent-light, 0.7), transparent 70%);
       opacity: 0;
-      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: opacity $transition-slow $easing-smooth;
       z-index: -1;
       border-radius: $border-radius-xl;
       filter: blur(15px);
@@ -74,11 +74,11 @@
 
     &:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 35px rgba(6, 182, 212, 0.7),
-                  0 8px 20px rgba(8, 145, 178, 0.5),
-                  0 0 50px rgba(34, 211, 238, 0.6),
+      box-shadow: 0 12px 35px rgba($accent-primary, 0.7),
+                  0 8px 20px rgba($accent-dark, 0.5),
+                  0 0 50px rgba($accent-light, 0.6),
                   inset 0 1px 0 rgba(255, 255, 255, 0.4);
-      background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 50%, #0891b2 100%);
+      background: linear-gradient(135deg, $accent-light 0%, $accent-primary 50%, $accent-dark 100%);
       filter: brightness(1.15);
 
       &::after {
@@ -99,7 +99,7 @@
     border: 2px solid rgba(255, 255, 255, 0.3);
     position: relative;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2),
-                0 0 20px rgba(34, 211, 238, 0.1),
+                0 0 20px rgba($accent-light, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
     font-weight: 600;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -108,9 +108,9 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(6, 182, 212, 0.2));
+      background: linear-gradient(135deg, rgba($accent-light, 0.2), rgba($accent-primary, 0.2));
       opacity: 0;
-      transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: opacity $transition-slow $easing-smooth;
       border-radius: $border-radius-lg;
       z-index: -1;
     }
@@ -118,10 +118,10 @@
     &:hover {
       background: rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(15px);
-      border-color: rgba(34, 211, 238, 0.6);
+      border-color: rgba($accent-light, 0.6);
       transform: translateY(-3px);
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3),
-                  0 0 40px rgba(34, 211, 238, 0.4),
+                  0 0 40px rgba($accent-light, 0.4),
                   inset 0 1px 0 rgba(255, 255, 255, 0.3);
 
       &::after {
@@ -139,29 +139,29 @@
     background: transparent;
     color: var(--primary-color);
     border: 2px solid var(--primary-color);
-    box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 10px rgba($accent-primary, 0.1);
 
     &:hover {
       background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
       color: white;
       border-color: transparent;
       transform: translateY(-4px);
-      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+      box-shadow: 0 10px 30px rgba($accent-primary, 0.5);
     }
   }
 
   // Glow Button (efecto neón)
   &-glow {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, $accent-primary 0%, $message-primary 100%);
     color: white;
     border: none;
-    box-shadow: 0 0 25px rgba(99, 102, 241, 0.6),
-                0 4px 15px rgba(99, 102, 241, 0.5);
-    animation: pulse-glow 2s ease-in-out infinite;
+    box-shadow: 0 0 25px rgba($accent-primary, 0.6),
+                0 4px 15px rgba($accent-primary, 0.5);
+    animation: pulseGlow 2s ease-in-out infinite;
 
     &:hover {
-      box-shadow: 0 0 40px rgba(99, 102, 241, 1),
-                  0 8px 25px rgba(99, 102, 241, 0.6);
+      box-shadow: 0 0 40px rgba($accent-primary, 1),
+                  0 8px 25px rgba($accent-primary, 0.6);
       transform: translateY(-4px);
       filter: brightness(1.15);
     }
@@ -187,16 +187,7 @@
   }
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 25px rgba(99, 102, 241, 0.6),
-                0 4px 15px rgba(99, 102, 241, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 35px rgba(99, 102, 241, 0.8),
-                0 4px 20px rgba(99, 102, 241, 0.6);
-  }
-}
+// Keyframes centralizados en _animations.scss
 
 // Responsive
 @media (max-width: $breakpoint-sm) {

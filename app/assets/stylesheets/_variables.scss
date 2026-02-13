@@ -38,18 +38,26 @@ $message-dark: #7c3aed;
 $message-darker: #6d28d9;
 $message-gradient: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
 
+// BRAND ACCENT (Steel Blue — Claridad, coherencia, confianza visual)
+$accent-primary: #6b8caa;
+$accent-light: #89a7be;
+$accent-lighter: #b3c7d6;
+$accent-dark: #5a7892;
+$accent-darker: #4a657a;
+$accent-gradient: linear-gradient(135deg, $accent-primary 0%, $accent-light 100%);
+
 // Colores Base del Sistema
-$primary-color: $responsive-primary;
-$primary-dark: $responsive-dark;
-$primary-light: $responsive-light;
+$primary-color: $accent-primary;
+$primary-dark: $accent-dark;
+$primary-light: $accent-light;
 $secondary-color: #ec4899;
 $success-color: $resilient-primary;
 $error-color: #ef4444;
 $warning-color: $elastic-primary;
 $info-color: $responsive-primary;
 
-// Para el grafo
-$accent-color-rgb: 59, 130, 246;
+// Para el grafo y rgba()
+$accent-color-rgb: 107, 140, 170;
 
 // ============================================
 // PALETA DE GRISES REFINADA (10 tonos)
@@ -255,13 +263,6 @@ $z-popover: 1060;
 $z-tooltip: 1070;
 $z-notification: 1080;
 
-// Dark Mode Colors
-$dark-text-primary: #f9fafb;
-$dark-text-secondary: #d1d5db;
-$dark-bg-primary: #1f2937;
-$dark-bg-secondary: #111827;
-$dark-border-color: #374151;
-
 // ============================================
 // CSS CUSTOM PROPERTIES (Runtime Variables)
 // ============================================
@@ -279,6 +280,7 @@ $dark-border-color: #374151;
   // Colores Base
   --accent-color: #{$primary-color};
   --accent-color-rgb: #{$accent-color-rgb};
+  --accent-gradient: #{$accent-gradient};
   --secondary-color: #{$secondary-color};
   --success-color: #{$success-color};
   --error-color: #{$error-color};

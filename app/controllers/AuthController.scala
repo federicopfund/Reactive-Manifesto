@@ -6,6 +6,7 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import scala.concurrent.{ExecutionContext, Future}
+import play.api.Configuration
 import repositories.{UserRepository, AdminRepository}
 import services.EmailVerificationService
 import models.User
@@ -17,12 +18,15 @@ case class UserRegisterForm(username: String, email: String, password: String, c
 case class EmailVerificationForm(userId: Long, code: String)
 
 @Singleton
-class AuthController @Inject()(
+class AuthController @Inject()( 
   cc: ControllerComponents,
   userRepository: UserRepository,
   adminRepository: AdminRepository,
-  emailVerificationService: EmailVerificationService
+  emailVerificationService: EmailVerificationService,
+  config: Configuration
 )(implicit ec: ExecutionContext) extends AbstractController(cc) with I18nSupport {
+
+  private val requireEmailVerification: Boolean = config.getOptional[Boolean]("auth.requireEmailVerification").getOrElse(true)
 
   // Formulario de login unificado
   val loginForm = Form(
@@ -115,14 +119,14 @@ class AuthController @Inject()(
   private def authenticateUser(username: String, password: String)(implicit request: RequestHeader): Future[Result] = {
     userRepository.findByUsername(username).flatMap {
       case Some(user) if BCrypt.checkpw(password, user.passwordHash) =>
-        if (!user.emailVerified) {
-          // Usuario no verificado, enviar código
+        if (!user.emailVerified && requireEmailVerification) {
+          // Usuario no verificado y la app requiere verificación: enviar código
           emailVerificationService.createAndSendCode(user.id.get, user.email).map { _ =>
             Redirect(routes.AuthController.verifyEmailPage(user.id.get))
               .flashing("info" -> "Por favor verifica tu email para continuar")
           }
         } else {
-          // Usuario verificado, login normal
+          // Usuario verificado o verificación no requerida: login normal
           userRepository.updateLastLogin(user.id.get).map { _ =>
             Redirect(routes.AuthController.userDashboard())
               .withSession("userId" -> user.id.get.toString, "username" -> user.username, "userRole" -> user.role)
@@ -203,7 +207,7 @@ class AuthController @Inject()(
                   isActive = true,
                   createdAt = Instant.now(),
                   lastLogin = None,
-                  emailVerified = false  // Requiere verificación por código
+                  emailVerified = false  // Requiere verificación por código según configuración
                 )
                 
                 userRepository.create(newUser).map { _ =>
@@ -224,7 +228,11 @@ class AuthController @Inject()(
   def logout(): Action[AnyContent] = Action { implicit request =>
     Redirect(routes.HomeController.index())
       .withNewSession
-      .flashing("success" -> "Sesión cerrada exitosamente")
+      .withHeaders(
+        "Cache-Control" -> "no-cache, no-store, must-revalidate",
+        "Pragma" -> "no-cache",
+        "Expires" -> "0"
+      )
   }
 
   /**

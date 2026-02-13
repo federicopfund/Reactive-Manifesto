@@ -7,7 +7,7 @@
   border-radius: $border-radius-lg;
   padding: $spacing-xl;
   box-shadow: var(--shadow-md);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all $transition-slow $easing-smooth;
   border: 2px solid transparent;
   position: relative;
 
@@ -15,7 +15,7 @@
     content: '';
     position: absolute;
     inset: -4px;
-    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.4), transparent 70%);
+    background: radial-gradient(circle at center, rgba($accent-primary, 0.4), transparent 70%);
     opacity: 0;
     transition: opacity $transition-slow $easing-default;
     z-index: -1;
@@ -25,9 +25,9 @@
 
   &:hover {
     transform: translateY(-6px);
-    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3),
-                0 10px 20px -5px rgba(99, 102, 241, 0.2),
-                0 0 40px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 20px 40px -10px rgba($accent-primary, 0.3),
+                0 10px 20px -5px rgba($accent-primary, 0.2),
+                0 0 40px rgba($accent-primary, 0.15);
     border-color: var(--primary-light);
 
     &::after {
@@ -87,14 +87,14 @@
     margin-bottom: 0.75rem;
     color: var(--primary-color);
     text-align: center;
-    transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: color $transition-slow $easing-smooth;
   }
 
   p {
     color: var(--text-light);
     line-height: $line-height-relaxed;
     margin-bottom: $spacing-md;
-    transition: color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: color $transition-slow $easing-smooth;
   }
 
   .principle-features {
@@ -120,10 +120,8 @@
   }
 }
 
-// Grids
-.principles-grid,
-.publications-grid,
-.portfolio-grid {
+// Principles Grid (canonical)
+.principles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: $spacing-xl;
@@ -136,19 +134,19 @@
   display: flex;
   gap: $spacing-xl;
   align-items: flex-start;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all $transition-slow $easing-smooth;
 
   .benefit-number {
     font-size: $font-size-4xl;
     font-weight: $font-weight-bold;
     color: var(--primary-light);
     min-width: 60px;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all $transition-slow $easing-smooth;
   }
 
   &:hover .benefit-number {
     color: var(--primary-color);
-    text-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+    text-shadow: 0 0 20px rgba($accent-primary, 0.6);
     transform: scale(1.1);
   }
 

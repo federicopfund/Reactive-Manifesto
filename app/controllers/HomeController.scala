@@ -7,7 +7,7 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import services.ReactiveContactAdapter
-import repositories.ContactRepository
+import repositories.{ContactRepository, ReactionRepository, CommentRepository, BookmarkRepository, NewsletterRepository}
 import core.{Contact, ContactSubmitted, ContactError}
 import actions.{OptionalAuthAction, OptionalAuthRequest}
 import scala.concurrent.{ExecutionContext, Future}
@@ -21,6 +21,10 @@ class HomeController @Inject()(
   adapter: ReactiveContactAdapter,
   contactRepository: ContactRepository,
   publicationRepository: repositories.PublicationRepository,
+  reactionRepo: ReactionRepository,
+  commentRepo: CommentRepository,
+  bookmarkRepo: BookmarkRepository,
+  newsletterRepo: NewsletterRepository,
   optionalAuth: OptionalAuthAction
 )(implicit ec: ExecutionContext) extends BaseController with I18nSupport {
 
@@ -41,20 +45,38 @@ class HomeController @Inject()(
   def publicaciones() = Action.async { implicit request: Request[AnyContent] =>
     // Obtener publicaciones dinámicas aprobadas de usuarios
     publicationRepository.findAllApproved(limit = 20).map { dynamicPublications =>
-      Ok(views.html.publicaciones(dynamicPublications))
+      Ok(views.html.publicaciones(dynamicPublications, "", None))
     }
   }
 
-  def publicacion(slug: String) = Action.async { implicit request: Request[AnyContent] =>
+  def publicacion(slug: String) = optionalAuth.async { implicit request: OptionalAuthRequest[AnyContent] =>
     // Primero buscar en publicaciones dinámicas
-    publicationRepository.findBySlug(slug).map {
+    publicationRepository.findBySlug(slug).flatMap {
       case Some(publication) if publication.status == "approved" =>
         // Incrementar contador de vistas
         publicationRepository.incrementViewCount(publication.id.get)
-        Ok(views.html.user.publicationPreview(publication, "Invitado"))
+        val userId = request.userInfo.map(_._1)
+        val pubId = publication.id.get
+        for {
+          reactions <- reactionRepo.countByPublication(pubId)
+          userReactions <- userId.map(uid => reactionRepo.getUserReactions(pubId, uid)).getOrElse(Future.successful(Set.empty[String]))
+          comments <- commentRepo.findByPublicationId(pubId)
+          isBookmarked <- userId.map(uid => bookmarkRepo.isBookmarked(uid, pubId)).getOrElse(Future.successful(false))
+        } yield {
+          Ok(views.html.user.publicationPreview(
+            publication, 
+            request.userInfo.map(_._2).getOrElse("Invitado"), 
+            List.empty,
+            reactions,
+            userReactions,
+            comments,
+            isBookmarked,
+            userId
+          ))
+        }
       case _ =>
         // Si no se encuentra, buscar en artículos estáticos
-        slug match {
+        Future.successful(slug match {
           case "akka-actors" => Ok(views.html.articulos.akkaActors())
           case "patrones-resiliencia" => Ok(views.html.articulos.patronesResiliencia())
           case "akka-streams" => Ok(views.html.articulos.akkaStreams())
@@ -62,7 +84,17 @@ class HomeController @Inject()(
           case "message-passing" => Ok(views.html.articulos.messagePassing())
           case "testing-reactivo" => Ok(views.html.articulos.testingReactivo())
           case _ => NotFound("Publicación no encontrada")
-        }
+        })
+    }
+  }
+
+  def searchPublicaciones(q: String, category: Option[String]) = Action.async { implicit request: Request[AnyContent] =>
+    if (q.trim.isEmpty) {
+      Future.successful(Redirect(routes.HomeController.publicaciones()))
+    } else {
+      publicationRepository.searchApproved(q, category).map { results =>
+        Ok(views.html.publicaciones(results, q, category))
+      }
     }
   }
 
@@ -82,7 +114,7 @@ class HomeController @Inject()(
         val contact = Contact(contactData.name, contactData.email, contactData.message)
         adapter.submitContact(contact).map {
           case ContactSubmitted(id) =>
-            Redirect(routes.HomeController.index()).flashing("success" -> s"¡Gracias por tu mensaje! ID: $id")
+            Redirect(routes.HomeController.index()).flashing("success" -> "¡Mensaje recibido! Gracias por contactarnos, te responderemos lo antes posible.")
           case ContactError(msg) =>
             Redirect(routes.HomeController.index()).flashing("error" -> s"Error: $msg")
         }
@@ -113,6 +145,30 @@ class HomeController @Inject()(
         "total" -> total,
         "timestamp" -> java.time.Instant.now().toString
       ))
+    }
+  }
+
+  // Newsletter subscription
+  def subscribeNewsletter() = Action.async { implicit request: Request[AnyContent] =>
+    request.body.asFormUrlEncoded.flatMap(_.get("email").flatMap(_.headOption)) match {
+      case Some(email) if email.trim.nonEmpty =>
+        val ip = request.remoteAddress
+        newsletterRepo.subscribe(email, Some(ip)).map {
+          case Right(_) =>
+            Redirect(routes.HomeController.publicaciones()).flashing(
+              "success" -> "¡Suscripción exitosa! Recibirás nuestras novedades."
+            )
+          case Left(msg) =>
+            Redirect(routes.HomeController.publicaciones()).flashing(
+              "info" -> msg
+            )
+        }
+      case _ =>
+        Future.successful(
+          Redirect(routes.HomeController.publicaciones()).flashing(
+            "error" -> "Por favor ingresa un email válido."
+          )
+        )
     }
   }
 }

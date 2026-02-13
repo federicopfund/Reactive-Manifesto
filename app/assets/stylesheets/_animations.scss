@@ -1,0 +1,192 @@
+// ============================================
+// Animations - Keyframes Centralizados
+// Sistema de Diseño Reactive Manifesto
+// ============================================
+
+// ── GRADIENT FLOW ──
+// Animación de background-position para gradientes dinámicos
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+// ── LIGHT PULSE ──
+// Efecto de luz ambiental pulsante
+@keyframes lightPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.05); }
+}
+
+// ── TITLE FOCUS ──
+// Sutil escalado para foco en títulos
+@keyframes titleFocus {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+// ── SPOTLIGHT PULSE ──
+// Efecto spotlight detrás de títulos
+@keyframes spotlightPulse {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+// ── UNDERLINE GLOW ──
+// Brillo animado para subrayado de títulos
+@keyframes underlineGlow {
+  0%, 100% {
+    opacity: 0.7;
+    box-shadow: 0 0 20px rgba($accent-primary, 0.6),
+                0 0 40px rgba($accent-light, 0.4);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 30px rgba($accent-primary, 0.8),
+                0 0 60px rgba($accent-light, 0.6);
+  }
+}
+
+// ── PULSE GLOW ──
+// Efecto neón pulsante para botones
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba($accent-primary, 0.6),
+                0 4px 15px rgba($accent-primary, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba($accent-primary, 0.8),
+                0 4px 20px rgba($accent-primary, 0.6);
+  }
+}
+
+// ── SLIDE DOWN ──
+// Entrada deslizante desde arriba (alertas)
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ── FADE IN UP ──
+// Entrada con desvanecimiento desde abajo
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ── WARM GLOW ──
+// Efecto de brillo cálido ambiental
+@keyframes warmGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+// ── BADGE PULSE ──
+// Pulso sutil para badges
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+// ── SHIMMER ──
+// Efecto shimmer para background-position
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+// ── GOVERNANCE PULSE ──
+// Barra de pulso horizontal
+@keyframes governancePulse {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+// ── STATUS PULSE ──
+// Indicador de estado activo
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.9); }
+}
+
+// ── PROGRESS SHIMMER ──
+// Brillo deslizante para barras de progreso
+@keyframes progressShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+// ── BOUNCE ──
+// Rebote vertical
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+// ── PULSE SHADOW ──
+// Pulso de sombra para íconos de grafo
+@keyframes pulseShadow {
+  0%, 100% { box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.3); }
+  50% { box-shadow: 0 8px 24px rgba(var(--accent-color-rgb), 0.5); }
+}
+
+// ── RIPPLE ──
+// Efecto onda expansiva
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+// ── SLIDE PATTERN ──
+// Movimiento diagonal de patrón
+@keyframes slidePattern {
+  0% { transform: translateX(0) translateY(0); }
+  100% { transform: translateX(40px) translateY(40px); }
+}
+
+// ── PULSE SCALE ──
+// Pulso con escala y opacidad
+@keyframes pulseScale {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+// ── PULSE FADE ──
+// Pulso con desvanecimiento y centrado horizontal
+@keyframes pulseFade {
+  0%, 100% { opacity: 0.1; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.2; transform: translateX(-50%) scale(1.1); }
+}
+
+// ── FLOAT BACKGROUND ──
+// Movimiento flotante para fondos
+@keyframes floatBackground {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-30px, 30px); }
+}
+
+// ── TAG POP ──
+// Entrada pop para tags
+@keyframes tagPop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+// ── COMMAND PALETTE ──
+@keyframes cmdFadeMain {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cmdSlideMain {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// ── THEME TOGGLE ──
+@keyframes rotateTheme {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(0.85); }
+  100% { transform: rotate(360deg) scale(1); }
+}
