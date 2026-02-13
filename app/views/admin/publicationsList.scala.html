@@ -19,7 +19,7 @@
             <p class="text-muted text-sm">No hay publicaciones para este filtro</p>
         </div>
     } else {
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; overflow: hidden;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; overflow: hidden;">
             @for(pubWithAuthor <- publications) {
                 @defining(pubWithAuthor.publication) { pub =>
                     <div class="card">
