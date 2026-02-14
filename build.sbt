@@ -9,6 +9,10 @@ lazy val root = (project in file("."))
 
 scalaVersion := "2.13.12"
 
+// Asset pipeline: digest (fingerprinting) → gzip (compression)
+// Ensures browsers always load fresh CSS/JS after each deploy
+pipelineStages := Seq(digest, gzip)
+
 libraryDependencies ++= Seq(
   guice,
   jdbc, // Play JDBC API
