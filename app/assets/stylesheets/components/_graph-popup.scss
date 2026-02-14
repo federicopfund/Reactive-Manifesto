@@ -102,10 +102,10 @@
 }
 
 .graph-popup-title {
-  font-size: 28px;
+  font-size: $font-size-2xl;
   font-weight: 700;
   color: white;
-  margin-bottom: 8px;
+  margin-bottom: $spacing-2;
   text-align: center;
   background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
   -webkit-background-clip: text;
@@ -114,10 +114,10 @@
 }
 
 .graph-popup-subtitle {
-  font-size: 16px;
+  font-size: $font-size-base;
   color: rgba(255, 255, 255, 0.7);
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: $spacing-8;
 }
 
 .graph-container {
@@ -212,7 +212,7 @@
   }
 
   .node-icon {
-    font-size: 24px;
+    font-size: $font-size-xl;
     text-anchor: middle;
     alignment-baseline: middle;
     user-select: none;
@@ -220,7 +220,7 @@
 
   .node-text {
     fill: white;
-    font-size: 14px;
+    font-size: $font-size-body-sm;
     font-weight: 600;
     text-anchor: middle;
     user-select: none;
@@ -234,7 +234,7 @@
   padding: 16px 20px;
   border-radius: 8px;
   color: white;
-  font-size: 14px;
+  font-size: $font-size-body-sm;
   line-height: 1.6;
   min-height: 60px;
   transition: all 0.3s ease;
@@ -246,8 +246,8 @@
   strong {
     color: var(--accent-color);
     display: block;
-    margin-bottom: 8px;
-    font-size: 16px;
+    margin-bottom: $spacing-2;
+    font-size: $font-size-base;
   }
 }
 
@@ -259,11 +259,11 @@
   }
 
   .graph-popup-title {
-    font-size: 22px;
+    font-size: $font-size-xl;
   }
 
   .graph-popup-subtitle {
-    font-size: 14px;
+    font-size: $font-size-body-sm;
   }
 
   #graphSvg {

@@ -181,9 +181,15 @@ $font-family-base: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Rob
 $font-family-display: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 $font-family-mono: 'JetBrains Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
 
-// Escala Tipográfica - Major Third (1.250)
+// Escala Tipográfica - Major Third (1.250) + intermedios proporcionales
+$font-size-2xs: 0.5625rem;   // 9px   - micro UI (kbd, badges tiny)
 $font-size-xs: 0.64rem;      // 10.24px
+$font-size-caption: 0.6875rem; // 11px - captions, meta info
+$font-size-label: 0.75rem;   // 12px  - labels, tags, small UI
 $font-size-sm: 0.8rem;       // 12.8px
+$font-size-nav: 0.8125rem;   // 13px  - navigation, compact body
+$font-size-body-sm: 0.875rem; // 14px - body compacto, subtítulos
+$font-size-body: 0.9375rem;  // 15px  - body secundario
 $font-size-base: 1rem;       // 16px (base)
 $font-size-md: 1.125rem;     // 18px
 $font-size-lg: 1.25rem;      // 20px (h6)

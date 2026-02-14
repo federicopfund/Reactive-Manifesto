@@ -11,7 +11,8 @@
 }
 
 html {
-  font-size: 16px;
+  // Tamaño base fluido: 14px en móvil → 16px en desktop (proporcional)
+  font-size: clamp(14px, 13.2px + 0.2vw, 16px);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
