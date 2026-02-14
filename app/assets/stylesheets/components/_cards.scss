@@ -76,15 +76,15 @@
   cursor: default;
 
   .principle-icon {
-    font-size: 3rem;
-    margin-bottom: $spacing-md;
+    font-size: 2rem;
+    margin-bottom: $spacing-sm;
     display: block;
     text-align: center;
   }
 
   h3 {
-    font-size: $font-size-2xl;
-    margin-bottom: 0.75rem;
+    font-size: $font-size-lg;
+    margin-bottom: 0.5rem;
     color: var(--primary-color);
     text-align: center;
     transition: color $transition-slow $easing-smooth;
@@ -93,19 +93,20 @@
   p {
     color: var(--text-light);
     line-height: $line-height-relaxed;
-    margin-bottom: $spacing-md;
+    margin-bottom: $spacing-sm;
+    font-size: $font-size-sm;
     transition: color $transition-slow $easing-smooth;
   }
 
   .principle-features {
     list-style: none;
     padding: 0;
-    margin: $spacing-md 0 0 0;
+    margin: $spacing-sm 0 0 0;
     
     li {
-      padding: $spacing-sm 0;
+      padding: $spacing-xs 0;
       color: var(--text-light);
-      font-size: $font-size-sm;
+      font-size: $font-size-xs;
       position: relative;
       padding-left: $spacing-lg;
       
@@ -120,12 +121,12 @@
   }
 }
 
-// Principles Grid (canonical)
+// Principles Grid (canonical) — fuerza 4 columnas
 .principles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: $spacing-xl;
-  margin-top: $spacing-3xl;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-lg;
+  margin-top: $spacing-2xl;
 }
 
 // Benefit Item
@@ -162,6 +163,12 @@
 }
 
 // Responsive
+@media (max-width: 1024px) {
+  .principles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: $breakpoint-md) {
   .principles-grid,
   .publications-grid,

@@ -31,8 +31,11 @@ class UserRepository @Inject()(
     def avatarUrl = column[String]("avatar_url")
     def website = column[String]("website")
     def location = column[String]("location")
+    def adminApproved = column[Boolean]("admin_approved")
+    def adminApprovedBy = column[Option[Long]]("admin_approved_by")
+    def adminRequestedAt = column[Option[Instant]]("admin_requested_at")
 
-    def * = (id.?, username, email, passwordHash, fullName, role, isActive, createdAt, lastLogin, emailVerified, bio, avatarUrl, website, location).mapTo[User]
+    def * = (id.?, username, email, passwordHash, fullName, role, isActive, createdAt, lastLogin, emailVerified, bio, avatarUrl, website, location, adminApproved, adminApprovedBy, adminRequestedAt).mapTo[User]
   }
 
   private val users = TableQuery[UsersTable]
@@ -170,4 +173,78 @@ class UserRepository @Inject()(
       .update((bio, avatarUrl, website, location))
     db.run(query)
   }
+
+  // ── ADMIN MANAGEMENT ──────────────────────────
+
+  /**
+   * Verifica si existe algún super_admin en el sistema
+   */
+  def hasSuperAdmin(): Future[Boolean] =
+    db.run(users.filter(u => u.role === "super_admin" && u.isActive).exists.result)
+
+  /**
+   * Lista administradores pendientes de aprobación
+   */
+  def findPendingAdmins(): Future[Seq[User]] =
+    db.run(users.filter(u => u.role === "pending_admin" && u.isActive).sortBy(_.adminRequestedAt.desc).result)
+
+  /**
+   * Lista todos los administradores aprobados (admin + super_admin)
+   */
+  def findApprovedAdmins(): Future[Seq[User]] =
+    db.run(users.filter(u => (u.role === "admin" || u.role === "super_admin") && u.isActive).sortBy(_.createdAt.desc).result)
+
+  /**
+   * Aprueba un admin pendiente — cambia role de pending_admin a admin
+   */
+  def approveAdmin(userId: Long, approvedBy: Long): Future[Int] =
+    db.run(
+      users.filter(u => u.id === userId && u.role === "pending_admin")
+        .map(u => (u.role, u.adminApproved, u.adminApprovedBy))
+        .update(("admin", true, Some(approvedBy)))
+    )
+
+  /**
+   * Rechaza un admin pendiente — vuelve a role user
+   */
+  def rejectAdmin(userId: Long): Future[Int] =
+    db.run(
+      users.filter(u => u.id === userId && u.role === "pending_admin")
+        .map(u => (u.role, u.adminApproved, u.adminApprovedBy, u.adminRequestedAt))
+        .update(("user", false, None, None))
+    )
+
+  /**
+   * Revoca permisos de admin — vuelve a role user
+   */
+  def revokeAdmin(userId: Long): Future[Int] =
+    db.run(
+      users.filter(u => u.id === userId && u.role === "admin")
+        .map(u => (u.role, u.adminApproved, u.adminApprovedBy))
+        .update(("user", false, None))
+    )
+
+  /**
+   * Actualiza el rol de un usuario
+   */
+  def updateRole(id: Long, role: String): Future[Int] =
+    db.run(users.filter(_.id === id).map(_.role).update(role))
+
+  /**
+   * Cuenta admins pendientes de aprobación
+   */
+  def countPendingAdmins(): Future[Int] =
+    db.run(users.filter(u => u.role === "pending_admin" && u.isActive).length.result)
+
+  /**
+   * Busca un usuario admin (admin o super_admin) por username
+   */
+  def findAdminByUsername(username: String): Future[Option[User]] =
+    db.run(users.filter(u => u.username === username && u.isActive && (u.role === "admin" || u.role === "super_admin")).result.headOption)
+
+  /**
+   * Actualiza contraseña de un usuario
+   */
+  def updatePassword(id: Long, newPasswordHash: String): Future[Int] =
+    db.run(users.filter(_.id === id).map(_.passwordHash).update(newPasswordHash))
 }

@@ -6,9 +6,9 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json._
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{ContactRepository, AdminRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository}
-import models.{ContactRecord, Admin, PublicationFeedback, UserNotification, FeedbackType}
-import actions.{AdminOnlyAction, AuthRequest}
+import repositories.{ContactRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository}
+import models.{ContactRecord, PublicationFeedback, UserNotification, FeedbackType}
+import actions.{AdminOnlyAction, SuperAdminOnlyAction, AuthRequest}
 import org.mindrot.jbcrypt.BCrypt
 import java.time.Instant
 
@@ -21,13 +21,13 @@ case class PublicationReviewForm(publicationId: Long, action: String, rejectionR
 class AdminController @Inject()(
   cc: ControllerComponents,
   contactRepository: ContactRepository,
-  adminRepository: AdminRepository,
   userRepository: UserRepository,
   publicationRepository: PublicationRepository,
   feedbackRepository: PublicationFeedbackRepository,
   notificationRepository: UserNotificationRepository,
   newsletterRepository: NewsletterRepository,
-  adminAction: AdminOnlyAction
+  adminAction: AdminOnlyAction,
+  superAdminAction: SuperAdminOnlyAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) {
 
   val loginForm = Form(
@@ -63,7 +63,7 @@ class AdminController @Inject()(
   }
 
   /**
-   * Procesar login de admin
+   * Procesar login de admin (usa users table con roles admin/super_admin)
    */
   def login(): Action[AnyContent] = Action.async { implicit request =>
     loginForm.bindFromRequest().fold(
@@ -74,23 +74,38 @@ class AdminController @Inject()(
         )
       },
       loginData => {
-        adminRepository.findByUsername(loginData.username).flatMap {
-          case Some(admin) if BCrypt.checkpw(loginData.password, admin.passwordHash) =>
-            // Actualizar último login
-            adminRepository.updateLastLogin(admin.id.get).map { _ =>
-              Redirect(routes.AdminController.dashboard(0, None))
-                .withSession(
-                  "userId" -> admin.id.get.toString,
-                  "username" -> admin.username,
-                  "userRole" -> "admin"
-                )
-                .flashing("success" -> s"Bienvenido, ${admin.username}")
+        userRepository.findAdminByUsername(loginData.username).flatMap {
+          case Some(user) if BCrypt.checkpw(loginData.password, user.passwordHash) =>
+            if (!user.adminApproved && user.role != "super_admin") {
+              Future.successful(
+                Redirect(routes.AuthController.loginPage())
+                  .flashing("error" -> "Tu cuenta de administrador aún no ha sido aprobada por el Super Admin")
+              )
+            } else {
+              userRepository.updateLastLogin(user.id.get).map { _ =>
+                Redirect(routes.AdminController.dashboard(0, None))
+                  .withSession(
+                    "userId" -> user.id.get.toString,
+                    "username" -> user.username,
+                    "userRole" -> user.role
+                  )
+                  .flashing("success" -> s"Bienvenido, ${user.fullName}")
+              }
             }
           case _ =>
-            Future.successful(
-              Redirect(routes.AuthController.loginPage())
-                .flashing("error" -> "Credenciales de administrador inválidas")
-            )
+            // Verificar si es un pending_admin
+            userRepository.findByUsername(loginData.username).flatMap {
+              case Some(user) if user.isPendingAdmin && BCrypt.checkpw(loginData.password, user.passwordHash) =>
+                Future.successful(
+                  Redirect(routes.AuthController.loginPage())
+                    .flashing("error" -> "Tu solicitud de administrador está pendiente de aprobación")
+                )
+              case _ =>
+                Future.successful(
+                  Redirect(routes.AuthController.loginPage())
+                    .flashing("error" -> "Credenciales de administrador inválidas")
+                )
+            }
         }
       }
     )
@@ -100,32 +115,34 @@ class AdminController @Inject()(
    * Logout
    */
   def logout(): Action[AnyContent] = Action { implicit request =>
-    Redirect(routes.AuthController.loginPage())
+    Redirect(routes.HomeController.index())
       .withNewSession
+      .flashing("success" -> "Sesión de administrador cerrada correctamente")
       .withHeaders(
         "Cache-Control" -> "no-cache, no-store, must-revalidate",
         "Pragma" -> "no-cache",
         "Expires" -> "0"
       )
+      .discardingCookies(DiscardingCookie("PLAY_SESSION"))
   }
 
   /**
-   * Endpoint de debug: Listar todos los administradores
+   * Endpoint de debug: Listar todos los administradores (desde users table)
    * Ruta: GET /debug/admins
-   * (TODO: Proteger este endpoint en producción)
    */
   def listAllAdmins(): Action[AnyContent] = Action.async { implicit request =>
-    adminRepository.listAll().map { admins =>
+    userRepository.findApprovedAdmins().map { admins =>
       Ok(Json.obj(
         "total" -> admins.length,
-        "admins" -> Json.toJson(admins.map { admin =>
+        "admins" -> Json.toJson(admins.map { user =>
           Json.obj(
-            "id" -> admin.id,
-            "username" -> admin.username,
-            "email" -> admin.email,
-            "role" -> admin.role,
-            "createdAt" -> admin.createdAt.toString,
-            "lastLogin" -> admin.lastLogin.map(_.toString)
+            "id" -> user.id,
+            "username" -> user.username,
+            "email" -> user.email,
+            "role" -> user.role,
+            "adminApproved" -> user.adminApproved,
+            "createdAt" -> user.createdAt.toString,
+            "lastLogin" -> user.lastLogin.map(_.toString)
           )
         })
       ))
@@ -140,6 +157,7 @@ class AdminController @Inject()(
       contacts <- contactRepository.listAll()
       totalCount <- contactRepository.count()
       pendingPublications <- publicationRepository.findPending()
+      pendingAdminsCount <- userRepository.countPendingAdmins()
     } yield {
       val filteredContacts = search match {
         case Some(query) if query.nonEmpty =>
@@ -156,7 +174,7 @@ class AdminController @Inject()(
       val paginatedContacts = filteredContacts.slice(offset, offset + pageSize)
       val totalPages = Math.ceil(filteredContacts.length.toDouble / pageSize).toInt
       
-      Ok(views.html.admin.dashboard(paginatedContacts, request.username, page, totalPages, search, pendingPublications.length))
+      Ok(views.html.admin.dashboard(paginatedContacts, request.username, page, totalPages, search, pendingPublications.length, pendingAdminsCount, request.role))
     }
   }
 
@@ -330,9 +348,9 @@ class AdminController @Inject()(
       contactsLast7Days <- contactRepository.getContactsInLastDays(7)
       contactsLast30Days <- contactRepository.getContactsInLastDays(30)
 
-      // Estadísticas de administradores
-      totalAdmins <- adminRepository.count()
-      allAdmins <- adminRepository.listAll()
+      // Estadísticas de administradores (desde users table)
+      approvedAdmins <- userRepository.findApprovedAdmins()
+      pendingAdmins <- userRepository.countPendingAdmins()
 
     } yield {
         // Calcular métricas de tiempo promedio
@@ -397,8 +415,9 @@ class AdminController @Inject()(
             "contactsPerActiveUser" -> contactsPerActiveUser.toString
           ),
           "admins" -> Json.obj(
-            "total" -> totalAdmins,
-            "recentActivity" -> allAdmins.count(a => a.lastLogin.exists(ll => 
+            "total" -> approvedAdmins.length,
+            "pending" -> pendingAdmins,
+            "recentActivity" -> approvedAdmins.count(a => a.lastLogin.exists(ll => 
               java.time.Duration.between(ll, now).toDays < 7
             ))
           ),
@@ -674,6 +693,67 @@ class AdminController @Inject()(
   def newsletterSubscribers() = adminAction.async { implicit request: AuthRequest[AnyContent] =>
     newsletterRepository.findAll().map { subscribers =>
       Ok(views.html.admin.newsletterSubscribers(subscribers))
+    }
+  }
+
+  // ============================================
+  // GESTIÓN DE ADMINISTRADORES (Super Admin Only)
+  // ============================================
+
+  /**
+   * Panel de gestión de administradores — solo Super Admin
+   */
+  def adminManagement(): Action[AnyContent] = superAdminAction.async { implicit request: AuthRequest[AnyContent] =>
+    for {
+      pendingAdmins <- userRepository.findPendingAdmins()
+      approvedAdmins <- userRepository.findApprovedAdmins()
+    } yield {
+      Ok(views.html.admin.adminManagement(pendingAdmins, approvedAdmins, request.username, request.role))
+    }
+  }
+
+  /**
+   * Aprobar un administrador pendiente
+   */
+  def approveAdmin(userId: Long): Action[AnyContent] = superAdminAction.async { implicit request: AuthRequest[AnyContent] =>
+    userRepository.approveAdmin(userId, request.userId).map { updated =>
+      if (updated > 0) {
+        Redirect(routes.AdminController.adminManagement())
+          .flashing("success" -> "Administrador aprobado exitosamente")
+      } else {
+        Redirect(routes.AdminController.adminManagement())
+          .flashing("error" -> "No se pudo aprobar el administrador")
+      }
+    }
+  }
+
+  /**
+   * Rechazar un administrador pendiente (vuelve a usuario normal)
+   */
+  def rejectAdmin(userId: Long): Action[AnyContent] = superAdminAction.async { implicit request: AuthRequest[AnyContent] =>
+    userRepository.rejectAdmin(userId).map { updated =>
+      if (updated > 0) {
+        Redirect(routes.AdminController.adminManagement())
+          .flashing("success" -> "Solicitud de administrador rechazada")
+      } else {
+        Redirect(routes.AdminController.adminManagement())
+          .flashing("error" -> "No se pudo rechazar la solicitud")
+      }
+    }
+  }
+
+  /**
+   * Revocar permisos de administrador (vuelve a usuario normal)
+   */
+  def revokeAdmin(userId: Long): Action[AnyContent] = superAdminAction.async { implicit request: AuthRequest[AnyContent] =>
+    userRepository.revokeAdmin(userId).map { updated =>
+      if (updated > 0) {
+        Redirect(routes.AdminController.adminManagement())
+          .flashing("success" -> "Permisos de administrador revocados")
+      } else {
+        Redirect(routes.AdminController.adminManagement())
+          .flashing("error" -> "No se pudieron revocar los permisos")
+      }
     }
   }
 }

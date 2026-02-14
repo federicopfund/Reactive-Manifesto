@@ -92,7 +92,7 @@ class UserAction @Inject()(
         val username = request.session.get("username").getOrElse("Usuario")
         val role = request.session.get("userRole").getOrElse("user")
         
-        if (role == "user" || role == "admin") {
+        if (role == "user" || role == "admin" || role == "super_admin") {
           block(AuthRequest(userId, username, role, request))
         } else {
           Future.successful(
@@ -110,7 +110,7 @@ class UserAction @Inject()(
 }
 
 /**
- * AdminOnlyAction - Verifica que el usuario es administrador
+ * AdminOnlyAction - Verifica que el usuario es administrador (admin o super_admin)
  */
 class AdminOnlyAction @Inject()(
   val parser: BodyParsers.Default,
@@ -127,11 +127,46 @@ class AdminOnlyAction @Inject()(
         val username = request.session.get("username").getOrElse("Admin")
         val role = request.session.get("userRole").getOrElse("user")
         
-        if (role == "admin") {
+        if (role == "admin" || role == "super_admin") {
           block(AuthRequest(userId, username, role, request))
         } else {
           Future.successful(
             Results.Forbidden("Solo los administradores pueden acceder a este recurso")
+          )
+        }
+        
+      case None =>
+        Future.successful(
+          Results.Redirect(controllers.routes.AdminController.loginPage())
+            .flashing("error" -> "Debes iniciar sesión como administrador")
+        )
+    }
+  }
+}
+
+/**
+ * SuperAdminOnlyAction - Verifica que el usuario es super administrador
+ */
+class SuperAdminOnlyAction @Inject()(
+  val parser: BodyParsers.Default,
+  val executionContext: ExecutionContext
+) extends ActionBuilder[AuthRequest, AnyContent] {
+
+  override def invokeBlock[A](
+    request: Request[A], 
+    block: AuthRequest[A] => Future[Result]
+  ): Future[Result] = {
+    request.session.get("userId") match {
+      case Some(userIdStr) =>
+        val userId = userIdStr.toLong
+        val username = request.session.get("username").getOrElse("Admin")
+        val role = request.session.get("userRole").getOrElse("user")
+        
+        if (role == "super_admin") {
+          block(AuthRequest(userId, username, role, request))
+        } else {
+          Future.successful(
+            Results.Forbidden("Solo el Super Administrador puede acceder a este recurso")
           )
         }
         

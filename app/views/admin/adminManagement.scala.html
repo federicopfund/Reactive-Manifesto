@@ -1,0 +1,164 @@
+@(pendingAdmins: Seq[models.User], approvedAdmins: Seq[models.User], username: String, role: String)(implicit request: RequestHeader, flash: Flash)
+
+@admin.adminLayout("Gestión de Administradores") {
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #1a202c; margin-bottom: 0.25rem;">🛡️ Gestión de Administradores</h2>
+            <p style="font-size: 0.8125rem; color: #64748b;">Panel exclusivo de Super Admin — <strong>@username</strong></p>
+        </div>
+        <a href="@routes.AdminController.dashboard()" class="btn btn-secondary">← Volver al Dashboard</a>
+    </div>
+
+    @flash.get("success").map { msg =>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #22c55e; color: #166534; font-size: 0.875rem;">
+            ✅ @msg
+        </div>
+    }
+    @flash.get("error").map { msg =>
+        <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #ef4444; color: #991b1b; font-size: 0.875rem;">
+            ❌ @msg
+        </div>
+    }
+
+    <!-- Estadísticas rápidas -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+        <div class="card" style="border-left: 3px solid #d4a853; padding: 1.25rem;">
+            <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Pendientes</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@pendingAdmins.size</div>
+        </div>
+        <div class="card" style="border-left: 3px solid #6b8f71; padding: 1.25rem;">
+            <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Aprobados</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@approvedAdmins.size</div>
+        </div>
+        <div class="card" style="border-left: 3px solid #7c3aed; padding: 1.25rem;">
+            <div style="font-size: 0.6875rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Total Admins</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #1a202c; margin-top: 0.25rem;">@{pendingAdmins.size + approvedAdmins.size}</div>
+        </div>
+    </div>
+
+    <!-- Sección: Administradores Pendientes -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="font-size: 0.9375rem; font-weight: 700; color: #1a202c; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e2e8f0;">
+            ⏳ Solicitudes Pendientes
+            @if(pendingAdmins.nonEmpty) {
+                <span style="background: #d4a853; color: white; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; margin-left: 0.5rem;">@pendingAdmins.size</span>
+            }
+        </h3>
+
+        @if(pendingAdmins.isEmpty) {
+            <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                <p style="font-size: 0.875rem;">No hay solicitudes pendientes de aprobación.</p>
+            </div>
+        } else {
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+                            <th style="padding: 0.75rem 1rem; color: #475569; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Usuario</th>
+                            <th style="padding: 0.75rem 1rem; color: #475569; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Email</th>
+                            <th style="padding: 0.75rem 1rem; color: #475569; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Fecha Solicitud</th>
+                            <th style="padding: 0.75rem 1rem; color: #475569; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for(admin <- pendingAdmins) {
+                            <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 0.75rem 1rem; font-weight: 600; color: #1a202c;">
+                                    @admin.username
+                                </td>
+                                <td style="padding: 0.75rem 1rem; color: #64748b;">
+                                    @admin.email
+                                </td>
+                                <td style="padding: 0.75rem 1rem; color: #64748b; font-size: 0.8125rem;">
+                                    @admin.adminRequestedAt.map { date =>
+                                        @{
+                                            val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                                            date.atZone(java.time.ZoneId.systemDefault()).format(formatter)
+                                        }
+                                    }.getOrElse("—")
+                                </td>
+                                <td style="padding: 0.75rem 1rem; text-align: center;">
+                                    <div style="display: flex; gap: 0.375rem; justify-content: center;">
+                                        <form method="POST" action="@routes.AdminController.approveAdmin(admin.id.get)" style="display: inline;">
+                                            @helper.CSRF.formField
+                                            <button type="submit" class="btn btn-success btn-sm" style="font-size: 0.75rem;"
+                                                    onclick="return confirm('¿Aprobar a @admin.username como administrador?')">
+                                                ✓ Aprobar
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="@routes.AdminController.rejectAdmin(admin.id.get)" style="display: inline;">
+                                            @helper.CSRF.formField
+                                            <button type="submit" class="btn btn-danger btn-sm" style="font-size: 0.75rem;"
+                                                    onclick="return confirm('¿Rechazar la solicitud de @admin.username? Volverá a ser usuario normal.')">
+                                                ✗ Rechazar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <!-- Sección: Administradores Aprobados -->
+    <div class="card">
+        <h3 style="font-size: 0.9375rem; font-weight: 700; color: #1a202c; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e2e8f0;">
+            ✅ Administradores Activos
+            <span style="background: #6b8f71; color: white; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; margin-left: 0.5rem;">@approvedAdmins.size</span>
+        </h3>
+
+        @if(approvedAdmins.isEmpty) {
+            <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                <p style="font-size: 0.875rem;">No hay administradores aprobados aún.</p>
+            </div>
+        } else {
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+                            <th style="padding: 0.75rem 1rem; color: #475569; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Usuario</th>
+                            <th style="padding: 0.75rem 1rem; color: #475569; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Email</th>
+                            <th style="padding: 0.75rem 1rem; color: #475569; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Rol</th>
+                            <th style="padding: 0.75rem 1rem; color: #475569; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for(admin <- approvedAdmins) {
+                            <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 0.75rem 1rem; font-weight: 600; color: #1a202c;">
+                                    @admin.username
+                                </td>
+                                <td style="padding: 0.75rem 1rem; color: #64748b;">
+                                    @admin.email
+                                </td>
+                                <td style="padding: 0.75rem 1rem;">
+                                    @if(admin.role == "super_admin") {
+                                        <span style="background: #7c3aed; color: white; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">Super Admin</span>
+                                    } else {
+                                        <span style="background: #6b8f71; color: white; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">Admin</span>
+                                    }
+                                </td>
+                                <td style="padding: 0.75rem 1rem; text-align: center;">
+                                    @if(admin.role != "super_admin") {
+                                        <form method="POST" action="@routes.AdminController.revokeAdmin(admin.id.get)" style="display: inline;">
+                                            @helper.CSRF.formField
+                                            <button type="submit" class="btn btn-danger btn-sm" style="font-size: 0.75rem;"
+                                                    onclick="return confirm('¿Revocar permisos de administrador a @admin.username? Volverá a ser usuario normal.')">
+                                                Revocar Permisos
+                                            </button>
+                                        </form>
+                                    } else {
+                                        <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}

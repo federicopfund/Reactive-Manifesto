@@ -102,6 +102,24 @@
                             <div class="error">@registerForm("confirmPassword").errors.map(_.message).mkString(", ")</div>
                         }
                     </div>
+
+                    <div class="form-group admin-toggle">
+                        <label class="toggle-label" for="registerAsAdmin">
+                            <input
+                                type="checkbox"
+                                id="registerAsAdmin"
+                                name="registerAsAdmin"
+                                value="true"
+                                @if(registerForm("registerAsAdmin").value.contains("true")) { checked }
+                            />
+                            <span class="toggle-text">🛡️ Registrarme como Administrador</span>
+                        </label>
+                        <p class="admin-note" id="adminNote" style="display:none;">
+                            Si eres el primer administrador registrado, obtendrás el rol de <strong>Super Admin</strong>.
+                            De lo contrario, tu solicitud será revisada y aprobada por el Super Admin existente.
+                        </p>
+                    </div>
+                    <input type="hidden" name="registerAsAdmin" value="false" />
                     
                     <button type="submit" class="btn-register">Crear Cuenta</button>
                 </form>
@@ -115,4 +133,43 @@
             </div>
         </div>
     </div>
+
+    <style>
+        .admin-toggle { margin-top: 0.5rem; }
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .toggle-label:hover { border-color: #9ca3af; background: #f9fafb; }
+        .toggle-label input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        .toggle-label input[type="checkbox"]:checked ~ .toggle-text { color: #374151; }
+        .admin-note {
+            font-size: 0.8125rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
+            line-height: 1.5;
+        }
+    </style>
+    <script>
+        (function() {
+            var cb   = document.getElementById('registerAsAdmin');
+            var note = document.getElementById('adminNote');
+            if (cb && note) {
+                function toggle() { note.style.display = cb.checked ? 'block' : 'none'; }
+                cb.addEventListener('change', toggle);
+                toggle();
+            }
+        })();
+    </script>
 }

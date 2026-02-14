@@ -7,21 +7,20 @@ import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.Configuration
-import repositories.{UserRepository, AdminRepository}
+import repositories.UserRepository
 import services.EmailVerificationService
 import models.User
 import org.mindrot.jbcrypt.BCrypt
 import java.time.Instant
 
 case class UserLoginForm(username: String, password: String, loginType: String)
-case class UserRegisterForm(username: String, email: String, password: String, confirmPassword: String, fullName: String)
+case class UserRegisterForm(username: String, email: String, password: String, confirmPassword: String, fullName: String, registerAsAdmin: Boolean)
 case class EmailVerificationForm(userId: Long, code: String)
 
 @Singleton
 class AuthController @Inject()( 
   cc: ControllerComponents,
   userRepository: UserRepository,
-  adminRepository: AdminRepository,
   emailVerificationService: EmailVerificationService,
   config: Configuration
 )(implicit ec: ExecutionContext) extends AbstractController(cc) with I18nSupport {
@@ -44,7 +43,8 @@ class AuthController @Inject()(
       "email" -> email,
       "password" -> nonEmptyText(minLength = 6),
       "confirmPassword" -> nonEmptyText(minLength = 6),
-      "fullName" -> nonEmptyText
+      "fullName" -> nonEmptyText,
+      "registerAsAdmin" -> boolean
     )(UserRegisterForm.apply)(UserRegisterForm.unapply)
       .verifying("Las contraseñas no coinciden", fields => fields match {
         case form => form.password == form.confirmPassword
@@ -114,12 +114,19 @@ class AuthController @Inject()(
   }
 
   /**
-   * Autenticar usuario común
+   * Autenticar usuario (detecta también admin/super_admin y redirige)
    */
   private def authenticateUser(username: String, password: String)(implicit request: RequestHeader): Future[Result] = {
     userRepository.findByUsername(username).flatMap {
       case Some(user) if BCrypt.checkpw(password, user.passwordHash) =>
-        if (!user.emailVerified && requireEmailVerification) {
+        // Si es admin/super_admin, redirigir al flujo de admin
+        if (user.isSuperAdmin || user.isAdmin) {
+          authenticateAdmin(username, password)
+        } else if (user.isPendingAdmin) {
+          Future.successful(
+            Unauthorized(views.html.auth.login(loginForm.withGlobalError("Tu solicitud de administrador está pendiente de aprobación por el Super Admin")))
+          )
+        } else if (!user.emailVerified && requireEmailVerification) {
           // Usuario no verificado y la app requiere verificación: enviar código
           emailVerificationService.createAndSendCode(user.id.get, user.email).map { _ =>
             Redirect(routes.AuthController.verifyEmailPage(user.id.get))
@@ -141,24 +148,38 @@ class AuthController @Inject()(
   }
 
   /**
-   * Autenticar administrador
+   * Autenticar administrador (desde tabla users con role admin/super_admin)
    */
   private def authenticateAdmin(username: String, password: String)(implicit request: RequestHeader): Future[Result] = {
-    adminRepository.findByUsername(username).flatMap {
-      case Some(admin) if BCrypt.checkpw(password, admin.passwordHash) =>
-        adminRepository.updateLastLogin(admin.id.get).map { _ =>
-          Redirect(routes.AdminController.dashboard(0, None))
-            .withSession(
-              "userId" -> admin.id.get.toString,
-              "username" -> admin.username,
-              "userRole" -> "admin"
-            )
-            .flashing("success" -> s"Bienvenido Admin, ${admin.username}")
+    userRepository.findAdminByUsername(username).flatMap {
+      case Some(user) if BCrypt.checkpw(password, user.passwordHash) =>
+        if (!user.adminApproved && user.role != "super_admin") {
+          Future.successful(
+            Unauthorized(views.html.auth.login(loginForm.withGlobalError("Tu cuenta de administrador aún no ha sido aprobada por el Super Admin")))
+          )
+        } else {
+          userRepository.updateLastLogin(user.id.get).map { _ =>
+            Redirect(routes.AdminController.dashboard(0, None))
+              .withSession(
+                "userId" -> user.id.get.toString,
+                "username" -> user.username,
+                "userRole" -> user.role
+              )
+              .flashing("success" -> s"Bienvenido Admin, ${user.fullName}")
+          }
         }
       case _ =>
-        Future.successful(
-          Unauthorized(views.html.auth.login(loginForm.withGlobalError("Credenciales de administrador inválidas")))
-        )
+        // Check if pending_admin trying to login
+        userRepository.findByUsername(username).flatMap {
+          case Some(user) if user.isPendingAdmin && BCrypt.checkpw(password, user.passwordHash) =>
+            Future.successful(
+              Unauthorized(views.html.auth.login(loginForm.withGlobalError("Tu solicitud de administrador está pendiente de aprobación")))
+            )
+          case _ =>
+            Future.successful(
+              Unauthorized(views.html.auth.login(loginForm.withGlobalError("Credenciales de administrador inválidas")))
+            )
+        }
     }
   }
 
@@ -195,24 +216,43 @@ class AuthController @Inject()(
                   registerForm.withError("email", "Este email ya está registrado")
                 )))
               } else {
-                // Crear nuevo usuario
-                val hashedPassword = BCrypt.hashpw(registerData.password, BCrypt.gensalt(10))
-                val newUser = User(
-                  id = None,
-                  username = registerData.username,
-                  email = registerData.email,
-                  passwordHash = hashedPassword,
-                  fullName = registerData.fullName,
-                  role = "user",
-                  isActive = true,
-                  createdAt = Instant.now(),
-                  lastLogin = None,
-                  emailVerified = false  // Requiere verificación por código según configuración
-                )
-                
-                userRepository.create(newUser).map { _ =>
-                  Redirect(routes.AuthController.loginPage())
-                    .flashing("success" -> "Registro exitoso. Por favor inicia sesión para verificar tu email.")
+                // Determinar el rol según la opción de registro
+                val roleFuture: Future[(String, Boolean)] = if (registerData.registerAsAdmin) {
+                  // Si no hay super_admin, el primero se convierte en super_admin
+                  userRepository.hasSuperAdmin().map {
+                    case false => ("super_admin", true)   // Primer admin = super_admin, auto-aprobado
+                    case true  => ("pending_admin", false) // Los siguientes esperan aprobación
+                  }
+                } else {
+                  Future.successful(("user", false))
+                }
+
+                roleFuture.flatMap { case (role, autoApproved) =>
+                  val hashedPassword = BCrypt.hashpw(registerData.password, BCrypt.gensalt(10))
+                  val newUser = User(
+                    id = None,
+                    username = registerData.username,
+                    email = registerData.email,
+                    passwordHash = hashedPassword,
+                    fullName = registerData.fullName,
+                    role = role,
+                    isActive = true,
+                    createdAt = Instant.now(),
+                    lastLogin = None,
+                    emailVerified = false,
+                    adminApproved = autoApproved,
+                    adminRequestedAt = if (registerData.registerAsAdmin) Some(Instant.now()) else None
+                  )
+
+                  userRepository.create(newUser).map { _ =>
+                    val flashMsg = role match {
+                      case "super_admin"  => "¡Registro exitoso! Eres el Super Administrador del sistema. Inicia sesión para acceder."
+                      case "pending_admin" => "¡Registro exitoso! Tu solicitud de administrador está pendiente de aprobación por el Super Admin."
+                      case _              => "Registro exitoso. Por favor inicia sesión para verificar tu email."
+                    }
+                    Redirect(routes.AuthController.loginPage())
+                      .flashing("success" -> flashMsg)
+                  }
                 }
               }
             }
@@ -228,11 +268,13 @@ class AuthController @Inject()(
   def logout(): Action[AnyContent] = Action { implicit request =>
     Redirect(routes.HomeController.index())
       .withNewSession
+      .flashing("success" -> "Sesión cerrada correctamente")
       .withHeaders(
         "Cache-Control" -> "no-cache, no-store, must-revalidate",
         "Pragma" -> "no-cache",
         "Expires" -> "0"
       )
+      .discardingCookies(DiscardingCookie("PLAY_SESSION"))
   }
 
   /**

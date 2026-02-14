@@ -8,7 +8,7 @@ case class User(
   email: String,
   passwordHash: String,
   fullName: String,
-  role: String = "user",
+  role: String = "user",           // user | admin | super_admin | pending_admin
   isActive: Boolean = true,
   createdAt: Instant = Instant.now(),
   lastLogin: Option[Instant] = None,
@@ -16,5 +16,13 @@ case class User(
   bio: String = "",
   avatarUrl: String = "",
   website: String = "",
-  location: String = ""
-)
+  location: String = "",
+  adminApproved: Boolean = false,
+  adminApprovedBy: Option[Long] = None,
+  adminRequestedAt: Option[Instant] = None
+) {
+  def isSuperAdmin: Boolean = role == "super_admin"
+  def isAdmin: Boolean      = role == "admin" || role == "super_admin"
+  def isPendingAdmin: Boolean = role == "pending_admin"
+  def isAdminRole: Boolean  = isAdmin || isPendingAdmin
+}

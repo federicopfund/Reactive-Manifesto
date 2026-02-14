@@ -1,649 +1,53 @@
 @(form: Form[controllers.PublicationFormData], publication: Option[models.Publication], username: String)(implicit request: RequestHeader, flash: Flash)
 
 @main(if(publication.isDefined) "Editar Publicación" else "Nueva Publicación") {
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: #f3f4f6;
-            min-height: 100vh;
-            padding: 2rem 1rem;
-        }
-
-        .publication-container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .publication-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .publication-header h1 {
-            font-size: 2rem;
-            color: #1f2937;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-        }
-
-        .publication-header a {
-            background: #ffffff;
-            color: #4b5563;
-            padding: 0.625rem 1.25rem;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            font-weight: 500;
-            font-size: 0.875rem;
-            border: 1px solid #e5e7eb;
-        }
-
-        .publication-header a:hover {
-            background: #f9fafb;
-            border-color: #d1d5db;
-            color: #1f2937;
-        }
-
-        .form-wrapper {
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-        }
-
-        .form-header {
-            background: #f9fafb;
-            color: #1f2937;
-            padding: 1.75rem 2rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .form-header h2 {
-            font-size: 1.375rem;
-            margin-bottom: 0.25rem;
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        .form-header p {
-            color: #6b7280;
-            font-size: 0.9375rem;
-        }
-
-        .form-content {
-            padding: 2rem;
-        }
-
-        .publication-info {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            padding: 1.375rem;
-            border-radius: 10px;
-            margin-bottom: 2rem;
-        }
-
-        .info-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .info-header span {
-            font-size: 1.5rem;
-        }
-
-        .info-header h3 {
-            color: #374151;
-            font-size: 1.0625rem;
-            font-weight: 600;
-        }
-
-        .info-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .info-content p {
-            color: #4b5563;
-            font-size: 0.95rem;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .status-badge.draft {
-            background: #f3f4f6;
-            color: #6b7280;
-        }
-
-        .status-badge.pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-badge.approved {
-            background: #ecfdf5;
-            color: #065f46;
-        }
-
-        .error {
-            background: #fef2f2;
-            color: #991b1b;
-            padding: 0.875rem 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            border-left: 3px solid #fca5a5;
-            font-size: 0.9375rem;
-        }
-
-        .error-list {
-            list-style: none;
-            margin: 0.5rem 0 0 0;
-        }
-
-        .error-list li {
-            padding: 0.25rem 0;
-        }
-
-        .form-section {
-            margin-bottom: 2.5rem;
-        }
-
-        .form-section-title {
-            font-size: 1.0625rem;
-            color: #374151;
-            font-weight: 600;
-            margin-bottom: 1.25rem;
-            padding-bottom: 0.625rem;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            gap: 0.625rem;
-        }
-
-        .form-section-title span {
-            font-size: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.75rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.75rem;
-        }
-
-        @@media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        label {
-            display: block;
-            font-weight: 500;
-            color: #4b5563;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .required {
-            color: #f87171;
-            font-weight: 600;
-        }
-
-        .char-count {
-            font-size: 0.85rem;
-            color: #9ca3af;
-            font-weight: normal;
-        }
-
-        input[type="text"],
-        input[type="url"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 0.75rem 0.875rem;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 0.9375rem;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            background: #ffffff;
-            color: #374151;
-        }
-
-        input[type="text"]:focus,
-        input[type="url"]:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #9ca3af;
-            box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.12);
-        }
-
-        input[type="text"].has-error,
-        select.has-error,
-        textarea.has-error {
-            border-color: #f87171;
-            box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.08);
-        }
-
-        input[type="text"].has-error:focus,
-        select.has-error:focus,
-        textarea.has-error:focus {
-            border-color: #f87171;
-            box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
-        }
-
-        select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            padding-right: 2.5rem;
-        }
-
-        .help-text {
-            margin-top: 0.5rem;
-            font-size: 0.875rem;
-            color: #6b7280;
-            line-height: 1.5;
-        }
-
-        .help-text code {
-            background: #f3f4f6;
-            padding: 0.1rem 0.35rem;
-            border-radius: 4px;
-            font-family: 'Monaco', 'Menlo', monospace;
-            color: #4b5563;
-            font-size: 0.8125rem;
-        }
-
-        .help-text strong {
-            color: #374151;
-        }
-
-        .field-error {
-            background: #fef2f2;
-            color: #991b1b;
-            padding: 0.625rem 0.75rem;
-            border-radius: 6px;
-            margin-top: 0.5rem;
-            font-size: 0.8125rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .field-error::before {
-            content: "⚠️";
-        }
-
-        .tags-hint {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .tag-suggestion {
-            background: #f3f4f6;
-            color: #374151;
-            padding: 0.4rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid #e5e7eb;
-        }
-
-        .tag-suggestion:hover {
-            background: #e5e7eb;
-            border-color: #9ca3af;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 2.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e5e7eb;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-            font-size: 0.9375rem;
-            transition: all 0.2s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            justify-content: center;
-            min-height: 44px;
-        }
-
-        .btn-primary {
-            background: #374151;
-            color: #ffffff;
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .btn-primary:hover {
-            background: #1f2937;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-primary:active {
-            background: #111827;
-        }
-
-        .btn-secondary {
-            background: #ffffff;
-            color: #4b5563;
-            border: 1px solid #d1d5db;
-        }
-
-        .btn-secondary:hover {
-            background: #f9fafb;
-            border-color: #9ca3af;
-        }
-
-        .content-tip {
-            background: #f9fafb;
-            border-left: 3px solid #d1d5db;
-            padding: 0.875rem 1rem;
-            border-radius: 6px;
-            margin-top: 1rem;
-            font-size: 0.875rem;
-            color: #6b7280;
-            line-height: 1.6;
-        }
-
-        .content-tip strong {
-            color: #374151;
-            font-weight: 600;
-        }
-
-        .title-preview {
-            background: #f9fafb;
-            padding: 0.875rem 1rem;
-            border-radius: 8px;
-            margin-top: 0.75rem;
-            border: 1px solid #e5e7eb;
-        }
-
-        .title-preview-label {
-            font-size: 0.85rem;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
-        }
-
-        .title-preview-text {
-            font-size: 1.5rem;
-            color: #1f2937;
-            font-weight: 600;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-
-        .title-preview-text.truncated {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .character-indicator {
-            margin-top: 0.5rem;
-            font-size: 0.85rem;
-            color: #6b7280;
-        }
-
-        .character-indicator.warning {
-            color: #f59e0b;
-        }
-
-        .character-indicator.error {
-            color: #dc2626;
-        }
-
-        @@media (max-width: 768px) {
-            .publication-header h1 {
-                font-size: 1.5rem;
-            }
-
-            .form-header {
-                padding: 1.25rem 1.5rem;
-            }
-
-            .form-header h2 {
-                font-size: 1.25rem;
-            }
-
-            .form-content {
-                padding: 1.25rem;
-            }
-        }
-
-        /* ── DARK MODE ── */
-        [data-theme="dark"] body {
-            background: #111827;
-            color: #e5e7eb;
-        }
-
-        [data-theme="dark"] .publication-header h1 {
-            color: #f3f4f6;
-        }
-
-        [data-theme="dark"] .publication-header a {
-            background: #1f2937;
-            color: #d1d5db;
-            border-color: #374151;
-        }
-        [data-theme="dark"] .publication-header a:hover {
-            background: #374151;
-            color: #f3f4f6;
-            border-color: #4b5563;
-        }
-
-        [data-theme="dark"] .form-wrapper {
-            background: #1f2937;
-            border-color: #374151;
-        }
-
-        [data-theme="dark"] .form-header {
-            background: #1a2332;
-            border-bottom-color: #374151;
-        }
-        [data-theme="dark"] .form-header h2 {
-            color: #f3f4f6;
-        }
-        [data-theme="dark"] .form-header p {
-            color: #9ca3af;
-        }
-
-        [data-theme="dark"] .publication-info {
-            background: #1a2332;
-            border-color: #374151;
-        }
-        [data-theme="dark"] .info-header h3 {
-            color: #e5e7eb;
-        }
-        [data-theme="dark"] .info-content p {
-            color: #d1d5db;
-        }
-        [data-theme="dark"] .info-content p strong {
-            color: #e5e7eb;
-        }
-
-        [data-theme="dark"] .form-section-title {
-            color: #e5e7eb;
-            border-bottom-color: #374151;
-        }
-
-        [data-theme="dark"] label {
-            color: #d1d5db;
-        }
-
-        [data-theme="dark"] .char-count {
-            color: #6b7280;
-        }
-
-        [data-theme="dark"] input[type="text"],
-        [data-theme="dark"] input[type="url"],
-        [data-theme="dark"] select,
-        [data-theme="dark"] textarea {
-            background: #111827;
-            color: #e5e7eb;
-            border-color: #374151;
-        }
-        [data-theme="dark"] input[type="text"]:focus,
-        [data-theme="dark"] input[type="url"]:focus,
-        [data-theme="dark"] select:focus,
-        [data-theme="dark"] textarea:focus {
-            border-color: #6b8caa;
-            box-shadow: 0 0 0 3px rgba(107, 140, 170, 0.15);
-        }
-        [data-theme="dark"] input[type="text"]::placeholder,
-        [data-theme="dark"] input[type="url"]::placeholder,
-        [data-theme="dark"] textarea::placeholder {
-            color: #4b5563;
-        }
-
-        [data-theme="dark"] select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-        }
-
-        [data-theme="dark"] .help-text {
-            color: #6b7280;
-        }
-        [data-theme="dark"] .help-text code {
-            background: #111827;
-            color: #9ca3af;
-        }
-        [data-theme="dark"] .help-text strong {
-            color: #d1d5db;
-        }
-
-        [data-theme="dark"] .title-preview {
-            background: #111827;
-            border-color: #374151;
-        }
-        [data-theme="dark"] .title-preview-label {
-            color: #6b7280;
-        }
-        [data-theme="dark"] .title-preview-text {
-            color: #f3f4f6;
-        }
-
-        [data-theme="dark"] .content-tip {
-            background: #1a2332;
-            border-left-color: #4b5563;
-            color: #9ca3af;
-        }
-        [data-theme="dark"] .content-tip strong {
-            color: #d1d5db;
-        }
-
-        [data-theme="dark"] .tag-suggestion {
-            background: #111827;
-            color: #d1d5db;
-            border-color: #374151;
-        }
-        [data-theme="dark"] .tag-suggestion:hover {
-            background: #1f2937;
-            border-color: #6b7280;
-        }
-
-        [data-theme="dark"] .error {
-            background: #1c1517;
-            color: #fca5a5;
-            border-left-color: #7f1d1d;
-        }
-        [data-theme="dark"] .field-error {
-            background: #1c1517;
-            color: #fca5a5;
-        }
-
-        [data-theme="dark"] .form-actions {
-            border-top-color: #374151;
-        }
-        [data-theme="dark"] .btn-primary {
-            background: #6b8caa;
-            color: #ffffff;
-        }
-        [data-theme="dark"] .btn-primary:hover {
-            background: #5a7892;
-        }
-        [data-theme="dark"] .btn-secondary {
-            background: #1f2937;
-            color: #d1d5db;
-            border-color: #374151;
-        }
-        [data-theme="dark"] .btn-secondary:hover {
-            background: #374151;
-            color: #f3f4f6;
-            border-color: #4b5563;
-        }
-
-        [data-theme="dark"] .status-badge.draft {
-            background: #1f2937;
-            color: #9ca3af;
-        }
-        [data-theme="dark"] .status-badge.pending {
-            background: #1a2332;
-            color: #93c5fd;
-        }
-        [data-theme="dark"] .status-badge.approved {
-            background: #0d2818;
-            color: #6ee7b7;
-        }
-
-        [data-theme="dark"] .character-indicator {
-            color: #6b7280;
-        }
-    </style>
+    <!-- FULLSCREEN EDITOR OVERLAY -->
+    <div class="fullscreen-overlay" id="fullscreenOverlay">
+        <div class="fullscreen-header">
+            <h3>📝 Editor de Contenido</h3>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+                <button type="button" class="md-toolbar-toggle" id="fsPreviewToggle" onclick="toggleFullscreenPreview()">👁 Preview</button>
+                <button type="button" class="fullscreen-close" onclick="closeFullscreen()">✕ Cerrar <span class="kbd">Esc</span></button>
+            </div>
+        </div>
+        <div class="fullscreen-body">
+            <textarea id="fsContent" placeholder="Escribe tu contenido aquí..."></textarea>
+            <div class="preview-pane" id="fsPreview"></div>
+        </div>
+        <div class="fullscreen-stats">
+            <span class="stat-item">📝 <span class="stat-value" id="fsWordCount">0</span> palabras</span>
+            <span class="stat-item">⏱ <span class="stat-value" id="fsReadTime">0</span> min lectura</span>
+            <span class="stat-item">📏 <span class="stat-value" id="fsCharCount">0</span> caracteres</span>
+        </div>
+    </div>
 
     <div class="publication-container">
         <div class="publication-header">
-            <h1>@if(publication.isDefined) {✏️ Editar} else {✨ Crear} Publicación</h1>
+            <h1>@if(publication.isDefined) { ✏️ Editar Publicación } else { ✨ Nueva Publicación }</h1>
             <a href="@routes.UserPublicationController.dashboard()">← Volver al Dashboard</a>
         </div>
 
         <div class="form-wrapper">
+            <!-- PROGRESS BAR -->
+            <div class="form-progress">
+                <span class="progress-label">Progreso</span>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-text" id="progressText">0%</span>
+            </div>
+
+            <!-- AUTOSAVE INDICATOR -->
+            <div class="autosave-indicator" id="autosaveIndicator">
+                <span class="autosave-dot"></span>
+                <span id="autosaveText">Auto-guardado activo</span>
+                <div class="autosave-actions">
+                    <button type="button" class="autosave-btn restore" id="restoreDraftBtn" style="display:none;" onclick="restoreDraft()">🔄 Restaurar borrador</button>
+                    <button type="button" class="autosave-btn" onclick="clearDraft()">🗑 Limpiar borrador</button>
+                </div>
+            </div>
+
             <div class="form-header">
                 <h2>@if(publication.isDefined) { Editar tu Publicación } else { Comparte tu Conocimiento }</h2>
                 <p>@if(publication.isDefined) { Actualiza el contenido de tu publicación } else { Crea contenido de calidad para nuestra comunidad }</p>
@@ -704,19 +108,17 @@
                                 <span class="required">*</span>
                                 <span class="char-count"><span id="titleCount">0</span>/200</span>
                             </label>
-                            <input 
-                                type="text" 
-                                id="title" 
-                                name="title" 
+                            <input
+                                type="text"
+                                id="title"
+                                name="title"
                                 value="@form("title").value.getOrElse("")"
                                 placeholder="Ej: Introducción a Akka Actors en Scala"
                                 required
                                 minlength="5"
                                 maxlength="200"
                                 autofocus
-                                @if(form("title").hasErrors) {
-                                    class="has-error"
-                                }
+                                @if(form("title").hasErrors) { class="has-error" }
                             />
                             <div class="title-preview">
                                 <div class="title-preview-label">Vista Previa:</div>
@@ -724,13 +126,11 @@
                             </div>
                             <div class="character-indicator" id="titleIndicator"></div>
                             <div class="help-text">
-                                Mínimo <strong>5 caracteres</strong>, máximo <strong>200</strong>. 
+                                Mínimo <strong>5 caracteres</strong>, máximo <strong>200</strong>.
                                 Sé descriptivo y atractivo - este será el primer contacto del lector.
                             </div>
                             @if(form("title").hasErrors) {
-                                <div class="field-error">
-                                    @form("title").errors.map(_.message).mkString(", ")
-                                </div>
+                                <div class="field-error">@form("title").errors.map(_.message).mkString(", ")</div>
                             }
                         </div>
 
@@ -760,17 +160,31 @@
                             <div class="form-group">
                                 <label for="tags">
                                     Etiquetas
-                                    <span class="char-count" id="tagsLabel"></span>
+                                    <span class="char-count" id="tagsLabel">(0)</span>
                                 </label>
-                                <input 
-                                    type="text" 
-                                    id="tags" 
-                                    name="tags" 
-                                    value="@form("tags").value.getOrElse("")"
-                                    placeholder="scala, akka, reactive, actors"
-                                />
-                                <div class="help-text">Separadas por comas. Mejora la visibilidad de tu publicación. <strong>Máximo 5-7 etiquetas recomendadas</strong></div>
-                                <div class="tags-hint" id="tagsHint"></div>
+                                <input type="hidden" id="tags" name="tags" value="@form("tags").value.getOrElse("")" />
+                                <div class="tags-container">
+                                    <div class="tag-chips" id="tagChips" onclick="document.getElementById('tagInputInline').focus()">
+                                        <input type="text" class="tag-input-inline" id="tagInputInline" placeholder="Escribe y presiona Enter..." autocomplete="off" />
+                                    </div>
+                                    <div class="tag-count-badge" id="tagCountBadge"></div>
+                                </div>
+                                <div class="help-text">
+                                    Presiona <span class="kbd">Enter</span> o <span class="kbd">,</span> para agregar.
+                                    Click en ✕ para eliminar. <strong>Máximo 7 etiquetas</strong>
+                                </div>
+                                <div class="tag-suggestions-row" id="tagSuggestions">
+                                    <span class="tag-suggestion" data-tag="scala" onclick="addTagFromSuggestion(this)">🎯 scala</span>
+                                    <span class="tag-suggestion" data-tag="akka" onclick="addTagFromSuggestion(this)">⚡ akka</span>
+                                    <span class="tag-suggestion" data-tag="play-framework" onclick="addTagFromSuggestion(this)">🎮 play-framework</span>
+                                    <span class="tag-suggestion" data-tag="reactive" onclick="addTagFromSuggestion(this)">🌊 reactive</span>
+                                    <span class="tag-suggestion" data-tag="arquitectura" onclick="addTagFromSuggestion(this)">🏗️ arquitectura</span>
+                                    <span class="tag-suggestion" data-tag="patterns" onclick="addTagFromSuggestion(this)">🧩 patterns</span>
+                                    <span class="tag-suggestion" data-tag="testing" onclick="addTagFromSuggestion(this)">✅ testing</span>
+                                    <span class="tag-suggestion" data-tag="devops" onclick="addTagFromSuggestion(this)">🚀 devops</span>
+                                    <span class="tag-suggestion" data-tag="docker" onclick="addTagFromSuggestion(this)">🐳 docker</span>
+                                    <span class="tag-suggestion" data-tag="functional" onclick="addTagFromSuggestion(this)">λ functional</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -787,9 +201,9 @@
                                 Extracto / Descripción
                                 <span class="char-count"><span id="excerptCount">0</span>/500</span>
                             </label>
-                            <textarea 
-                                id="excerpt" 
-                                name="excerpt" 
+                            <textarea
+                                id="excerpt"
+                                name="excerpt"
                                 rows="3"
                                 maxlength="500"
                                 placeholder="Breve resumen de tu publicación (lo que verán en listados)"
@@ -804,38 +218,92 @@
                                 <span class="required">*</span>
                                 <span class="char-count"><span id="contentCount">0</span> caracteres</span>
                             </label>
-                            <textarea 
-                                id="content" 
-                                name="content" 
-                                rows="12"
-                                minlength="50"
-                                required
-                                placeholder="Escribe aquí el contenido detallado de tu publicación...
+
+                            <!-- MARKDOWN TOOLBAR -->
+                            <div class="md-toolbar" id="mdToolbar">
+                                <div class="md-toolbar-group">
+                                    <button type="button" class="md-toolbar-btn" title="Negrita (Ctrl+B)" onclick="insertMd('bold')"><b>B</b></button>
+                                    <button type="button" class="md-toolbar-btn" title="Cursiva (Ctrl+I)" onclick="insertMd('italic')"><i>I</i></button>
+                                    <button type="button" class="md-toolbar-btn" title="Tachado" onclick="insertMd('strike')"><s>S</s></button>
+                                </div>
+                                <div class="md-toolbar-group">
+                                    <button type="button" class="md-toolbar-btn" title="Encabezado 1" onclick="insertMd('h1')">H1</button>
+                                    <button type="button" class="md-toolbar-btn" title="Encabezado 2" onclick="insertMd('h2')">H2</button>
+                                    <button type="button" class="md-toolbar-btn" title="Encabezado 3" onclick="insertMd('h3')">H3</button>
+                                </div>
+                                <div class="md-toolbar-group">
+                                    <button type="button" class="md-toolbar-btn" title="Lista" onclick="insertMd('ul')">☰</button>
+                                    <button type="button" class="md-toolbar-btn" title="Lista Numerada" onclick="insertMd('ol')">1.</button>
+                                    <button type="button" class="md-toolbar-btn" title="Cita" onclick="insertMd('quote')">❝</button>
+                                </div>
+                                <div class="md-toolbar-group">
+                                    <button type="button" class="md-toolbar-btn" title="Código Inline" onclick="insertMd('code')">⟨/⟩</button>
+                                    <button type="button" class="md-toolbar-btn" title="Bloque de Código" onclick="insertMd('codeblock')">{ }</button>
+                                    <button type="button" class="md-toolbar-btn" title="Enlace" onclick="insertMd('link')">🔗</button>
+                                    <button type="button" class="md-toolbar-btn" title="Imagen" onclick="insertMd('image')">🖼</button>
+                                    <button type="button" class="md-toolbar-btn" title="Línea Horizontal" onclick="insertMd('hr')">─</button>
+                                    <button type="button" class="md-toolbar-btn" title="Tabla" onclick="insertMd('table')">▦</button>
+                                </div>
+                                <div class="md-toolbar-spacer"></div>
+                                <button type="button" class="md-toolbar-toggle" id="previewToggle" onclick="togglePreview()">👁 Preview</button>
+                                <button type="button" class="md-toolbar-toggle" id="tocToggle" onclick="toggleTOC()">📑 TOC</button>
+                                <button type="button" class="md-toolbar-toggle" onclick="openFullscreen()">⛶ Expandir</button>
+                            </div>
+
+                            <!-- EDITOR + PREVIEW SPLIT -->
+                            <div class="editor-container" id="editorContainer">
+                                <div class="editor-pane">
+                                    <textarea
+                                        id="content"
+                                        name="content"
+                                        rows="14"
+                                        minlength="50"
+                                        required
+                                        placeholder="Escribe aquí el contenido...
 
 # Título de Sección
-## Subsección
 
-Usa **negrita** para destacar conceptos importantes.
-Puedes usar *cursiva* para énfasis.
+Usa **negrita** y *cursiva*.
 
 ```scala
-// Código Scala
-val mensaje = 'Hello Reactive World'
+val x = 42
 ```
 
-- Elemento de lista 1
-- Elemento de lista 2
-- Elemento de lista 3
+- Elemento 1
+- Elemento 2"
+                                        @if(form("content").hasErrors) { class="has-error" }
+                                    >@form("content").value.getOrElse("")</textarea>
+                                </div>
+                                <div class="preview-pane" id="previewPane">
+                                    <div class="preview-empty">Escribe contenido para ver la vista previa...</div>
+                                </div>
+                            </div>
 
-¡Markdown completamente soportado!"
-                                @if(form("content").hasErrors) {
-                                    class="has-error"
-                                }
-                            ></textarea>
+                            <!-- CONTENT STATS BAR -->
+                            <div class="content-stats">
+                                <span class="stat-item">📝 Palabras: <span class="stat-value" id="wordCount">0</span></span>
+                                <span class="stat-item">⏱ Lectura: <span class="stat-value" id="readTime">0 min</span></span>
+                                <span class="stat-item">📏 Caracteres: <span class="stat-value" id="charCount">0</span></span>
+                                <span class="stat-item">📄 Líneas: <span class="stat-value" id="lineCount">0</span></span>
+                            </div>
+
+                            <!-- TABLE OF CONTENTS -->
+                            <div class="toc-panel" id="tocPanel">
+                                <div class="toc-title">📑 Tabla de Contenidos</div>
+                                <ul class="toc-list" id="tocList">
+                                    <li class="toc-empty">Agrega encabezados (#, ##, ###) para generar la tabla de contenidos</li>
+                                </ul>
+                            </div>
+
                             <div class="character-indicator" id="contentIndicator"></div>
-                            <div class="help-text">Mínimo <strong>50 caracteres</strong>. Soporta <strong>Markdown</strong> para formateo. Usa bloques ` ```scala ` para código.</div>
+                            <div class="help-text">
+                                Mínimo <strong>50 caracteres</strong>. Soporta <strong>Markdown</strong>.
+                                <span class="kbd">Ctrl+B</span> Negrita
+                                <span class="kbd">Ctrl+I</span> Cursiva
+                                <span class="kbd">Ctrl+Shift+F</span> Pantalla completa
+                            </div>
                             <div class="content-tip">
-                                <strong>💡 Consejo:</strong> Estructura tu contenido con encabezados, párrafos cortos y ejemplos de código. 
+                                <strong>💡 Consejo:</strong> Estructura tu contenido con encabezados, párrafos cortos y ejemplos de código.
                                 Esto facilita la lectura y mejora el SEO.
                             </div>
                             @if(form("content").hasErrors) {
@@ -853,10 +321,10 @@ val mensaje = 'Hello Reactive World'
 
                         <div class="form-group">
                             <label for="coverImage">Imagen de Portada (URL)</label>
-                            <input 
-                                type="url" 
-                                id="coverImage" 
-                                name="coverImage" 
+                            <input
+                                type="url"
+                                id="coverImage"
+                                name="coverImage"
                                 value="@form("coverImage").value.getOrElse("")"
                                 placeholder="https://ejemplo.com/imagen.jpg"
                             />
@@ -867,6 +335,18 @@ val mensaje = 'Hello Reactive World'
                                     <li>Formato: JPG o PNG</li>
                                     <li>Tamaño archivo: &lt; 500KB</li>
                                 </ul>
+                            </div>
+                            <!-- IMAGE LIVE PREVIEW -->
+                            <div class="image-preview-container" id="imagePreviewContainer">
+                                <div class="image-preview-header">
+                                    <span>🖼 Vista previa de imagen</span>
+                                    <span class="image-dimensions" id="imageDimensions"></span>
+                                </div>
+                                <div class="image-preview-body" id="imagePreviewBody">
+                                    <img id="imagePreviewImg" style="display:none;" alt="Preview de portada" />
+                                    <span class="image-preview-loading" id="imagePreviewLoading">Cargando imagen...</span>
+                                    <span class="image-preview-error" id="imagePreviewError" style="display:none;">⚠️ No se pudo cargar la imagen</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -891,105 +371,5 @@ val mensaje = 'Hello Reactive World'
         </div>
     </div>
 
-    <script>
-        // Contador de caracteres para título
-        const titleInput = document.getElementById('title');
-        const titleCount = document.getElementById('titleCount');
-        const titlePreview = document.getElementById('titlePreview');
-        const titleIndicator = document.getElementById('titleIndicator');
-
-        function updateTitleCount() {
-            const count = titleInput.value.length;
-            titleCount.textContent = count;
-            titlePreview.textContent = titleInput.value || 'Tu título aparecerá aquí';
-            
-            // Indicador de cantidad
-            if (count < 5) {
-                titleIndicator.textContent = '⚠️ Muy corto - mínimo 5 caracteres';
-                titleIndicator.className = 'character-indicator error';
-            } else if (count < 30) {
-                titleIndicator.textContent = '✓ Corto - considera ser más descriptivo';
-                titleIndicator.className = 'character-indicator warning';
-            } else if (count > 180) {
-                titleIndicator.textContent = '⚠️ Muy largo - considera acortar';
-                titleIndicator.className = 'character-indicator warning';
-            } else {
-                titleIndicator.textContent = '✓ Longitud ideal';
-                titleIndicator.className = 'character-indicator';
-                titleIndicator.style.color = '#10b981';
-            }
-        }
-
-        titleInput.addEventListener('input', updateTitleCount);
-        updateTitleCount();
-
-        // Contador de caracteres para extracto
-        const excerptInput = document.getElementById('excerpt');
-        const excerptCount = document.getElementById('excerptCount');
-        const excerptIndicator = document.getElementById('excerptIndicator');
-
-        function updateExcerptCount() {
-            const count = excerptInput.value.length;
-            excerptCount.textContent = count;
-            
-            if (count < 50) {
-                excerptIndicator.textContent = excerptCount.textContent === '0' ? '' : '✓ Descripción breve';
-                excerptIndicator.className = 'character-indicator';
-            } else if (count > 480) {
-                excerptIndicator.textContent = '⚠️ Acercándose al límite';
-                excerptIndicator.className = 'character-indicator warning';
-            } else {
-                excerptIndicator.textContent = '';
-                excerptIndicator.className = 'character-indicator';
-            }
-        }
-
-        excerptInput.addEventListener('input', updateExcerptCount);
-        updateExcerptCount();
-
-        // Contador de caracteres para contenido
-        const contentInput = document.getElementById('content');
-        const contentCount = document.getElementById('contentCount');
-        const contentIndicator = document.getElementById('contentIndicator');
-
-        function updateContentCount() {
-            const count = contentInput.value.length;
-            contentCount.textContent = count.toLocaleString();
-            
-            if (count < 50) {
-                contentIndicator.textContent = '⚠️ Muy corto - mínimo 50 caracteres';
-                contentIndicator.className = 'character-indicator error';
-            } else if (count < 200) {
-                contentIndicator.textContent = '✓ Contenido mínimo aceptado';
-                contentIndicator.className = 'character-indicator warning';
-            } else if (count > 5000) {
-                contentIndicator.textContent = '✓ Excelente cantidad de contenido';
-                contentIndicator.className = 'character-indicator';
-                contentIndicator.style.color = '#10b981';
-            } else {
-                contentIndicator.textContent = '';
-                contentIndicator.className = 'character-indicator';
-            }
-        }
-
-        contentInput.addEventListener('input', updateContentCount);
-        updateContentCount();
-
-        // Sugerencias de etiquetas
-        const tagsInput = document.getElementById('tags');
-        
-        function updateTagsSuggestions() {
-            const tags = tagsInput.value.split(',').filter(t => t.trim());
-            const label = document.getElementById('tagsLabel');
-            label.textContent = `(${tags.length})`;
-            
-            if (tags.length > 7) {
-                tagsInput.style.borderColor = '#fca5a5';
-            } else {
-                tagsInput.style.borderColor = '';
-            }
-        }
-
-        tagsInput.addEventListener('input', updateTagsSuggestions);
-    </script>
+    <script src="@routes.Assets.versioned("javascripts/publicationForm.js")"></script>
 }

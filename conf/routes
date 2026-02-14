@@ -5,12 +5,6 @@
 # Home page
 GET     /                           controllers.HomeController.index()
 
-# Setup Routes (Temporal - solo para desarrollo)
-GET     /setup/create-admin         controllers.SetupController.createInitialAdmin()
-GET     /setup/list-admins          controllers.SetupController.listAdmins()
-GET     /setup/update-password      controllers.SetupController.updatePassword(username: String, password: String)
-GET     /setup/test-login           controllers.SetupController.testLogin(username: String, password: String)
-
 # Debug endpoint: Listar todos los admins (JSON)
 GET     /debug/admins               controllers.AdminController.listAllAdmins()
 
@@ -135,6 +129,14 @@ POST    /admin/feedback/:feedbackId/delete       controllers.AdminController.del
 
 # Newsletter subscribers management
 GET     /admin/newsletter           controllers.AdminController.newsletterSubscribers()
+
+# ============================================
+# ADMIN MANAGEMENT (Super Admin Only)
+# ============================================
+GET     /admin/admins               controllers.AdminController.adminManagement()
+POST    /admin/admins/:id/approve   controllers.AdminController.approveAdmin(id: Long)
+POST    /admin/admins/:id/reject    controllers.AdminController.rejectAdmin(id: Long)
+POST    /admin/admins/:id/revoke    controllers.AdminController.revokeAdmin(id: Long)
 
 # API
 GET     /api/admin/publications     controllers.AdminController.listAllPublicationsJson()
