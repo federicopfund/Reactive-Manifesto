@@ -287,6 +287,9 @@ $z-notification: 1080;
   --accent-color: #{$primary-color};
   --accent-color-rgb: #{$accent-color-rgb};
   --accent-gradient: #{$accent-gradient};
+  --primary-color: #{$primary-color};
+  --primary-light: #{$primary-light};
+  --primary-dark: #{$primary-dark};
   --secondary-color: #{$secondary-color};
   --success-color: #{$success-color};
   --error-color: #{$error-color};
@@ -295,12 +298,15 @@ $z-notification: 1080;
   // Colores de Texto
   --text-primary: #{$text-dark};
   --text-secondary: #{$text-light};
+  --text-light: #{$text-light};
   --text-muted: #{$gray-500};
   
   // Backgrounds
   --bg-primary: #{$bg-white};
   --bg-secondary: #{$bg-light};
   --bg-tertiary: #{$gray-100};
+  --bg-white: #{$bg-white};
+  --bg-light: #{$bg-light};
   
   // Borders
   --border-color: #{$border-color};
@@ -318,11 +324,18 @@ $z-notification: 1080;
 [data-theme="dark"] {
   --text-primary: #{$dark-text-primary};
   --text-secondary: #{$dark-text-secondary};
+  --text-light: #{$dark-text-secondary};
   --text-muted: #{$gray-400};
+  
+  --primary-color: #{$primary-light};
+  --primary-light: #{$primary-light};
+  --primary-dark: #{$primary-dark};
   
   --bg-primary: #{$dark-bg-secondary};
   --bg-secondary: #{$dark-bg-primary};
   --bg-tertiary: #{$gray-800};
+  --bg-white: #{$dark-bg-secondary};
+  --bg-light: #{$dark-bg-primary};
   
   --border-color: #{$dark-border-color};
   --border-color-light: #{$gray-800};

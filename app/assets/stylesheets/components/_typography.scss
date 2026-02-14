@@ -309,6 +309,27 @@ ul, ol {
   -webkit-text-fill-color: transparent;
 }
 
+// Estilos standalone de títulos de sección
+.section-title {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  line-height: $line-height-tight;
+  color: var(--text-primary);
+  margin-bottom: $spacing-3;
+  
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-xl;
+  }
+}
+
+.section-subtitle {
+  font-size: $font-size-base;
+  line-height: $line-height-relaxed;
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0 auto $spacing-6;
+}
+
 // Sección de Título con Subtítulo
 .section-header {
   text-align: center;
@@ -322,26 +343,6 @@ ul, ol {
     letter-spacing: $tracking-wider;
     color: var(--accent-color);
     margin-bottom: $spacing-2;
-  }
-  
-  .section-title {
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    line-height: $line-height-tight;
-    color: var(--text-primary);
-    margin-bottom: $spacing-3;
-    
-    @media (max-width: $breakpoint-md) {
-      font-size: $font-size-xl;
-    }
-  }
-  
-  .section-subtitle {
-    font-size: $font-size-base;
-    line-height: $line-height-relaxed;
-    color: var(--text-secondary);
-    max-width: 700px;
-    margin: 0 auto;
   }
 }
 
