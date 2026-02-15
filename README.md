@@ -40,7 +40,7 @@ fuser -k 9000/tcp 2>/dev/null && sbt clean compile run
 
 ## 🏗️ Arquitectura de Agentes
 
-El proyecto sigue una **arquitectura de agentes reactivos** con **7 actores Akka Typed** organizados en capas desacopladas:
+El proyecto sigue una **arquitectura de agentes reactivos** con **9 actores Akka Typed** organizados en capas desacopladas, comunicados mediante **EventBus (Pub/Sub)** y **Saga Orchestrator**:
 
 ```mermaid
 graph TB
@@ -65,16 +65,20 @@ graph TB
         RNA["ReactiveNotificationAdapter"]
         RMOA["ReactiveModerationAdapter"]
         RAA["ReactiveAnalyticsAdapter"]
+        REBA["ReactiveEventBusAdapter"]
+        RPLA["ReactivePipelineAdapter"]
     end
 
-    subgraph ActorSystem["Akka Typed Actor System (7 Agents)"]
+    subgraph ActorSystem["Akka Typed Actor System (9 Agents)"]
         CE["🔵 ContactEngine\n(contact-core)"]
         ME["🔵 MessageEngine\n(message-core)"]
         PE["🟢 PublicationEngine\n(publication-core)"]
         GE["🟢 GamificationEngine\n(gamification-core)"]
-        NE["🟢 NotificationEngine\n(notification-core)"]
+        NE["🟢 NotificationEngine\n(notification-core)\n⚡ Circuit Breaker"]
         MOE["🟢 ModerationEngine\n(moderation-core)"]
         AE["🟢 AnalyticsEngine\n(analytics-core)"]
+        EB["🟡 EventBusEngine\n(eventbus-core)\nPub/Sub"]
+        PL["🟡 PipelineEngine\n(pipeline-core)\nSaga Orchestrator"]
     end
 
     subgraph Repositories["Repositories (Async / Slick)"]
@@ -103,7 +107,7 @@ graph TB
     %% Controller → Adapter
     HC -- "submitContact()" --> RCA
     UPC -- "sendMessage()" --> RMA
-    UPC -- "createPublication()" --> RPA
+    UPC -- "processPublication()" --> RPLA
     UPC -- "trackView()" --> RAA
     AC -- "approve/reject()" --> RPA
     AC -- "moderate()" --> RMOA
@@ -118,11 +122,20 @@ graph TB
     RNA -- "tell ⚡" --> NE
     RMOA -- "ask" --> MOE
     RAA -- "tell ⚡" --> AE
+    REBA -- "tell/ask" --> EB
+    RPLA -- "ask" --> PL
 
-    %% Actor → Actor (inter-agent)
-    PE -. "notify author" .-> NE
-    ME -. "notify receiver" .-> NE
-    MOE -. "auto-flag" .-> NE
+    %% Pipeline Saga (inter-agent orchestration)
+    PL == "1. Ask: ModerateContent" ==> MOE
+    PL == "2. Ask: CreatePublication" ==> PE
+    PL == "3. Tell: SendNotification" ==> NE
+    PL == "4. Tell: CheckBadges" ==> GE
+    PL == "5. Tell: TrackEvent" ==> AE
+
+    %% EventBus (Pub/Sub broadcast)
+    PL -. "publish: DomainEvent" .-> EB
+    EB -. "broadcast" .-> AE
+    EB -. "broadcast" .-> GE
 
     %% Actor → Repository
     CE --> CR
@@ -130,7 +143,7 @@ graph TB
     PE --> PR
     GE --> BR
     NE --> UNR
-    NE --> ES
+    NE -- "⚡ Circuit Breaker" --> ES
 
     %% Repository → DB
     CR --> DBIcon
@@ -147,7 +160,7 @@ graph TB
     style DB fill:#553c9a,stroke:#6b46c1,color:#fff
 ```
 
-### Los 7 Agentes
+### Los 9 Agentes
 
 | # | Agente | Sistema | Patrón | Responsabilidad |
 |---|--------|---------|--------|-----------------|
@@ -155,79 +168,111 @@ graph TB
 | 🔵 | **MessageEngine** | `message-core` | Ask | Mensajería privada + notificaciones al receptor |
 | 🟢 | **PublicationEngine** | `publication-core` | Ask | Ciclo de vida: crear → revisar → aprobar/rechazar |
 | 🟢 | **GamificationEngine** | `gamification-core` | Tell | Verificación y otorgamiento de badges (fire-and-forget) |
-| 🟢 | **NotificationEngine** | `notification-core` | Tell | Hub multi-canal: in-app + email con fan-out |
+| 🟢 | **NotificationEngine** | `notification-core` | Tell | Hub multi-canal con **Circuit Breaker** en email |
 | 🟢 | **ModerationEngine** | `moderation-core` | Ask | Auto-filtrado de contenido + cola de revisión manual |
 | 🟢 | **AnalyticsEngine** | `analytics-core` | Tell | Tracking de métricas in-memory (zero-latency) |
+| 🟡 | **EventBusEngine** | `eventbus-core` | Pub/Sub | Bus de eventos de dominio con topic filtering + DeathWatch |
+| 🟡 | **PipelineEngine** | `pipeline-core` | Saga | Orquestador: Moderate → Create → Notify → Gamify → Track |
 
-> 🔵 = existente &nbsp; 🟢 = nuevo
+> 🔵 = existente &nbsp; 🟢 = dominio &nbsp; 🟡 = infraestructura
 
-### Comunicación inter-agente
+### Comunicación inter-agente avanzada
 
-Los agentes se comunican entre sí mediante **mensajes tipados**, creando un grafo de eventos:
+Los agentes se comunican mediante tres patrones complementarios:
+
+1. **EventBus (Pub/Sub)**: Eventos de dominio broadcasteados a suscriptores por topic
+2. **Saga Orchestrator (Pipeline)**: Coordinación explícita de workflows multi-agente
+3. **Circuit Breaker**: Protección resiliente de servicios externos (email SMTP)
 
 ```mermaid
 graph LR
-    PE["PublicationEngine"] -- "publication_status" --> NE["NotificationEngine"]
-    ME["MessageEngine"] -- "private_message" --> NE
-    MOE["ModerationEngine"] -- "content_flagged" --> NE
-    PE -- "publication trigger" --> GE["GamificationEngine"]
-    AE["AnalyticsEngine"] -.  "metrics (in-memory)" .-> AE
+    subgraph Saga["Saga Orchestrator (Pipeline)"]
+        direction LR
+        S1["1. Moderate"] --> S2["2. Create"]
+        S2 --> S3["3. Notify"]
+        S2 --> S4["4. Gamify"]
+        S2 --> S5["5. Track"]
+    end
 
-    style PE fill:#276749,color:#fff
-    style ME fill:#2b6cb0,color:#fff
-    style NE fill:#975a16,color:#fff
-    style MOE fill:#9b2c2c,color:#fff
-    style GE fill:#553c9a,color:#fff
-    style AE fill:#4a5568,color:#fff
+    subgraph PubSub["EventBus (Pub/Sub)"]
+        direction LR
+        EB["EventBus"]
+        PUB1["publication.submitted"]
+        PUB2["content.moderated"]
+        PUB3["pipeline.completed"]
+        PUB1 --> EB
+        PUB2 --> EB
+        PUB3 --> EB
+    end
+
+    subgraph CB["Circuit Breaker (Email)"]
+        direction LR
+        CLOSED["CLOSED\n(normal)"] -->|"5 failures"| OPEN["OPEN\n(reject)"]
+        OPEN -->|"60s timeout"| HALFOPEN["HALF_OPEN\n(test)"]
+        HALFOPEN -->|"success"| CLOSED
+        HALFOPEN -->|"failure"| OPEN
+    end
+
+    style Saga fill:#276749,color:#fff
+    style PubSub fill:#2b6cb0,color:#fff
+    style CB fill:#9b2c2c,color:#fff
 ```
 
----
-
-## 🔄 Flujo de Mensajes — Ask vs Tell
-
-El sistema usa dos patrones de comunicación según el caso:
-
-- **Ask** (request-response): cuando el controller necesita el resultado (crear publicación, moderar contenido)
-- **Tell** (fire-and-forget): cuando el resultado no bloquea al usuario (analytics, badges, notificaciones)
+### Saga: Flujo completo de publicación
 
 ```mermaid
 sequenceDiagram
     participant U as Usuario
     participant C as Controller
-    participant A1 as Adapter (Ask)
-    participant A2 as Adapter (Tell)
-    participant E1 as Engine (Ask)
-    participant E2 as Engine (Tell)
-    participant NE as NotificationEngine
-    participant R as Repository
-    participant DB as PostgreSQL
+    participant PL as PipelineEngine<br/>(Saga)
+    participant MOD as ModerationEngine
+    participant PUB as PublicationEngine
+    participant NOT as NotificationEngine<br/>⚡ Circuit Breaker
+    participant GAM as GamificationEngine
+    participant ANA as AnalyticsEngine
+    participant EB as EventBus<br/>(Pub/Sub)
 
-    U->>C: HTTP Request (crear publicación)
-    C->>A1: createPublication()
-    A1->>E1: ask(CreatePublication, replyTo)
-    activate E1
-    E1->>R: create() (async)
-    R->>DB: SQL INSERT
-    DB-->>R: Result
-    R-->>E1: Future[Success]
-    E1-->>A1: PublicationCreatedOk(id)
-    deactivate E1
+    U->>C: POST /publication
+    C->>PL: ask(ProcessNewPublication)
+    activate PL
+    Note over PL: correlationId = abc123
 
-    par Fire-and-forget (no bloquea)
-        C->>A2: trackEvent("publish")
-        A2->>E2: tell(TrackEvent)
-        Note over E2: In-memory counter++
-    and
-        C->>A2: checkBadges(userId)
-        A2->>E2: tell(CheckBadges)
-        E2->>R: award() (async)
-    and
-        E1->>NE: tell(SendNotification)
-        NE->>R: create notification
+    PL->>EB: publish(PublicationSubmitted)
+    PL->>ANA: tell(TrackEvent: pipeline.started)
+
+    rect rgb(40, 80, 60)
+        Note over PL,MOD: Stage 1: MODERATION (Ask)
+        PL->>MOD: ask(ModerateContent)
+        MOD-->>PL: ModerationResult(verdict, score, flags)
     end
 
-    A1-->>C: Future[Response]
-    C-->>U: HTTP Response (redirect)
+    PL->>EB: publish(ContentModerated)
+
+    alt verdict == "auto_rejected"
+        PL->>NOT: tell(SendNotification: rejection)
+        PL-->>C: PipelineRejected
+    else verdict == "auto_approved" / "pending_review"
+        rect rgb(40, 60, 80)
+            Note over PL,PUB: Stage 2: CREATE (Ask)
+            PL->>PUB: ask(CreatePublication)
+            PUB-->>PL: PublicationCreatedOk(id)
+        end
+
+        par Stage 3: SIDE EFFECTS (Tell, parallel)
+            PL->>NOT: tell(SendNotification)
+            Note over NOT: Circuit Breaker<br/>gates email
+        and
+            PL->>GAM: tell(CheckBadges)
+        and
+            PL->>ANA: tell(TrackEvent: pipeline.completed)
+        end
+
+        PL->>EB: publish(PipelineCompleted)
+        PL-->>C: PipelineSuccess(id, verdict, latency)
+    end
+
+    deactivate PL
+    C-->>U: HTTP Response
 ```
 
 ---
@@ -236,10 +281,10 @@ sequenceDiagram
 
 | Principio | Implementación |
 |-----------|---------------|
-| **Responsive** | Non-blocking I/O en todas las capas. Timeouts de 5s en Ask Pattern. Fast-fail con manejo de errores |
-| **Resilient** | Errores capturados con `pipeToSelf(Failure)` sin crashear el actor. Connection pooling con recuperación automática |
-| **Elastic** | Actor model permite escalado horizontal. Stateless controllers. Preparado para Akka Cluster |
-| **Message-Driven** | Comunicación asíncrona vía mensajes tipados (`sealed trait`). Location transparency entre actores |
+| **Responsive** | Non-blocking I/O en todas las capas. Timeouts de 5-30s en Ask Pattern. Fast-fail con manejo de errores |
+| **Resilient** | Circuit Breaker en email. `pipeToSelf(Failure)` sin crashear actores. DeathWatch en EventBus. Saga con compensación |
+| **Elastic** | Actor model permite escalado horizontal. Stateless controllers. Pipeline concurrente. Preparado para Akka Cluster |
+| **Message-Driven** | Comunicación asíncrona vía mensajes tipados (`sealed trait`). EventBus Pub/Sub. Domain Events con correlationId |
 
 ---
 
@@ -248,7 +293,7 @@ sequenceDiagram
 ```
 Reactive-Manifiesto/
 ├── app/
-│   ├── Module.scala                      # DI: provee 7 ActorSystems y 7 Adapters
+│   ├── Module.scala                      # DI: provee 9 ActorSystems y 9 Adapters
 │   ├── controllers/
 │   │   ├── HomeController.scala          # Contacto, páginas públicas
 │   │   ├── AuthController.scala          # Login, registro, verificación email
@@ -261,9 +306,12 @@ Reactive-Manifiesto/
 │   │   ├── MessageEngine.scala           # 🔵 Mensajería privada
 │   │   ├── PublicationEngine.scala       # 🟢 Ciclo de vida de publicaciones
 │   │   ├── GamificationEngine.scala      # 🟢 Sistema de badges
-│   │   ├── NotificationEngine.scala      # 🟢 Hub multi-canal de notificaciones
+│   │   ├── NotificationEngine.scala      # 🟢 Hub multi-canal + Circuit Breaker
 │   │   ├── ModerationEngine.scala        # 🟢 Auto-moderación de contenido
-│   │   └── AnalyticsEngine.scala         # 🟢 Métricas y tracking
+│   │   ├── AnalyticsEngine.scala         # 🟢 Métricas y tracking
+│   │   ├── DomainEvents.scala            # 🟡 Vocabulario de eventos de dominio
+│   │   ├── EventBusEngine.scala          # 🟡 Bus Pub/Sub + DeathWatch
+│   │   └── PublicationPipelineEngine.scala # 🟡 Saga Orchestrator
 │   ├── services/                         # 🔌 ADAPTERS (Ask/Tell → Actors)
 │   │   ├── ReactiveContactAdapter        # Ask → ContactEngine
 │   │   ├── ReactiveMessageAdapter        # Ask → MessageEngine
@@ -272,6 +320,8 @@ Reactive-Manifiesto/
 │   │   ├── ReactiveNotificationAdapter   # Tell → NotificationEngine
 │   │   ├── ReactiveModerationAdapter     # Ask → ModerationEngine
 │   │   ├── ReactiveAnalyticsAdapter      # Tell → AnalyticsEngine
+│   │   ├── ReactiveEventBusAdapter       # Tell/Ask → EventBusEngine
+│   │   ├── ReactivePipelineAdapter       # Ask → PipelineEngine (Saga)
 │   │   ├── EmailService.scala            # SMTP email delivery
 │   │   ├── EmailVerificationService      # Verificación de email
 │   │   └── GamificationService.scala     # Legacy (reemplazado por Engine)
@@ -294,13 +344,20 @@ Reactive-Manifiesto/
 
 | Patrón | Uso | Ubicación |
 |--------|-----|-----------|
-| **Actor Model** | Concurrencia sin locks, procesamiento asíncrono | 7 Engines en `core/` |
-| **Ask Pattern** | Request-response sobre actores | Contact, Message, Publication, Moderation |
+| **Actor Model** | Concurrencia sin locks, procesamiento asíncrono | 9 Engines en `core/` |
+| **Ask Pattern** | Request-response sobre actores | Contact, Message, Publication, Moderation, Pipeline |
 | **Tell Pattern** | Fire-and-forget, zero-latency | Gamification, Notification, Analytics |
+| **Saga Orchestrator** | Workflow multi-agente coordinado | PublicationPipelineEngine |
+| **Pub/Sub (EventBus)** | Broadcast desacoplado de domain events | EventBusEngine + DomainEvents |
+| **Circuit Breaker** | Protección resiliente de servicios externos | NotificationEngine (email) |
+| **Message Adapter** | Conversión de respuestas tipadas entre actores | PipelineEngine → Moderation/Publication |
+| **Domain Events** | Vocabulario compartido con correlationId | DomainEvents.scala (9 event types) |
 | **pipeToSelf** | Convertir Futures en mensajes del actor | Todos los Engines |
+| **DeathWatch** | Auto-cleanup de suscriptores terminados | EventBusEngine |
 | **Fan-out** | Un evento → múltiples canales | NotificationEngine (in-app + email) |
+| **Compensating Action** | Notificación de rechazo al autor | PipelineEngine (saga rollback) |
 | **Repository** | Abstracción de acceso a datos | 13 Repositories |
-| **Adapter** | Puente entre Controllers y Actor System | 7 `Reactive*Adapter` |
+| **Adapter** | Puente entre Controllers y Actor System | 9 `Reactive*Adapter` |
 | **Command** | Mensajes tipados como objetos | `sealed trait *Command` |
 | **Dependency Injection** | Inversión de control (Guice) | `Module.scala` |
 | **MVC** | Separación de responsabilidades | Controllers + Views + Models |
