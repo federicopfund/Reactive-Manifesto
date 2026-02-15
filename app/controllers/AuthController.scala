@@ -7,9 +7,9 @@ import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.Configuration
-import repositories.UserRepository
+import repositories.{UserRepository, BookmarkRepository, PublicationRepository}
 import services.EmailVerificationService
-import models.User
+import models.{User, Publication}
 import org.mindrot.jbcrypt.BCrypt
 import java.time.Instant
 
@@ -21,6 +21,8 @@ case class EmailVerificationForm(userId: Long, code: String)
 class AuthController @Inject()( 
   cc: ControllerComponents,
   userRepository: UserRepository,
+  bookmarkRepository: BookmarkRepository,
+  publicationRepository: PublicationRepository,
   emailVerificationService: EmailVerificationService,
   config: Configuration
 )(implicit ec: ExecutionContext) extends AbstractController(cc) with I18nSupport {
@@ -268,7 +270,6 @@ class AuthController @Inject()(
   def logout(): Action[AnyContent] = Action { implicit request =>
     Redirect(routes.HomeController.index())
       .withNewSession
-      .flashing("success" -> "Sesión cerrada correctamente")
       .withHeaders(
         "Cache-Control" -> "no-cache, no-store, must-revalidate",
         "Pragma" -> "no-cache",
@@ -283,10 +284,19 @@ class AuthController @Inject()(
   def userDashboard(): Action[AnyContent] = Action.async { implicit request =>
     withUserAuth {
       val userId = request.session.get("userId").get.toLong
-      userRepository.findById(userId).map {
-        case Some(user) => Ok(views.html.auth.userDashboard(user))
-        case None => Redirect(routes.AuthController.loginPage()).withNewSession
-      }
+      for {
+        userOpt <- userRepository.findById(userId)
+        result <- userOpt match {
+          case Some(user) =>
+            for {
+              bookmarkedIds <- bookmarkRepository.getBookmarkedIds(userId)
+              bookmarkedPubs <- publicationRepository.findByIds(bookmarkedIds.toSeq)
+              userPubs <- publicationRepository.findByUserId(userId)
+            } yield Ok(views.html.auth.userDashboard(user, bookmarkedPubs, userPubs))
+          case None =>
+            Future.successful(Redirect(routes.AuthController.loginPage()).withNewSession)
+        }
+      } yield result
     }
   }
 

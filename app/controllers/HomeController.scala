@@ -38,8 +38,10 @@ class HomeController @Inject()(
     )(ContactFormData.apply)(ContactFormData.unapply)
   )
 
-  def index() = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.index(contactForm))
+  def index() = Action.async { implicit request: Request[AnyContent] =>
+    publicationRepository.findAllApproved(limit = 6).map { publications =>
+      Ok(views.html.index(contactForm, publications))
+    }
   }
 
   def publicaciones() = Action.async { implicit request: Request[AnyContent] =>

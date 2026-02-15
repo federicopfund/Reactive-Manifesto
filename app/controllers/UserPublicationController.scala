@@ -7,9 +7,10 @@ import play.api.data.Forms._
 import play.api.libs.json._
 import play.api.i18n.I18nSupport
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{PublicationRepository, UserRepository, PublicationFeedbackRepository, UserNotificationRepository, ReactionRepository, CommentRepository, BookmarkRepository, BadgeRepository}
-import models.{Publication, PublicationStatus, NotificationType, PublicationComment}
-import services.GamificationService
+import repositories.{PublicationRepository, UserRepository, PublicationFeedbackRepository, UserNotificationRepository, ReactionRepository, CommentRepository, BookmarkRepository, BadgeRepository, PrivateMessageRepository}
+import models.{Publication, PublicationStatus, NotificationType, PublicationComment, PrivateMessage}
+import services.{GamificationService, ReactiveMessageAdapter}
+import core.{MessageSent, MessageError}
 import actions.{UserAction, AuthRequest}
 import java.time.Instant
 
@@ -34,6 +35,8 @@ class UserPublicationController @Inject()(
   bookmarkRepo: BookmarkRepository,
   badgeRepo: BadgeRepository,
   gamification: GamificationService,
+  messageRepo: PrivateMessageRepository,
+  messageAdapter: ReactiveMessageAdapter,
   userAction: UserAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) with I18nSupport {
 
@@ -431,6 +434,144 @@ class UserPublicationController @Inject()(
       Ok(Json.toJson(badges.map { b =>
         Json.obj("key" -> b.badgeKey, "awardedAt" -> b.awardedAt.toString)
       }))
+    }
+  }
+
+  // ============================================
+  // MENSAJERÍA PRIVADA (Message-Driven / Reactive)
+  // ============================================
+
+  /**
+   * Bandeja de mensajes (recibidos y enviados)
+   */
+  def inbox(tab: String) = userAction.async { implicit request: AuthRequest[AnyContent] =>
+    val messagesF = tab match {
+      case "sent" => messageRepo.findSentWithUsers(request.userId)
+      case _      => messageRepo.findReceivedWithUsers(request.userId)
+    }
+    for {
+      msgs <- messagesF
+      unreadCount <- messageRepo.countUnread(request.userId)
+    } yield {
+      Ok(views.html.user.inbox(request.username, msgs, tab, unreadCount))
+    }
+  }
+
+  /**
+   * Ver un mensaje específico
+   */
+  def viewMessage(id: Long) = userAction.async { implicit request: AuthRequest[AnyContent] =>
+    messageRepo.findByIdWithUsers(id, request.userId).map {
+      case Some(msgWithUsers) =>
+        // Marcar como leído si es el receptor
+        if (msgWithUsers.message.receiverId == request.userId && !msgWithUsers.message.isRead) {
+          messageRepo.markAsRead(id, request.userId)
+        }
+        Ok(views.html.user.viewMessage(request.username, msgWithUsers))
+      case None =>
+        NotFound("Mensaje no encontrado")
+    }
+  }
+
+  /**
+   * Enviar mensaje privado al autor de una publicación.
+   * Usa el sistema reactivo (Akka Typed Actor) para procesar
+   * el envío de forma asíncrona y crear la notificación.
+   */
+  def sendMessage(publicationId: Long) = userAction.async { implicit request: AuthRequest[AnyContent] =>
+    val form = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+    val subject = form.get("subject").flatMap(_.headOption).getOrElse("").trim
+    val content = form.get("content").flatMap(_.headOption).getOrElse("").trim
+
+    if (subject.isEmpty || content.isEmpty) {
+      Future.successful(
+        Redirect(routes.HomeController.publicacion(""))
+          .flashing("error" -> "El asunto y el contenido son obligatorios")
+      )
+    } else {
+      publicationRepo.findById(publicationId).flatMap {
+        case Some(pub) if pub.userId == request.userId =>
+          Future.successful(
+            Redirect(request.headers.get("Referer").getOrElse(routes.HomeController.publicaciones().url))
+              .flashing("error" -> "No puedes enviarte un mensaje a ti mismo")
+          )
+        case Some(pub) =>
+          // Enviar a través del sistema reactivo Message-Driven
+          messageAdapter.sendMessage(
+            senderId = request.userId,
+            senderUsername = request.username,
+            receiverId = pub.userId,
+            publicationId = Some(publicationId),
+            publicationTitle = Some(pub.title),
+            subject = subject,
+            content = content
+          ).map {
+            case MessageSent(_) =>
+              Redirect(request.headers.get("Referer").getOrElse(routes.HomeController.publicaciones().url))
+                .flashing("success" -> "Mensaje enviado correctamente")
+            case MessageError(reason) =>
+              Redirect(request.headers.get("Referer").getOrElse(routes.HomeController.publicaciones().url))
+                .flashing("error" -> s"Error al enviar: $reason")
+          }
+        case None =>
+          Future.successful(NotFound("Publicación no encontrada"))
+      }
+    }
+  }
+
+  /**
+   * Enviar mensaje directo a un usuario (sin publicación asociada)
+   */
+  def sendDirectMessage = userAction.async { implicit request: AuthRequest[AnyContent] =>
+    val form = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+    val receiverUsername = form.get("receiverUsername").flatMap(_.headOption).getOrElse("").trim
+    val subject = form.get("subject").flatMap(_.headOption).getOrElse("").trim
+    val content = form.get("content").flatMap(_.headOption).getOrElse("").trim
+
+    if (subject.isEmpty || content.isEmpty || receiverUsername.isEmpty) {
+      Future.successful(
+        Redirect(routes.UserPublicationController.inbox("received"))
+          .flashing("error" -> "Todos los campos son obligatorios")
+      )
+    } else {
+      userRepo.findByUsername(receiverUsername).flatMap {
+        case Some(receiver) if receiver.id.contains(request.userId) =>
+          Future.successful(
+            Redirect(routes.UserPublicationController.inbox("received"))
+              .flashing("error" -> "No puedes enviarte un mensaje a ti mismo")
+          )
+        case Some(receiver) =>
+          messageAdapter.sendMessage(
+            senderId = request.userId,
+            senderUsername = request.username,
+            receiverId = receiver.id.get,
+            publicationId = None,
+            publicationTitle = None,
+            subject = subject,
+            content = content
+          ).map {
+            case MessageSent(_) =>
+              Redirect(routes.UserPublicationController.inbox("sent"))
+                .flashing("success" -> s"Mensaje enviado a ${receiver.fullName}")
+            case MessageError(reason) =>
+              Redirect(routes.UserPublicationController.inbox("received"))
+                .flashing("error" -> s"Error al enviar: $reason")
+          }
+        case None =>
+          Future.successful(
+            Redirect(routes.UserPublicationController.inbox("received"))
+              .flashing("error" -> "Usuario destinatario no encontrado")
+          )
+      }
+    }
+  }
+
+  /**
+   * API: Contar mensajes no leídos
+   */
+  def unreadMessagesCount = userAction.async { implicit request: AuthRequest[AnyContent] =>
+    messageRepo.countUnread(request.userId).map { count =>
+      Ok(Json.obj("count" -> count))
     }
   }
 

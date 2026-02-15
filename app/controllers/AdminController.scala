@@ -6,7 +6,7 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.json._
 import scala.concurrent.{ExecutionContext, Future}
-import repositories.{ContactRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository}
+import repositories.{ContactRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository, PrivateMessageRepository}
 import models.{ContactRecord, PublicationFeedback, UserNotification, FeedbackType}
 import actions.{AdminOnlyAction, SuperAdminOnlyAction, AuthRequest}
 import org.mindrot.jbcrypt.BCrypt
@@ -26,6 +26,7 @@ class AdminController @Inject()(
   feedbackRepository: PublicationFeedbackRepository,
   notificationRepository: UserNotificationRepository,
   newsletterRepository: NewsletterRepository,
+  messageRepository: PrivateMessageRepository,
   adminAction: AdminOnlyAction,
   superAdminAction: SuperAdminOnlyAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) {
@@ -158,6 +159,20 @@ class AdminController @Inject()(
       totalCount <- contactRepository.count()
       pendingPublications <- publicationRepository.findPending()
       pendingAdminsCount <- userRepository.countPendingAdmins()
+      // Messaging metrics
+      msgTotal <- messageRepository.countAll()
+      msgUnread <- messageRepository.countAllUnread()
+      msgRead <- messageRepository.countAllRead()
+      msgWithPub <- messageRepository.countWithPublication()
+      msgDirect <- messageRepository.countDirect()
+      msgLast7 <- messageRepository.countInLastDays(7)
+      msgLast30 <- messageRepository.countInLastDays(30)
+      msgReadRate <- messageRepository.readRate()
+      msgUniqueSenders <- messageRepository.countUniqueSenders()
+      msgUniqueReceivers <- messageRepository.countUniqueReceivers()
+      topSenders <- messageRepository.topSenders(5)
+      topReceivers <- messageRepository.topReceivers(5)
+      topPubsByMsg <- messageRepository.topPublicationsByMessages(5)
     } yield {
       val filteredContacts = search match {
         case Some(query) if query.nonEmpty =>
@@ -174,7 +189,19 @@ class AdminController @Inject()(
       val paginatedContacts = filteredContacts.slice(offset, offset + pageSize)
       val totalPages = Math.ceil(filteredContacts.length.toDouble / pageSize).toInt
       
-      Ok(views.html.admin.dashboard(paginatedContacts, request.username, page, totalPages, search, pendingPublications.length, pendingAdminsCount, request.role))
+      val msgMetrics = Map(
+        "total" -> msgTotal,
+        "unread" -> msgUnread,
+        "read" -> msgRead,
+        "withPublication" -> msgWithPub,
+        "direct" -> msgDirect,
+        "last7Days" -> msgLast7,
+        "last30Days" -> msgLast30,
+        "readRate" -> msgReadRate,
+        "uniqueSenders" -> msgUniqueSenders,
+        "uniqueReceivers" -> msgUniqueReceivers
+      )
+      Ok(views.html.admin.dashboard(paginatedContacts, request.username, page, totalPages, search, pendingPublications.length, pendingAdminsCount, request.role, msgMetrics, topSenders, topReceivers, topPubsByMsg))
     }
   }
 
@@ -432,6 +459,43 @@ class AdminController @Inject()(
           )
         ))
       }
+  }
+
+  /**
+   * API: Métricas del sistema de mensajería (JSON)
+   */
+  def messagingStats(): Action[AnyContent] = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    for {
+      total <- messageRepository.countAll()
+      unread <- messageRepository.countAllUnread()
+      readCount <- messageRepository.countAllRead()
+      withPub <- messageRepository.countWithPublication()
+      direct <- messageRepository.countDirect()
+      last7 <- messageRepository.countInLastDays(7)
+      last30 <- messageRepository.countInLastDays(30)
+      rate <- messageRepository.readRate()
+      senders <- messageRepository.countUniqueSenders()
+      receivers <- messageRepository.countUniqueReceivers()
+      topS <- messageRepository.topSenders(5)
+      topR <- messageRepository.topReceivers(5)
+      topP <- messageRepository.topPublicationsByMessages(5)
+    } yield {
+      Ok(Json.obj(
+        "total" -> total,
+        "unread" -> unread,
+        "read" -> readCount,
+        "withPublication" -> withPub,
+        "direct" -> direct,
+        "last7Days" -> last7,
+        "last30Days" -> last30,
+        "readRate" -> rate,
+        "uniqueSenders" -> senders,
+        "uniqueReceivers" -> receivers,
+        "topSenders" -> topS.map { case (id, name, count) => Json.obj("id" -> id, "username" -> name, "count" -> count) },
+        "topReceivers" -> topR.map { case (id, name, count) => Json.obj("id" -> id, "username" -> name, "count" -> count) },
+        "topPublications" -> topP.map { case (id, title, count) => Json.obj("id" -> id, "title" -> title, "count" -> count) }
+      ))
+    }
   }
 
   // ============================================
