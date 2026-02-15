@@ -470,6 +470,16 @@
   [data-theme="dark"] & {
     background: var(--bg-primary-dark);
   }
+
+  .section-title,
+  .section-subtitle {
+    text-align: left;
+  }
+
+  .section-subtitle {
+    margin-left: 0;
+    margin-right: auto;
+  }
 }
 
 .stats-cards-grid {
@@ -629,6 +639,16 @@
   [data-theme="dark"] & {
     background: var(--bg-secondary-dark);
   }
+
+  .section-title,
+  .section-subtitle {
+    text-align: left;
+  }
+
+  .section-subtitle {
+    margin-left: 0;
+    margin-right: auto;
+  }
 }
 
 .actions-grid {
@@ -692,25 +712,31 @@
   padding: $spacing-4xl 0;
   background: #ffffff;
 
+  .section-title,
+  .section-subtitle {
+    text-align: left;
+  }
+
+  .section-subtitle {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
   [data-theme="dark"] & {
     background: var(--bg-primary-dark);
   }
 }
 
 .favorites-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: $spacing-4;
-
-  @media (max-width: $breakpoint-sm) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .favorite-item {
   background: white;
   border-radius: $border-radius-lg;
-  padding: $spacing-4;
+  padding: $spacing-4 $spacing-5;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -719,6 +745,7 @@
   text-decoration: none;
   transition: all 0.2s ease;
   border: 1px solid #e5e7eb;
+  width: 220px;
   position: relative;
   overflow: hidden;
 
@@ -766,6 +793,10 @@
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;
   color: var(--text-primary);
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .favorite-views {

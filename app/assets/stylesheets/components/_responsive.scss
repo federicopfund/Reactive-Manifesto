@@ -265,12 +265,24 @@
     gap: $spacing-lg;
   }
 
-  .portfolio-image {
-    height: 180px;
+  .portfolio-card {
+    padding: $spacing-lg;
+    padding-top: calc(#{$spacing-lg} + 4px);
   }
 
-  .portfolio-content {
-    padding: $spacing-lg;
+  .portfolio-card-header {
+    margin-bottom: $spacing-md;
+    padding-bottom: $spacing-sm;
+  }
+
+  .portfolio-category {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.6875rem;
+  }
+
+  .portfolio-status {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.625rem;
   }
 
   .portfolio-title {
@@ -281,23 +293,21 @@
     font-size: 0.875rem;
   }
 
-  .portfolio-tech {
+  .portfolio-tags {
     gap: 0.25rem;
+
+    .tag {
+      padding: 0.25rem 0.625rem;
+      font-size: 0.6875rem;
+    }
   }
 
-  .tech-badge {
-    padding: 0.25rem 0.625rem;
-    font-size: 0.6875rem;
-  }
-
-  .portfolio-links {
+  .portfolio-actions {
     flex-direction: column;
     gap: $spacing-sm;
   }
 
   .portfolio-link {
-    width: 100%;
-    padding: 0.625rem 1rem;
     font-size: 0.8125rem;
   }
 
