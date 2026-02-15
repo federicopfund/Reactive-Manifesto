@@ -51,6 +51,7 @@ GET     /admin/dashboard            controllers.AdminController.dashboard(page: 
 GET     /admin/statistics           controllers.AdminController.statisticsPage()
 GET     /admin/stats                controllers.AdminController.stats()
 GET     /admin/stats/advanced       controllers.AdminController.advancedStats()
+GET     /admin/stats/messaging      controllers.AdminController.messagingStats()
 
 # Admin CRUD Operations
 GET     /admin/contacts/new         controllers.AdminController.createContactPage()
@@ -103,6 +104,13 @@ POST    /publications/:id/bookmark      controllers.UserPublicationController.to
 
 # Badges API
 GET     /api/user/badges                controllers.UserPublicationController.userBadges()
+
+# Private Messaging (Reactive / Message-Driven)
+GET     /user/messages                  controllers.UserPublicationController.inbox(tab: String ?= "received")
+GET     /user/messages/:id              controllers.UserPublicationController.viewMessage(id: Long)
+POST    /publications/:id/message       controllers.UserPublicationController.sendMessage(id: Long)
+POST    /user/messages/send             controllers.UserPublicationController.sendDirectMessage()
+GET     /api/user/messages/unread       controllers.UserPublicationController.unreadMessagesCount()
 
 # API
 GET     /api/user/publications      controllers.UserPublicationController.listPublicationsJson()
