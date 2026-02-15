@@ -113,6 +113,50 @@ class EmailService @Inject()(
   }
 
   /**
+   * Envía un email de notificación genérica
+   */
+  def sendNotificationEmail(email: String, title: String, message: String): Future[Boolean] = Future {
+    if (emailEnabled) {
+      val htmlBody = s"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { text-align: center; margin-bottom: 30px; }
+            .header h1 { color: #667eea; margin: 0; font-size: 1.25rem; }
+            .content { color: #333; font-size: 15px; line-height: 1.6; }
+            .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header"><h1>$$title</h1></div>
+            <div class="content"><p>$$message</p></div>
+            <div class="footer">
+              <p>© $${java.time.Year.now().getValue()} Reactive Manifesto</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      """
+      sendEmail(email, title, htmlBody) match {
+        case Success(_) =>
+          logger.info(s"📧 Notification email sent to $$email")
+          true
+        case Failure(ex) =>
+          logger.error(s"❌ Error sending notification email to $$email: $${ex.getMessage}", ex)
+          false
+      }
+    } else {
+      logger.info(s"[DEV] Notification email: $$title → $$email")
+      true
+    }
+  }
+
+  /**
    * Crea el HTML del email de verificación
    */
   private def createVerificationEmailHtml(code: String, expirationMinutes: Int): String = {
