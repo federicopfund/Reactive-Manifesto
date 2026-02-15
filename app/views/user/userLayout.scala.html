@@ -598,6 +598,11 @@
             </div>
 
             <div class="u-right">
+                <a href="@routes.UserPublicationController.inbox("received")" class="u-notif-bell" title="Mensajes" id="msgBell" style="margin-right: 0.25rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <span class="u-notif-badge" id="msgBadge"></span>
+                </a>
+
                 <a href="@routes.UserPublicationController.notifications()" class="u-notif-bell" title="Notificaciones" id="notifBell">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                     <span class="u-notif-badge" id="notifBadge"></span>
@@ -658,6 +663,10 @@
                 <a class="u-cmd-item" href="@routes.UserPublicationController.notifications()" data-s="notificaciones feedback avisos bell campana">
                     <div class="u-cmd-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
                     <div class="u-cmd-text"><span>Notificaciones</span><small>Ver feedback y actualizaciones</small></div>
+                </a>
+                <a class="u-cmd-item" href="@routes.UserPublicationController.inbox("received")" data-s="mensajes privados inbox bandeja correo mensaje">
+                    <div class="u-cmd-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+                    <div class="u-cmd-text"><span>Mensajes</span><small>Bandeja de mensajes privados</small></div>
                 </a>
                 <a class="u-cmd-item" href="@routes.HomeController.index()#contact" data-s="contacto mensaje enviar formulario">
                     <div class="u-cmd-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
@@ -804,7 +813,29 @@
                 .catch(function(){});
         }
         checkNotifs();
-        setInterval(checkNotifs, 30000); // cada 30 segundos
+        setInterval(checkNotifs, 30000);
+    })();
+    </script>
+
+    <script>
+    // Message badge polling (reactive messaging)
+    (function(){
+        var badge = document.getElementById('msgBadge');
+        function checkMsgs() {
+            fetch('/api/user/messages/unread')
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                    if (d.count > 0) {
+                        badge.textContent = d.count > 9 ? '9+' : d.count;
+                        badge.classList.add('has-notifs');
+                    } else {
+                        badge.classList.remove('has-notifs');
+                    }
+                })
+                .catch(function(){});
+        }
+        checkMsgs();
+        setInterval(checkMsgs, 30000);
     })();
     </script>
 

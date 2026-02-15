@@ -1,4 +1,4 @@
-@(user: models.User)(implicit request: RequestHeader, flash: Flash)
+@(user: models.User, bookmarkedPublications: List[models.Publication], userPublications: List[models.Publication] = Nil)(implicit request: RequestHeader, flash: Flash)
 
 @main("Dashboard - " + user.fullName) {
     <!-- Dashboard Hero Section -->
@@ -144,29 +144,35 @@
             <p class="section-subtitle">Accesos directos a tus contenidos más consultados</p>
             
             <div class="favorites-grid">
-                <a href="@routes.HomeController.publicacion("akka-actors")" class="favorite-item favorite-primary">
-                    <span class="favorite-icon">📘</span>
-                    <span class="favorite-title">Akka Actors</span>
-                    <span class="favorite-views">125 visitas</span>
-                </a>
-                
-                <a href="@routes.HomeController.publicacion("akka-streams")" class="favorite-item favorite-success">
-                    <span class="favorite-icon">🌊</span>
-                    <span class="favorite-title">Akka Streams</span>
-                    <span class="favorite-views">98 visitas</span>
-                </a>
-                
-                <a href="@routes.HomeController.publicacion("play-async")" class="favorite-item favorite-warning">
-                    <span class="favorite-icon">⚡</span>
-                    <span class="favorite-title">Play Async</span>
-                    <span class="favorite-views">87 visitas</span>
-                </a>
-                
-                <a href="@routes.HomeController.publicacion("patrones-resiliencia")" class="favorite-item favorite-purple">
-                    <span class="favorite-icon">🛡️</span>
-                    <span class="favorite-title">Patrones Resiliencia</span>
-                    <span class="favorite-views">76 visitas</span>
-                </a>
+                @if(bookmarkedPublications.isEmpty) {
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                        <span style="font-size: 2rem;">🔖</span>
+                        <p style="color: #94a3b8; margin-top: 0.5rem;">Aún no tienes publicaciones guardadas en favoritos.</p>
+                        <a href="@routes.HomeController.publicaciones()" style="color: #60a5fa; text-decoration: underline; font-size: 0.875rem;">Explorar publicaciones</a>
+                    </div>
+                } else {
+                    @defining(Seq("favorite-primary", "favorite-success", "favorite-warning", "favorite-purple")) { colors =>
+                        @for((pub, idx) <- bookmarkedPublications.take(4).zipWithIndex) {
+                            <a href="@routes.HomeController.publicacion(pub.slug)" class="favorite-item @colors(idx % colors.size)">
+                                <span class="favorite-icon">@{
+                                    pub.category.toLowerCase match {
+                                        case c if c.contains("akka") => "📘"
+                                        case c if c.contains("stream") => "🌊"
+                                        case c if c.contains("play") || c.contains("async") => "⚡"
+                                        case c if c.contains("resilien") || c.contains("patron") => "🛡️"
+                                        case c if c.contains("scala") => "💎"
+                                        case c if c.contains("react") => "⚛️"
+                                        case c if c.contains("docker") || c.contains("deploy") => "🐳"
+                                        case c if c.contains("test") => "🧪"
+                                        case _ => "📄"
+                                    }
+                                }</span>
+                                <span class="favorite-title">@pub.title</span>
+                                <span class="favorite-views">@pub.viewCount visitas</span>
+                            </a>
+                        }
+                    }
+                }
             </div>
         </div>
     </section>
@@ -179,18 +185,18 @@
 
             <div class="stats-cards-grid">
                 <div class="stat-card stat-primary">
-                    <div class="stat-icon">📚</div>
+                    <div class="stat-icon">�</div>
                     <div class="stat-content">
-                        <span class="stat-value">7</span>
-                        <span class="stat-label">Artículos Disponibles</span>
+                        <span class="stat-value">@userPublications.size</span>
+                        <span class="stat-label">Publicaciones Creadas</span>
                     </div>
                 </div>
 
                 <div class="stat-card stat-success">
-                    <div class="stat-icon">🎯</div>
+                    <div class="stat-icon">👁️</div>
                     <div class="stat-content">
-                        <span class="stat-value">6</span>
-                        <span class="stat-label">Proyectos Activos</span>
+                        <span class="stat-value">@userPublications.map(_.viewCount).sum</span>
+                        <span class="stat-label">Visitas Totales</span>
                     </div>
                 </div>
 
@@ -218,8 +224,12 @@
 
             <!-- Activity Chart -->
             <div class="activity-chart-container">
-                <h3 class="chart-title">📈 Tendencia de Actividad</h3>
-                <canvas id="activityChart"></canvas>
+                <h3 class="chart-title">📈 Visitas por Publicación</h3>
+                @if(userPublications.nonEmpty) {
+                    <canvas id="activityChart"></canvas>
+                } else {
+                    <p style="text-align: center; color: #94a3b8; padding: 2rem 0; font-size: 0.875rem;">Crea tu primera publicación para ver las estadísticas de visitas.</p>
+                }
             </div>
 
             <!-- Learning Progress -->
@@ -287,49 +297,50 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.1/dist/chart.umd.js"></script>
+    @if(userPublications.nonEmpty) {
     <script>
+        const pubLabels = [@for((pub, idx) <- userPublications.sortBy(-_.viewCount).take(10).zipWithIndex) {'@Html(pub.title.replace("'", "\\'").take(30))@if(pub.title.length > 30){...}'@if(idx < userPublications.sortBy(-_.viewCount).take(10).size - 1){,}}];
+        const pubViews = [@for((pub, idx) <- userPublications.sortBy(-_.viewCount).take(10).zipWithIndex) {@pub.viewCount@if(idx < userPublications.sortBy(-_.viewCount).take(10).size - 1){,}}];
+        const pubStatuses = [@for((pub, idx) <- userPublications.sortBy(-_.viewCount).take(10).zipWithIndex) {'@pub.status'@if(idx < userPublications.sortBy(-_.viewCount).take(10).size - 1){,}}];
+
+        const barColors = pubStatuses.map(function(s) {
+            switch(s) {
+                case 'approved': return '#6b8f71';
+                case 'pending': return '#d4a853';
+                case 'draft': return '#94a3b8';
+                case 'rejected': return '#c0392b';
+                default: return '#6b8caa';
+            }
+        });
+
         const ctx = document.getElementById('activityChart').getContext('2d');
         new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
-                labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Esta Semana'],
+                labels: pubLabels,
                 datasets: [{
                     label: 'Visitas',
-                    data: [12, 19, 15, 25, 22],
-                    borderColor: '#9ca3af',
-                    backgroundColor: 'rgba(156, 163, 175, 0.08)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#9ca3af',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2
-                }, {
-                    label: 'Artículos Leídos',
-                    data: [5, 8, 6, 10, 9],
-                    borderColor: '#d1d5db',
-                    backgroundColor: 'rgba(209, 213, 219, 0.08)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#d1d5db',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2
+                    data: pubViews,
+                    backgroundColor: barColors,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    maxBarThickness: 48
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: true,
+                indexAxis: pubLabels.length > 5 ? 'y' : 'x',
                 plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            padding: 15,
-                            font: { size: 12 },
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#333'
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function(items) { return items[0].label; },
+                            label: function(item) {
+                                var status = pubStatuses[item.dataIndex];
+                                var statusLabel = status === 'approved' ? 'Aprobada' : status === 'pending' ? 'Pendiente' : status === 'draft' ? 'Borrador' : status;
+                                return item.formattedValue + ' visitas · ' + statusLabel;
+                            }
                         }
                     }
                 },
@@ -340,20 +351,18 @@
                             precision: 0,
                             color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
                         },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
+                        grid: { color: 'rgba(0,0,0,0.04)' }
                     },
                     x: {
                         ticks: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666',
+                            maxRotation: 45
                         },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
+                        grid: { display: false }
                     }
                 }
             }
         });
     </script>
+    }
 }

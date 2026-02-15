@@ -1,21 +1,8 @@
 @import controllers.ContactFormData
 
-@(contactForm: Form[ContactFormData])(implicit request: RequestHeader, messages: Messages)
+@(contactForm: Form[ContactFormData], communityPublications: List[models.PublicationWithAuthor] = Nil)(implicit request: RequestHeader, messages: Messages)
 
 @main("Inicio") {
-    <!-- Flash Messages -->
-    @request.flash.get("success").map { message =>
-        <div class="alert alert-success">
-            <span class="alert-icon">✓</span>
-            <span class="alert-message">@message</span>
-        </div>
-    }
-    @request.flash.get("error").map { message =>
-        <div class="alert alert-error">
-            <span class="alert-icon">✗</span>
-            <span class="alert-message">@message</span>
-        </div>
-    }
 
     <!-- Hero Section -->
     <section class="hero">
@@ -150,33 +137,28 @@
             <h2 class="section-title">Publicaciones Destacadas</h2>
             <p class="section-subtitle">Explora artículos sobre programación reactiva y sistemas distribuidos</p>
             <div class="publications-grid">
-                <div class="publication-card">
-                    <div class="publication-header">
-                        <span class="publication-category">Akka</span>
-                        <span class="publication-date">2026</span>
+                @if(communityPublications.nonEmpty) {
+                    @for(pub <- communityPublications.take(3)) {
+                        <div class="publication-card">
+                            <div class="publication-header">
+                                <span class="publication-category">@pub.publication.category</span>
+                                <span class="publication-date">@pub.publication.createdAt.atZone(java.time.ZoneId.systemDefault()).getYear</span>
+                            </div>
+                            <h3 class="publication-title">@pub.publication.title</h3>
+                            <p class="publication-excerpt">@pub.publication.excerpt.getOrElse(pub.publication.content.take(150) + "...")</p>
+                            <a href="@routes.HomeController.publicacion(pub.publication.slug)" class="publication-link">Leer más →</a>
+                        </div>
+                    }
+                } else {
+                    <div class="publication-card">
+                        <div class="publication-header">
+                            <span class="publication-category">Comunidad</span>
+                        </div>
+                        <h3 class="publication-title">Próximamente</h3>
+                        <p class="publication-excerpt">Aún no hay publicaciones aprobadas. ¡Sé el primero en contribuir!</p>
+                        <a href="@routes.HomeController.publicaciones()" class="publication-link">Ver publicaciones →</a>
                     </div>
-                    <h3 class="publication-title">Introducción a Akka Actors</h3>
-                    <p class="publication-excerpt">Descubre cómo el modelo de actores proporciona una abstracción poderosa para construir sistemas concurrentes y distribuidos.</p>
-                    <a href="@routes.HomeController.publicaciones()" class="publication-link">Leer más →</a>
-                </div>
-                <div class="publication-card">
-                    <div class="publication-header">
-                        <span class="publication-category">Streams</span>
-                        <span class="publication-date">2026</span>
-                    </div>
-                    <h3 class="publication-title">Akka Streams y Procesamiento Reactivo</h3>
-                    <p class="publication-excerpt">Aprende a procesar flujos de datos con backpressure y control de flujo automático usando Akka Streams.</p>
-                    <a href="@routes.HomeController.publicaciones()" class="publication-link">Leer más →</a>
-                </div>
-                <div class="publication-card">
-                    <div class="publication-header">
-                        <span class="publication-category">Play Framework</span>
-                        <span class="publication-date">2026</span>
-                    </div>
-                    <h3 class="publication-title">Programación Asíncrona en Play</h3>
-                    <p class="publication-excerpt">Domina Futures, Promises y técnicas asíncronas para construir aplicaciones web de alto rendimiento.</p>
-                    <a href="@routes.HomeController.publicaciones()" class="publication-link">Leer más →</a>
-                </div>
+                }
             </div>
         </div>
     </section>

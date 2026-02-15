@@ -1,4 +1,4 @@
-@(contacts: Seq[models.ContactRecord], username: String, currentPage: Int, totalPages: Int, searchQuery: Option[String], pendingPublicationsCount: Int, pendingAdminsCount: Int = 0, role: String = "admin")(implicit request: RequestHeader, flash: Flash)
+@(contacts: Seq[models.ContactRecord], username: String, currentPage: Int, totalPages: Int, searchQuery: Option[String], pendingPublicationsCount: Int, pendingAdminsCount: Int = 0, role: String = "admin", msgMetrics: Map[String, Int] = Map.empty, topSenders: Seq[(Long, String, Int)] = Seq.empty, topReceivers: Seq[(Long, String, Int)] = Seq.empty, topPubsByMsg: Seq[(Long, String, Int)] = Seq.empty)(implicit request: RequestHeader, flash: Flash)
 
 @admin.adminLayout("Dashboard") {
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -55,6 +55,126 @@
             </div>
         </div>
     }
+
+    @* ============================================ *@
+    @* MÉTRICAS DEL SISTEMA DE MENSAJERÍA REACTIVA  *@
+    @* ============================================ *@
+    <h3 style="font-size: 0.8125rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 0.25rem;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Mensajería Reactiva (Message-Driven)
+    </h3>
+
+    <!-- KPIs principales -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div class="card" style="border-left: 3px solid #6b8caa; padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Total mensajes</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("total", 0)</div>
+        </div>
+        <div class="card" style="border-left: 3px solid #d4a853; padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">No leídos</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: #d4a853; margin-top: 0.125rem;">@msgMetrics.getOrElse("unread", 0)</div>
+        </div>
+        <div class="card" style="border-left: 3px solid #6b8f71; padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Leídos</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: #6b8f71; margin-top: 0.125rem;">@msgMetrics.getOrElse("read", 0)</div>
+        </div>
+        <div class="card" style="border-left: 3px solid #8c6b8a; padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Tasa de lectura</div>
+            <div style="font-size: 1.75rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("readRate", 0)%</div>
+        </div>
+    </div>
+
+    <!-- Métricas de actividad y alcance -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div class="card" style="padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Última semana</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("last7Days", 0)</div>
+        </div>
+        <div class="card" style="padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Último mes</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("last30Days", 0)</div>
+        </div>
+        <div class="card" style="padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Sobre publicaciones</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #6b8caa; margin-top: 0.125rem;">@msgMetrics.getOrElse("withPublication", 0)</div>
+        </div>
+        <div class="card" style="padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Directos</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("direct", 0)</div>
+        </div>
+    </div>
+
+    <!-- Alcance de usuarios -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+        <div class="card" style="padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Remitentes únicos</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("uniqueSenders", 0)</div>
+            <div style="font-size: 0.6875rem; color: #94a3b8; margin-top: 0.25rem;">usuarios que han enviado mensajes</div>
+        </div>
+        <div class="card" style="padding: 1rem;">
+            <div style="font-size: 0.625rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Receptores únicos</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #1a202c; margin-top: 0.125rem;">@msgMetrics.getOrElse("uniqueReceivers", 0)</div>
+            <div style="font-size: 0.6875rem; color: #94a3b8; margin-top: 0.25rem;">autores que han recibido mensajes</div>
+        </div>
+    </div>
+
+    <!-- Gráficos de mensajería y tablas de ranking -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+        <div class="card">
+            <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Distribución de Mensajes</h3>
+            <canvas id="msgStatusChart" style="max-height: 250px;"></canvas>
+        </div>
+
+        <div class="card">
+            <h3 style="font-size: 0.8125rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Tipo de Mensajes</h3>
+            <canvas id="msgTypeChart" style="max-height: 250px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Rankings -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+        @if(topSenders.nonEmpty) {
+            <div class="card">
+                <h4 style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Top Remitentes</h4>
+                @for((user, idx) <- topSenders.zipWithIndex) {
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; @if(idx < topSenders.size - 1){border-bottom: 1px solid #f1f5f9;}">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="width: 22px; height: 22px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.625rem; font-weight: 700; color: #64748b;">@{idx + 1}</span>
+                            <span style="font-size: 0.8125rem; font-weight: 600; color: #1a202c;">@user._2</span>
+                        </div>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #6b8caa; background: #eef4fa; padding: 0.125rem 0.5rem; border-radius: 4px;">@user._3</span>
+                    </div>
+                }
+            </div>
+        }
+
+        @if(topReceivers.nonEmpty) {
+            <div class="card">
+                <h4 style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Top Receptores (Autores)</h4>
+                @for((user, idx) <- topReceivers.zipWithIndex) {
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; @if(idx < topReceivers.size - 1){border-bottom: 1px solid #f1f5f9;}">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="width: 22px; height: 22px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.625rem; font-weight: 700; color: #64748b;">@{idx + 1}</span>
+                            <span style="font-size: 0.8125rem; font-weight: 600; color: #1a202c;">@user._2</span>
+                        </div>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #6b8f71; background: #f0faf4; padding: 0.125rem 0.5rem; border-radius: 4px;">@user._3</span>
+                    </div>
+                }
+            </div>
+        }
+
+        @if(topPubsByMsg.nonEmpty) {
+            <div class="card">
+                <h4 style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Publicaciones con más mensajes</h4>
+                @for((pub, idx) <- topPubsByMsg.zipWithIndex) {
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; @if(idx < topPubsByMsg.size - 1){border-bottom: 1px solid #f1f5f9;}">
+                        <span style="font-size: 0.8125rem; color: #1a202c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="@pub._2">@pub._2</span>
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #8c6b8a; background: #f5f0fa; padding: 0.125rem 0.5rem; border-radius: 4px;">@pub._3</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
 
     @defining({
         val allContacts = contacts
@@ -381,5 +501,64 @@
 
         console.log('📊 Gráficos cargados exitosamente');
         console.log('Total:', total, '| Pendientes:', pending, '| Procesados:', processed, '| Archivados:', archived);
+    </script>
+
+    <!-- Messaging Charts -->
+    <script>
+        // Messaging data from server
+        const msgRead = @msgMetrics.getOrElse("read", 0);
+        const msgUnread = @msgMetrics.getOrElse("unread", 0);
+        const msgWithPub = @msgMetrics.getOrElse("withPublication", 0);
+        const msgDirect = @msgMetrics.getOrElse("direct", 0);
+
+        // 4. Doughnut — Leídos vs No leídos
+        const msgStatusCtx = document.getElementById('msgStatusChart');
+        if (msgStatusCtx) {
+            new Chart(msgStatusCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Leídos', 'No leídos'],
+                    datasets: [{
+                        data: [msgRead, msgUnread],
+                        backgroundColor: ['#6b8f71', '#d4a853'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '60%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 15, font: { size: 12 } } }
+                    }
+                }
+            });
+        }
+
+        // 5. Bar — Sobre publicaciones vs Directos
+        const msgTypeCtx = document.getElementById('msgTypeChart');
+        if (msgTypeCtx) {
+            new Chart(msgTypeCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Sobre publicaciones', 'Directos'],
+                    datasets: [{
+                        label: 'Mensajes',
+                        data: [msgWithPub, msgDirect],
+                        backgroundColor: ['#6b8caa', '#8b9fad'],
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        console.log('📬 Gráficos de mensajería cargados');
     </script>
 }

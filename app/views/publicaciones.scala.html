@@ -255,6 +255,7 @@
         var cards = document.querySelectorAll('.pub-filterable');
         var input = document.getElementById('pubSearchInput');
         var counter = document.getElementById('pubResultsCount');
+        var categorySelect = document.getElementById('pubCategorySelect');
         var activeCategory = 'all';
 
         function normalize(s) {
@@ -291,9 +292,30 @@
                 pills.forEach(function(p) { p.classList.remove('active'); });
                 pill.classList.add('active');
                 activeCategory = pill.getAttribute('data-category');
+                // Sync the select dropdown
+                if (categorySelect) {
+                    categorySelect.value = activeCategory === 'all' ? '' : activeCategory;
+                }
                 filterCards();
             });
         });
+
+        // Select dropdown triggers client-side filtering instead of form submit
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function() {
+                activeCategory = this.value || 'all';
+                // Sync the pills
+                pills.forEach(function(p) {
+                    var pillCat = p.getAttribute('data-category');
+                    if (pillCat === activeCategory) {
+                        p.classList.add('active');
+                    } else {
+                        p.classList.remove('active');
+                    }
+                });
+                filterCards();
+            });
+        }
 
         if (input) {
             var debounce;
@@ -306,17 +328,26 @@
         filterCards();
 
         // ── Hide filter bar on scroll down, show on scroll up ──
+        // The bar stays visible (sticky) while the user is near the top
+        // of the publications section. Once the user scrolls well past the
+        // first row of cards it slides away smoothly; scrolling back up
+        // always brings it back immediately.
         var nav = document.querySelector('.pub-category-nav');
-        if (nav) {
+        var pubSection = document.querySelector('.publications-section');
+        if (nav && pubSection) {
             var lastY = window.scrollY;
-            var threshold = 120;
             var ticking = false;
 
             window.addEventListener('scroll', function() {
                 if (!ticking) {
                     window.requestAnimationFrame(function() {
                         var currentY = window.scrollY;
-                        if (currentY > threshold && currentY > lastY) {
+                        // Distance from the top of the publications grid
+                        var sectionTop = pubSection.getBoundingClientRect().top + window.scrollY;
+                        // Hide once the user enters the publications grid
+                        var hidePoint = sectionTop + 80;
+
+                        if (currentY > hidePoint && currentY > lastY) {
                             nav.classList.add('nav-hidden');
                         } else {
                             nav.classList.remove('nav-hidden');
