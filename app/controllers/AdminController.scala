@@ -543,7 +543,7 @@ class AdminController @Inject()(
    * Aprobar una publicación — via PublicationEngine (Ask pattern)
    */
   def approvePublication(id: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
-    publicationAdapter.approvePublication(id, request.username).map {
+    publicationAdapter.approvePublication(id, request.userId, request.username).map {
       case _: PublicationApproved =>
         // Track via AnalyticsEngine
         analyticsAdapter.trackEvent("publication.approved", Some(request.userId), Map(
@@ -568,7 +568,7 @@ class AdminController @Inject()(
       .flatMap(_.headOption)
       .getOrElse("No cumple con los estándares de calidad")
     
-    publicationAdapter.rejectPublication(id, request.username, rejectionReason).map {
+    publicationAdapter.rejectPublication(id, request.userId, request.username, rejectionReason).map {
       case _: PublicationRejected =>
         analyticsAdapter.trackEvent("publication.rejected", Some(request.userId), Map(
           "publicationId" -> id.toString,

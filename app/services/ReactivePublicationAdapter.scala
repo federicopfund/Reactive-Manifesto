@@ -38,15 +38,15 @@ class ReactivePublicationAdapter @Inject()(
     }
   }
 
-  def approvePublication(publicationId: Long, adminUsername: String): Future[PublicationResponse] = {
+  def approvePublication(publicationId: Long, adminId: Long, adminUsername: String): Future[PublicationResponse] = {
     system.ask[PublicationResponse] { replyTo =>
-      ApprovePublication(publicationId, adminUsername, replyTo)
+      ApprovePublication(publicationId, adminId, adminUsername, replyTo)
     }
   }
 
-  def rejectPublication(publicationId: Long, adminUsername: String, reason: String): Future[PublicationResponse] = {
+  def rejectPublication(publicationId: Long, adminId: Long, adminUsername: String, reason: String): Future[PublicationResponse] = {
     system.ask[PublicationResponse] { replyTo =>
-      RejectPublication(publicationId, adminUsername, reason, replyTo)
+      RejectPublication(publicationId, adminId, adminUsername, reason, replyTo)
     }
   }
 }

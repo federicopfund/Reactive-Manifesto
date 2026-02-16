@@ -36,12 +36,14 @@ case class CreatePublication(
 
 case class ApprovePublication(
   publicationId: Long,
+  adminId: Long,
   adminUsername: String,
   replyTo: ActorRef[PublicationResponse]
 ) extends PublicationCommand
 
 case class RejectPublication(
   publicationId: Long,
+  adminId: Long,
   adminUsername: String,
   reason: String,
   replyTo: ActorRef[PublicationResponse]
@@ -136,10 +138,9 @@ object PublicationEngine {
           Behaviors.same
 
         // ── Approve publication ──
-        case ApprovePublication(publicationId, adminUsername, replyTo) =>
-          context.log.info(s"[PublicationEngine] Approving publication $publicationId by $adminUsername")
+        case ApprovePublication(publicationId, adminId, adminUsername, replyTo) =>
+          context.log.info(s"[PublicationEngine] Approving publication $publicationId by $adminUsername (id=$adminId)")
 
-          val adminId = 0L // Resolved via session in controller; actor receives the command
           context.pipeToSelf(
             publicationRepo.findById(publicationId).flatMap {
               case Some(pub) => publicationRepo.changeStatus(publicationId, "approved", adminId).map(_ => pub.userId)
@@ -152,10 +153,8 @@ object PublicationEngine {
           Behaviors.same
 
         // ── Reject publication ──
-        case RejectPublication(publicationId, adminUsername, reason, replyTo) =>
-          context.log.info(s"[PublicationEngine] Rejecting publication $publicationId by $adminUsername: $reason")
-
-          val adminId = 0L
+        case RejectPublication(publicationId, adminId, adminUsername, reason, replyTo) =>
+          context.log.info(s"[PublicationEngine] Rejecting publication $publicationId by $adminUsername (id=$adminId): $reason")
           context.pipeToSelf(
             publicationRepo.findById(publicationId).flatMap {
               case Some(pub) => publicationRepo.changeStatus(publicationId, "rejected", adminId, Some(reason)).map(_ => pub.userId)
