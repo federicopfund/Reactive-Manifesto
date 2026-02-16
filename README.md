@@ -106,12 +106,16 @@ graph TB
 
     %% Controller → Adapter
     HC -- "submitContact()" --> RCA
+    HC -- "trackPageView()" --> RAA
     UPC -- "sendMessage()" --> RMA
-    UPC -- "processPublication()" --> RPLA
-    UPC -- "trackView()" --> RAA
-    AC -- "approve/reject()" --> RPA
-    AC -- "moderate()" --> RMOA
+    UPC -- "moderate()" --> RMOA
     UPC -- "checkBadges()" --> RGA
+    UPC -- "trackEvent()" --> RAA
+    UPC -- "notify()" --> RNA
+    AC -- "approve/reject()" --> RPA
+    AC -- "notify()" --> RNA
+    AC -- "trackEvent()" --> RAA
+    AUC -- "trackEvent()" --> RAA
     AUC -- "notify()" --> RNA
 
     %% Adapter → Actor (Ask/Tell)
@@ -174,7 +178,136 @@ graph TB
 | 🟡 | **EventBusEngine** | `eventbus-core` | Pub/Sub | Bus de eventos de dominio con topic filtering + DeathWatch |
 | 🟡 | **PipelineEngine** | `pipeline-core` | Saga | Orquestador: Moderate → Create → Notify → Gamify → Track |
 
-> 🔵 = existente &nbsp; 🟢 = dominio &nbsp; 🟡 = infraestructura
+> 🔵 = dominio (core) &nbsp; 🟢 = cross-cutting &nbsp; 🟡 = infraestructura
+
+### Taxonomía del Module (DI)
+
+El `Module.scala` organiza los 9 agentes en **3 capas concéntricas** inyectadas por Guice. Cada capa tiene un propósito claro y dependencias unidireccionales (las capas externas dependen de las internas, nunca al revés):
+
+```mermaid
+graph TB
+    subgraph Guice["Module.scala — Guice DI Provider"]
+        direction TB
+
+        subgraph L1["LAYER 1 — DOMAIN AGENTS\n(core business logic)"]
+            direction LR
+
+            subgraph CE_GROUP["ContactEngine"]
+                CE_AS["ActorSystem&lt;ContactCommand&gt;\n<i>contact-core</i>"]
+                CE_AD["ReactiveContactAdapter"]
+                CE_AS --> CE_AD
+            end
+
+            subgraph ME_GROUP["MessageEngine"]
+                ME_AS["ActorSystem&lt;MessageCommand&gt;\n<i>message-core</i>"]
+                ME_AD["ReactiveMessageAdapter"]
+                ME_AS --> ME_AD
+            end
+
+            subgraph PE_GROUP["PublicationEngine"]
+                PE_AS["ActorSystem&lt;PublicationCommand&gt;\n<i>publication-core</i>"]
+                PE_AD["ReactivePublicationAdapter"]
+                PE_AS --> PE_AD
+            end
+
+            subgraph GE_GROUP["GamificationEngine"]
+                GE_AS["ActorSystem&lt;GamificationCommand&gt;\n<i>gamification-core</i>"]
+                GE_AD["ReactiveGamificationAdapter"]
+                GE_AS --> GE_AD
+            end
+        end
+
+        subgraph L2["LAYER 2 — CROSS-CUTTING AGENTS\n(notificaciones, moderación, analytics)"]
+            direction LR
+
+            subgraph NE_GROUP["NotificationEngine\n⚡ Circuit Breaker"]
+                NE_AS["ActorSystem&lt;NotificationCommand&gt;\n<i>notification-core</i>"]
+                NE_AD["ReactiveNotificationAdapter"]
+                NE_AS --> NE_AD
+            end
+
+            subgraph MOE_GROUP["ModerationEngine"]
+                MOE_AS["ActorSystem&lt;ModerationCommand&gt;\n<i>moderation-core</i>"]
+                MOE_AD["ReactiveModerationAdapter"]
+                MOE_AS --> MOE_AD
+            end
+
+            subgraph AE_GROUP["AnalyticsEngine"]
+                AE_AS["ActorSystem&lt;AnalyticsCommand&gt;\n<i>analytics-core</i>"]
+                AE_AD["ReactiveAnalyticsAdapter"]
+                AE_AS --> AE_AD
+            end
+        end
+
+        subgraph L3["LAYER 3 — INFRASTRUCTURE AGENTS\n(orquestación inter-agente)"]
+            direction LR
+
+            subgraph EB_GROUP["EventBusEngine\nPub/Sub + DeathWatch"]
+                EB_AS["ActorSystem&lt;EventBusCommand&gt;\n<i>eventbus-core</i>"]
+                EB_AD["ReactiveEventBusAdapter"]
+                EB_AS --> EB_AD
+            end
+
+            subgraph PL_GROUP["PipelineEngine\nSaga Orchestrator"]
+                PL_AS["ActorSystem&lt;PipelineCommand&gt;\n<i>pipeline-core</i>"]
+                PL_AD["ReactivePipelineAdapter"]
+                PL_AS --> PL_AD
+            end
+        end
+    end
+
+    %% ── Layer Dependencies (Guice injection graph) ──
+    CE_AS -. "ContactRepository" .-> REPOS
+    ME_AS -. "PrivateMessageRepo\nUserNotificationRepo" .-> REPOS
+    PE_AS -. "PublicationRepo\nUserNotificationRepo" .-> REPOS
+    GE_AS -. "BadgeRepository" .-> REPOS
+    NE_AS -. "UserNotificationRepo\nEmailService" .-> REPOS
+    
+    %% ── Pipeline depends on L1 + L2 agents ──
+    PL_AS == "inject\nActorSystem" ==> MOE_AS
+    PL_AS == "inject" ==> PE_AS
+    PL_AS == "inject" ==> NE_AS
+    PL_AS == "inject" ==> GE_AS
+    PL_AS == "inject" ==> AE_AS
+    PL_AS == "inject" ==> EB_AS
+
+    subgraph REPOS["Repositories + Services"]
+        direction LR
+        R1["ContactRepo"]
+        R2["PrivateMessageRepo"]
+        R3["UserNotificationRepo"]
+        R4["PublicationRepo"]
+        R5["BadgeRepo"]
+        R6["EmailService"]
+    end
+
+    %% Styles
+    style L1 fill:#1a365d,stroke:#63b3ed,color:#fff,stroke-width:2px
+    style L2 fill:#2c5282,stroke:#90cdf4,color:#fff,stroke-width:2px
+    style L3 fill:#1c4532,stroke:#68d391,color:#fff,stroke-width:2px
+    style Guice fill:#171923,stroke:#a0aec0,color:#fff,stroke-width:3px
+    style REPOS fill:#553c9a,stroke:#b794f4,color:#fff,stroke-width:2px
+
+    style CE_GROUP fill:#2b6cb0,stroke:#90cdf4,color:#fff
+    style ME_GROUP fill:#2b6cb0,stroke:#90cdf4,color:#fff
+    style PE_GROUP fill:#2b6cb0,stroke:#90cdf4,color:#fff
+    style GE_GROUP fill:#2b6cb0,stroke:#90cdf4,color:#fff
+    style NE_GROUP fill:#285e61,stroke:#81e6d9,color:#fff
+    style MOE_GROUP fill:#285e61,stroke:#81e6d9,color:#fff
+    style AE_GROUP fill:#285e61,stroke:#81e6d9,color:#fff
+    style EB_GROUP fill:#276749,stroke:#68d391,color:#fff
+    style PL_GROUP fill:#276749,stroke:#68d391,color:#fff
+```
+
+**Leyenda de la taxonomía:**
+
+| Capa | Propósito | Dependencias | Agentes |
+|------|-----------|-------------|---------|
+| **Layer 1 — Domain** | Lógica de negocio pura: contacto, mensajería, publicaciones, gamificación | Repositories (Slick) | Contact, Message, Publication, Gamification |
+| **Layer 2 — Cross-Cutting** | Capacidades transversales que cualquier layer puede consumir | Repos + EmailService | Notification (CB), Moderation, Analytics |
+| **Layer 3 — Infrastructure** | Orquestación inter-agente — coordina L1 y L2, nunca lógica propia | Recibe los `ActorSystem` de L1 + L2 | EventBus (Pub/Sub), Pipeline (Saga) |
+
+> **Regla de dependencia**: L3 → L2 → L1 → Repositories. Nunca al revés. El `PipelineEngine` recibe por inyección los 5 ActorSystems que orquesta.
 
 ### Comunicación inter-agente avanzada
 
@@ -275,6 +408,19 @@ sequenceDiagram
     C-->>U: HTTP Response
 ```
 
+### Integración Controller → Agentes
+
+Cada controller delega **toda la lógica reactiva** a sus agentes asignados vía adapters inyectados:
+
+| Controller | Agentes inyectados | Responsabilidad |
+|-----------|-------------------|-----------------|
+| **HomeController** | Contact, Analytics | Formularios de contacto + tracking de vistas |
+| **AuthController** | Analytics, Notification | Tracking de login/registro + bienvenida |
+| **UserPublicationController** | Message, Moderation, Gamification, Analytics, Notification | Publicaciones, mensajería, badges, moderación |
+| **AdminController** | Publication, Notification, Analytics | Aprobación/rechazo, feedback, estadísticas |
+
+> Los controllers **nunca** invocan lógica de negocio directamente — todo fluye a través de agentes.
+
 ---
 
 ## ✅ Principios Reactivos Implementados
@@ -295,10 +441,10 @@ Reactive-Manifiesto/
 ├── app/
 │   ├── Module.scala                      # DI: provee 9 ActorSystems y 9 Adapters
 │   ├── controllers/
-│   │   ├── HomeController.scala          # Contacto, páginas públicas
-│   │   ├── AuthController.scala          # Login, registro, verificación email
-│   │   ├── UserPublicationController     # Publicaciones, mensajería, dashboard
-│   │   ├── AdminController.scala         # Panel de administración
+│   │   ├── HomeController.scala          # Contacto, páginas → Contact, Analytics
+│   │   ├── AuthController.scala          # Login, registro → Analytics, Notification
+│   │   ├── UserPublicationController     # Publicaciones → Message, Moderation, Gamification, Analytics, Notification
+│   │   ├── AdminController.scala         # Admin → Publication, Notification, Analytics
 │   │   └── actions/
 │   │       └── AuthAction.scala          # Acción de autenticación
 │   ├── core/                             # 🧠 AGENTES (Akka Typed Actors)
@@ -323,8 +469,7 @@ Reactive-Manifiesto/
 │   │   ├── ReactiveEventBusAdapter       # Tell/Ask → EventBusEngine
 │   │   ├── ReactivePipelineAdapter       # Ask → PipelineEngine (Saga)
 │   │   ├── EmailService.scala            # SMTP email delivery
-│   │   ├── EmailVerificationService      # Verificación de email
-│   │   └── GamificationService.scala     # Legacy (reemplazado por Engine)
+│   │   └── EmailVerificationService      # Verificación de email
 │   ├── models/                           # Case classes + Slick mappings
 │   ├── repositories/                     # Data access layer (async)
 │   └── views/                            # Templates Twirl
