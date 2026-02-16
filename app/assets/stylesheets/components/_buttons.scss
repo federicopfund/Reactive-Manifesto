@@ -28,7 +28,7 @@
     width: 0;
     height: 0;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
     transform: translate(-50%, -50%);
     transition: width 0.6s $easing-smooth, height 0.6s $easing-smooth;
     z-index: -1;
@@ -48,15 +48,14 @@
     cursor: not-allowed;
   }
 
-  // Primary Button con efectos premium - Contexto Cyan/Teal
+  // Primary Button con efectos premium
   &-primary {
     background: linear-gradient(135deg, $accent-primary 0%, $accent-dark 50%, $accent-darker 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba($accent-primary, 0.5),
-                0 2px 8px rgba($accent-dark, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                0 0 30px rgba($accent-light, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba($accent-darker, 0.4),
+                0 2px 8px rgba($accent-dark, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     font-weight: 700;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 
@@ -64,7 +63,7 @@
       content: '';
       position: absolute;
       inset: -4px;
-      background: radial-gradient(circle at center, rgba($accent-light, 0.7), transparent 70%);
+      background: radial-gradient(circle at center, rgba(0, 0, 0, 0.15), transparent 70%);
       opacity: 0;
       transition: opacity $transition-slow $easing-smooth;
       z-index: -1;
@@ -74,15 +73,13 @@
 
     &:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 35px rgba($accent-primary, 0.7),
-                  0 8px 20px rgba($accent-dark, 0.5),
-                  0 0 50px rgba($accent-light, 0.6),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.4);
-      background: linear-gradient(135deg, $accent-light 0%, $accent-primary 50%, $accent-dark 100%);
-      filter: brightness(1.15);
+      box-shadow: 0 12px 30px rgba($accent-darker, 0.5),
+                  0 6px 16px rgba($accent-dark, 0.4),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      background: linear-gradient(135deg, $accent-primary 0%, $accent-dark 50%, $accent-darker 100%);
 
       &::after {
-        opacity: 1;
+        opacity: 0.5;
       }
     }
 
@@ -91,16 +88,15 @@
     }
   }
 
-  // Secondary Button - Glass morphism con contexto
+  // Secondary Button - Glass morphism sutil
   &-secondary {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(10px);
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.92);
+    border: 2px solid rgba(255, 255, 255, 0.25);
     position: relative;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2),
-                0 0 20px rgba($accent-light, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
     font-weight: 600;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 
@@ -108,7 +104,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba($accent-light, 0.2), rgba($accent-primary, 0.2));
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
       opacity: 0;
       transition: opacity $transition-slow $easing-smooth;
       border-radius: $border-radius-lg;
@@ -116,13 +112,12 @@
     }
 
     &:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(15px);
-      border-color: rgba($accent-light, 0.6);
+      border-color: rgba(255, 255, 255, 0.45);
       transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3),
-                  0 0 40px rgba($accent-light, 0.4),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.25);
 
       &::after {
         opacity: 1;

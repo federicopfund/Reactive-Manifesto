@@ -8,6 +8,8 @@ import play.api.libs.json._
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{ContactRepository, UserRepository, PublicationRepository, PublicationFeedbackRepository, UserNotificationRepository, NewsletterRepository, PrivateMessageRepository}
 import models.{ContactRecord, PublicationFeedback, UserNotification, FeedbackType}
+import services.{ReactivePublicationAdapter, ReactiveNotificationAdapter, ReactiveAnalyticsAdapter}
+import core.{PublicationApproved, PublicationRejected, PublicationError}
 import actions.{AdminOnlyAction, SuperAdminOnlyAction, AuthRequest}
 import org.mindrot.jbcrypt.BCrypt
 import java.time.Instant
@@ -27,6 +29,9 @@ class AdminController @Inject()(
   notificationRepository: UserNotificationRepository,
   newsletterRepository: NewsletterRepository,
   messageRepository: PrivateMessageRepository,
+  publicationAdapter: ReactivePublicationAdapter,
+  notificationAdapter: ReactiveNotificationAdapter,
+  analyticsAdapter: ReactiveAnalyticsAdapter,
   adminAction: AdminOnlyAction,
   superAdminAction: SuperAdminOnlyAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) {
@@ -535,34 +540,27 @@ class AdminController @Inject()(
   }
 
   /**
-   * Aprobar una publicación
+   * Aprobar una publicación — via PublicationEngine (Ask pattern)
    */
   def approvePublication(id: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
-    val adminId = request.userId
-    for {
-      pubOpt <- publicationRepository.findById(id)
-      success <- publicationRepository.changeStatus(id, "approved", adminId)
-      _ <- if (success && pubOpt.isDefined) {
-        notificationRepository.create(UserNotification(
-          userId = pubOpt.get.userId,
-          notificationType = "publication_approved",
-          title = "Publicación aprobada",
-          message = s"Tu publicación '${pubOpt.get.title.take(80)}' ha sido aprobada y ya está visible públicamente.",
-          publicationId = Some(id)
+    publicationAdapter.approvePublication(id, request.username).map {
+      case _: PublicationApproved =>
+        // Track via AnalyticsEngine
+        analyticsAdapter.trackEvent("publication.approved", Some(request.userId), Map(
+          "publicationId" -> id.toString,
+          "adminUsername" -> request.username
         ))
-      } else Future.successful(0L)
-    } yield {
-      if (success) {
         Redirect(routes.AdminController.pendingPublications())
           .flashing("success" -> "Publicación aprobada exitosamente")
-      } else {
-        BadRequest("Error al aprobar la publicación")
-      }
+      case PublicationError(reason) =>
+        BadRequest(s"Error al aprobar la publicación: $reason")
+      case _ =>
+        BadRequest("Error inesperado al aprobar la publicación")
     }
   }
 
   /**
-   * Rechazar una publicación
+   * Rechazar una publicación — via PublicationEngine (Ask pattern)
    */
   def rejectPublication(id: Long) = adminAction.async { implicit request: AuthRequest[AnyContent] =>
     val rejectionReason = request.body.asFormUrlEncoded
@@ -570,26 +568,19 @@ class AdminController @Inject()(
       .flatMap(_.headOption)
       .getOrElse("No cumple con los estándares de calidad")
     
-    val adminId = request.userId
-    for {
-      pubOpt <- publicationRepository.findById(id)
-      success <- publicationRepository.changeStatus(id, "rejected", adminId, Some(rejectionReason))
-      _ <- if (success && pubOpt.isDefined) {
-        notificationRepository.create(UserNotification(
-          userId = pubOpt.get.userId,
-          notificationType = "publication_rejected",
-          title = "Publicación rechazada",
-          message = s"Tu publicación '${pubOpt.get.title.take(80)}' necesita mejoras. Motivo: ${rejectionReason.take(150)}",
-          publicationId = Some(id)
+    publicationAdapter.rejectPublication(id, request.username, rejectionReason).map {
+      case _: PublicationRejected =>
+        analyticsAdapter.trackEvent("publication.rejected", Some(request.userId), Map(
+          "publicationId" -> id.toString,
+          "adminUsername" -> request.username,
+          "reason" -> rejectionReason.take(100)
         ))
-      } else Future.successful(0L)
-    } yield {
-      if (success) {
         Redirect(routes.AdminController.pendingPublications())
           .flashing("success" -> "Publicación rechazada")
-      } else {
-        BadRequest("Error al rechazar la publicación")
-      }
+      case PublicationError(reason) =>
+        BadRequest(s"Error al rechazar la publicación: $reason")
+      case _ =>
+        BadRequest("Error inesperado al rechazar la publicación")
     }
   }
 
@@ -673,18 +664,19 @@ class AdminController @Inject()(
       for {
         feedbackId <- feedbackRepository.create(feedback)
         pubOpt <- publicationRepository.findById(publicationId)
-        _ <- if (sendNow && pubOpt.isDefined) {
+        _ = if (sendNow && pubOpt.isDefined) {
           val pub = pubOpt.get
           val typeLabel = FeedbackType.label(feedbackType)
-          notificationRepository.create(UserNotification(
+          // Notify via NotificationEngine (fire-and-forget)
+          notificationAdapter.notify(
             userId = pub.userId,
+            userEmail = None,
             notificationType = "feedback_sent",
             title = s"Nuevo feedback: $typeLabel",
             message = message.trim.take(200),
-            publicationId = Some(publicationId),
-            feedbackId = Some(feedbackId)
-          ))
-        } else Future.successful(0L)
+            publicationId = Some(publicationId)
+          )
+        }
       } yield {
         val flashMsg = if (sendNow) "Feedback enviado al usuario" else "Feedback guardado (borrador)"
         Redirect(routes.AdminController.reviewPublicationDetail(publicationId))
@@ -707,21 +699,22 @@ class AdminController @Inject()(
       sent <- feedbackRepository.markAsSent(feedbackId)
       pubOpt <- if (sent) publicationRepository.findById(publicationId) else Future.successful(None)
       fbList <- if (sent) feedbackRepository.findByPublicationId(publicationId) else Future.successful(List.empty)
-      _ <- {
+      _ = {
         val fbOpt = fbList.find(_.feedback.id.contains(feedbackId))
         if (sent && pubOpt.isDefined && fbOpt.isDefined) {
           val pub = pubOpt.get
           val fb = fbOpt.get.feedback
           val typeLabel = FeedbackType.label(fb.feedbackType)
-          notificationRepository.create(UserNotification(
+          // Notify via NotificationEngine (fire-and-forget)
+          notificationAdapter.notify(
             userId = pub.userId,
+            userEmail = None,
             notificationType = "feedback_sent",
             title = s"Nuevo feedback: $typeLabel",
             message = fb.message.take(200),
-            publicationId = Some(publicationId),
-            feedbackId = Some(feedbackId)
-          ))
-        } else Future.successful(0L)
+            publicationId = Some(publicationId)
+          )
+        }
       }
     } yield {
       if (sent) {

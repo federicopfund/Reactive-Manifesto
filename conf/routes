@@ -16,6 +16,10 @@ GET     /publicaciones/:slug        controllers.HomeController.publicacion(slug:
 # Portafolio page
 GET     /portafolio                 controllers.HomeController.portafolio()
 
+# Legal pages
+GET     /privacidad                 controllers.HomeController.politicaPrivacidad()
+GET     /terminos                   controllers.HomeController.terminosDeUso()
+
 # Contact form
 POST    /contact                    controllers.HomeController.submitContact()
 

@@ -93,6 +93,39 @@
     justify-content: center;
     flex-wrap: wrap;
     margin-top: $spacing-2xl;
+
+    // Sin efectos hover en los botones del hero
+    .btn {
+      &::before {
+        display: none !important;
+      }
+
+      &:hover {
+        transform: none !important;
+        filter: none !important;
+      }
+
+      &-primary:hover {
+        box-shadow: 0 4px 15px rgba($accent-darker, 0.4),
+                    0 2px 8px rgba($accent-dark, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+
+        &::after {
+          opacity: 0 !important;
+        }
+      }
+
+      &-secondary:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+        &::after {
+          opacity: 0 !important;
+        }
+      }
+    }
   }
 }
 

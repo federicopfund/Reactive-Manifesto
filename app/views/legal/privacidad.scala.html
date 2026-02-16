@@ -1,0 +1,116 @@
+@()(implicit request: RequestHeader, messages: Messages)
+
+@main("Política de Privacidad — Reactive Manifesto") {
+    <article class="legal-page">
+        <header class="legal-header">
+            <div class="legal-header__inner">
+                <span class="legal-header__label">Documento Legal</span>
+                <h1 class="legal-header__title">Política de Privacidad</h1>
+                <p class="legal-header__subtitle">Reactive Manifesto — Plataforma educativa sobre sistemas reactivos</p>
+                <div class="legal-header__meta">
+                    <span>Vigencia: Febrero 2026</span>
+                    <span class="legal-header__separator">|</span>
+                    <span>Versión 1.0</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="legal-body">
+            <aside class="legal-toc">
+                <h2 class="legal-toc__title">Índice</h2>
+                <ol class="legal-toc__list">
+                    <li><a href="#info-recopilada">Información que Recopilamos</a></li>
+                    <li><a href="#uso-info">Uso de la Información</a></li>
+                    <li><a href="#proteccion">Protección de Datos</a></li>
+                    <li><a href="#comparticion">Compartición de Datos</a></li>
+                    <li><a href="#derechos">Tus Derechos</a></li>
+                    <li><a href="#cookies">Cookies y Sesiones</a></li>
+                    <li><a href="#cambios">Cambios en esta Política</a></li>
+                </ol>
+            </aside>
+
+            <div class="legal-content">
+                <section id="info-recopilada" class="legal-section">
+                    <h2 class="legal-section__heading"><span class="legal-section__number">1.</span> Información que Recopilamos</h2>
+                    <p>En Reactive Manifesto recopilamos información de manera transparente y con el único propósito de brindar una mejor experiencia en la plataforma.</p>
+
+                    <h3>1.1 Datos proporcionados por el usuario</h3>
+                    <ul>
+                        <li><strong>Registro:</strong> nombre de usuario, correo electrónico y nombre completo.</li>
+                        <li><strong>Publicaciones:</strong> título, contenido, categoría y etiquetas de los artículos que creas.</li>
+                        <li><strong>Contacto:</strong> nombre, correo electrónico y mensaje enviado a través del formulario de contacto.</li>
+                        <li><strong>Newsletter:</strong> dirección de correo electrónico para suscripción.</li>
+                    </ul>
+
+                    <h3>1.2 Datos recopilados automáticamente</h3>
+                    <ul>
+                        <li>Contadores de vistas en publicaciones (anónimos).</li>
+                        <li>Información técnica básica de la sesión para mantener la autenticación.</li>
+                    </ul>
+                </section>
+
+                <section id="uso-info" class="legal-section">
+                    <h2 class="legal-section__heading"><span class="legal-section__number">2.</span> Uso de la Información</h2>
+                    <p>Utilizamos la información recopilada para:</p>
+                    <ul>
+                        <li>Gestionar tu cuenta y autenticación en la plataforma.</li>
+                        <li>Permitir la creación, edición y publicación de artículos.</li>
+                        <li>Procesar y responder mensajes del formulario de contacto mediante nuestro sistema basado en Akka.</li>
+                        <li>Enviar notificaciones sobre el estado de tus publicaciones (aprobación, rechazo, feedback).</li>
+                        <li>Enviar el newsletter si te has suscrito voluntariamente.</li>
+                        <li>Generar estadísticas agregadas y anónimas sobre el uso de la plataforma.</li>
+                    </ul>
+                </section>
+
+                <section id="proteccion" class="legal-section">
+                    <h2 class="legal-section__heading"><span class="legal-section__number">3.</span> Protección de Datos</h2>
+                    <p>Implementamos medidas de seguridad técnicas y organizativas para proteger tu información:</p>
+                    <ul>
+                        <li>Las contraseñas se almacenan con hash bcrypt; nunca en texto plano.</li>
+                        <li>La verificación de correo electrónico utiliza códigos temporales seguros.</li>
+                        <li>Las comunicaciones del formulario de contacto se procesan de forma asíncrona y tolerante a fallos.</li>
+                        <li>Tokens CSRF en todos los formularios para prevenir ataques de falsificación de solicitudes.</li>
+                    </ul>
+                </section>
+
+                <section id="comparticion" class="legal-section">
+                    <h2 class="legal-section__heading"><span class="legal-section__number">4.</span> Compartición de Datos</h2>
+                    <p>No vendemos, comercializamos ni transferimos tu información personal a terceros. La información se comparte únicamente en los siguientes contextos:</p>
+                    <ul>
+                        <li><strong>Publicaciones aprobadas:</strong> el nombre de usuario y el contenido de publicaciones aprobadas son visibles públicamente.</li>
+                        <li><strong>Perfil público:</strong> el nombre de usuario, insignias y publicaciones aprobadas son visibles en tu perfil público.</li>
+                    </ul>
+                </section>
+
+                <section id="derechos" class="legal-section">
+                    <h2 class="legal-section__heading"><span class="legal-section__number">5.</span> Tus Derechos</h2>
+                    <p>Como usuario de la plataforma, tienes derecho a:</p>
+                    <ul>
+                        <li>Acceder a toda tu información personal desde tu panel de usuario.</li>
+                        <li>Editar tu perfil y datos personales en cualquier momento.</li>
+                        <li>Eliminar tus publicaciones sin restricción de estado.</li>
+                        <li>Solicitar la eliminación completa de tu cuenta contactándonos.</li>
+                        <li>Desuscribirte del newsletter en cualquier momento.</li>
+                    </ul>
+                </section>
+
+                <section id="cookies" class="legal-section">
+                    <h2 class="legal-section__heading"><span class="legal-section__number">6.</span> Cookies y Sesiones</h2>
+                    <p>Utilizamos cookies de sesión estrictamente necesarias para mantener tu autenticación y preferencias de tema (claro/oscuro). No utilizamos cookies de rastreo, analítica de terceros ni publicidad.</p>
+                </section>
+
+                <section id="cambios" class="legal-section">
+                    <h2 class="legal-section__heading"><span class="legal-section__number">7.</span> Cambios en esta Política</h2>
+                    <p>Nos reservamos el derecho de actualizar esta política de privacidad. Cualquier cambio será publicado en esta página con la fecha de última actualización.</p>
+                </section>
+
+                <footer class="legal-footer">
+                    <div class="legal-footer__update">Última actualización: Febrero 2026</div>
+                    <div class="legal-footer__links">
+                        <span>Consulte también los <a href="@routes.HomeController.terminosDeUso()">Términos de Uso</a>.</span>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </article>
+}

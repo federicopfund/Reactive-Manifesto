@@ -7,6 +7,7 @@ import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
 import services.ReactiveContactAdapter
+import services.ReactiveAnalyticsAdapter
 import repositories.{ContactRepository, ReactionRepository, CommentRepository, BookmarkRepository, NewsletterRepository}
 import core.{Contact, ContactSubmitted, ContactError}
 import actions.{OptionalAuthAction, OptionalAuthRequest}
@@ -19,6 +20,7 @@ case class ContactFormData(name: String, email: String, message: String)
 class HomeController @Inject()(
   val controllerComponents: ControllerComponents,
   adapter: ReactiveContactAdapter,
+  analyticsAdapter: ReactiveAnalyticsAdapter,
   contactRepository: ContactRepository,
   publicationRepository: repositories.PublicationRepository,
   reactionRepo: ReactionRepository,
@@ -39,6 +41,7 @@ class HomeController @Inject()(
   )
 
   def index() = Action.async { implicit request: Request[AnyContent] =>
+    analyticsAdapter.trackPageView("/", None, request.headers.get("Referer"))
     publicationRepository.findAllApproved(limit = 6).map { publications =>
       Ok(views.html.index(contactForm, publications))
     }
@@ -55,9 +58,14 @@ class HomeController @Inject()(
     // Primero buscar en publicaciones dinámicas
     publicationRepository.findBySlug(slug).flatMap {
       case Some(publication) if publication.status == "approved" =>
+        // Track via AnalyticsEngine (fire-and-forget)
+        val userId = request.userInfo.map(_._1)
+        publication.id.foreach { pubId =>
+          analyticsAdapter.trackPublicationView(pubId, userId)
+        }
+        analyticsAdapter.trackPageView(s"/publicacion/$slug", userId, request.headers.get("Referer"))
         // Incrementar contador de vistas
         publicationRepository.incrementViewCount(publication.id.get)
-        val userId = request.userInfo.map(_._1)
         val pubId = publication.id.get
         for {
           reactions <- reactionRepo.countByPublication(pubId)
@@ -105,6 +113,14 @@ class HomeController @Inject()(
     val isAuthenticated = request.userInfo.isDefined
     val username = request.userInfo.map(_._2)
     Ok(views.html.portafolio(isAuthenticated, username))
+  }
+
+  def politicaPrivacidad() = Action { implicit request: Request[AnyContent] =>
+    Ok(views.html.legal.privacidad())
+  }
+
+  def terminosDeUso() = Action { implicit request: Request[AnyContent] =>
+    Ok(views.html.legal.terminos())
   }
 
   def submitContact() = Action.async { implicit request: Request[AnyContent] =>

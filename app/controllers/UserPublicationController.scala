@@ -9,8 +9,8 @@ import play.api.i18n.I18nSupport
 import scala.concurrent.{ExecutionContext, Future}
 import repositories.{PublicationRepository, UserRepository, PublicationFeedbackRepository, UserNotificationRepository, ReactionRepository, CommentRepository, BookmarkRepository, BadgeRepository, PrivateMessageRepository}
 import models.{Publication, PublicationStatus, NotificationType, PublicationComment, PrivateMessage}
-import services.{GamificationService, ReactiveMessageAdapter}
-import core.{MessageSent, MessageError}
+import services.{ReactiveMessageAdapter, ReactiveGamificationAdapter, ReactiveAnalyticsAdapter, ReactiveNotificationAdapter, ReactiveModerationAdapter}
+import core.{MessageSent, MessageError, ModerationResult}
 import actions.{UserAction, AuthRequest}
 import java.time.Instant
 
@@ -34,9 +34,12 @@ class UserPublicationController @Inject()(
   commentRepo: CommentRepository,
   bookmarkRepo: BookmarkRepository,
   badgeRepo: BadgeRepository,
-  gamification: GamificationService,
   messageRepo: PrivateMessageRepository,
   messageAdapter: ReactiveMessageAdapter,
+  gamificationAdapter: ReactiveGamificationAdapter,
+  analyticsAdapter: ReactiveAnalyticsAdapter,
+  notificationAdapter: ReactiveNotificationAdapter,
+  moderationAdapter: ReactiveModerationAdapter,
   userAction: UserAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) with I18nSupport {
 
@@ -113,6 +116,12 @@ class UserPublicationController @Inject()(
         )
         
         publicationRepo.create(publication).map { id =>
+          // Track via AnalyticsEngine (fire-and-forget)
+          analyticsAdapter.trackEvent("publication.created", Some(request.userId), Map(
+            "publicationId" -> id.toString,
+            "category" -> formData.category,
+            "status" -> "draft"
+          ))
           Redirect(routes.UserPublicationController.editPublicationForm(id))
             .flashing("success" -> "Publicación creada exitosamente como borrador")
         }
@@ -198,17 +207,54 @@ class UserPublicationController @Inject()(
   def submitForReview(id: Long) = userAction.async { implicit request: AuthRequest[AnyContent] =>
     publicationRepo.findById(id).flatMap {
       case Some(publication) if publication.userId == request.userId =>
-        val updated = publication.copy(
-          status = PublicationStatus.Pending.toString,
-          updatedAt = Instant.now()
-        )
-        publicationRepo.update(updated).map { success =>
-          if (success) {
-            Redirect(routes.UserPublicationController.dashboard())
-              .flashing("success" -> "Publicación enviada para revisión")
-          } else {
-            InternalServerError("Error al enviar la publicación")
-          }
+        // Stage 1: Auto-moderate via ModerationEngine (Ask)
+        moderationAdapter.moderate(
+          contentId = id,
+          contentType = "publication",
+          authorId = request.userId,
+          title = Some(publication.title),
+          content = publication.content
+        ).flatMap {
+          case ModerationResult(_, verdict, flags, score) =>
+            val newStatus = if (verdict == "auto_rejected") "rejected" else PublicationStatus.Pending.toString
+            val updated = publication.copy(
+              status = newStatus,
+              updatedAt = Instant.now()
+            )
+            publicationRepo.update(updated).map { success =>
+              if (success) {
+                // Track via AnalyticsEngine
+                analyticsAdapter.trackEvent("publication.submitted", Some(request.userId), Map(
+                  "publicationId" -> id.toString,
+                  "verdict" -> verdict,
+                  "score" -> score.toString
+                ))
+                // Notify via NotificationEngine
+                notificationAdapter.notify(
+                  userId = request.userId,
+                  userEmail = None,
+                  notificationType = "publication_submitted",
+                  title = if (verdict == "auto_rejected") "Publicación rechazada" else "Publicación enviada",
+                  message = if (verdict == "auto_rejected")
+                    s"Tu publicación '${publication.title}' no pasó la moderación: ${flags.mkString(", ")}"
+                  else
+                    s"Tu publicación '${publication.title}' fue enviada para revisión.",
+                  publicationId = Some(id)
+                )
+                // Check badges via GamificationEngine
+                gamificationAdapter.checkBadges(request.userId, "publication", Map("publicationCount" -> 1L))
+
+                if (verdict == "auto_rejected") {
+                  Redirect(routes.UserPublicationController.dashboard())
+                    .flashing("error" -> s"Publicación rechazada automáticamente: ${flags.mkString(", ")}")
+                } else {
+                  Redirect(routes.UserPublicationController.dashboard())
+                    .flashing("success" -> s"Publicación enviada para revisión (moderación: $verdict)")
+                }
+              } else {
+                InternalServerError("Error al enviar la publicación")
+              }
+            }
         }
       case Some(_) =>
         Future.successful(Forbidden("No tienes permiso"))
@@ -237,6 +283,10 @@ class UserPublicationController @Inject()(
   def viewPublication(id: Long) = userAction.async { implicit request: AuthRequest[AnyContent] =>
     publicationRepo.findById(id).flatMap {
       case Some(publication) if publication.userId == request.userId || publication.status == PublicationStatus.Approved.toString =>
+        // Track via AnalyticsEngine (fire-and-forget, non-blocking)
+        publication.id.foreach { pubId =>
+          analyticsAdapter.trackPublicationView(pubId, Some(request.userId))
+        }
         for {
           feedbacks <- feedbackRepo.findVisibleByPublicationId(id)
           reactions <- reactionRepo.countByPublication(id)
@@ -313,7 +363,15 @@ class UserPublicationController @Inject()(
     
     for {
       added <- reactionRepo.toggle(publicationId, request.userId, reactionType)
-      _ <- if (added) gamification.checkPublicationBadges(request.userId) else Future.successful(Nil)
+      _ = if (added) {
+        // Fire-and-forget via GamificationEngine
+        gamificationAdapter.checkBadges(request.userId, "reaction", Map("totalReactions" -> 1L))
+        analyticsAdapter.trackEvent("reaction.toggled", Some(request.userId), Map(
+          "publicationId" -> publicationId.toString,
+          "reactionType" -> reactionType,
+          "action" -> "added"
+        ))
+      }
     } yield {
       val referer = request.headers.get("Referer").getOrElse(routes.HomeController.publicaciones().url)
       Redirect(referer).flashing(
@@ -345,7 +403,13 @@ class UserPublicationController @Inject()(
       )
       for {
         _ <- commentRepo.create(comment)
-        _ <- gamification.checkCommentBadges(request.userId)
+        _ = {
+          // Fire-and-forget via GamificationEngine
+          gamificationAdapter.checkBadges(request.userId, "comment", Map("commentCount" -> 1L))
+          analyticsAdapter.trackEvent("comment.added", Some(request.userId), Map(
+            "publicationId" -> publicationId.toString
+          ))
+        }
       } yield {
         Redirect(request.headers.get("Referer").getOrElse(routes.HomeController.publicaciones().url))
           .flashing("success" -> "Comentario agregado")

@@ -13,20 +13,39 @@
   transition: background $transition-slow $easing-smooth;
   overflow: hidden;
 
+  // Separador visual superior (consistente con Benefits y Contact)
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+  }
+
+  // Centrar títulos (consistente con las demás secciones del index)
+  .section-title,
   .section-subtitle {
-    margin-left: 0;
-    margin-right: auto;
+    text-align: center;
   }
 }
 
 // Publications Grid
 .publications-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: $spacing-2xl;
   margin-top: $spacing-3xl;
   position: relative;
   z-index: 1;
+
+  // En el index, limitar ancho para centrar mejor las 3 cards
+  .publications > .container > & {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 // Publication Card - Magazine Style
@@ -863,10 +882,69 @@
   }
 }
 
+// ─── Empty State (index — no publications yet) ───
+.publications-empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: $spacing-4xl $spacing-2xl;
+  background: var(--bg-white);
+  border-radius: $border-radius-xl;
+  border: 2px dashed rgba(0, 0, 0, 0.10);
+  transition: border-color $transition-base $easing-smooth,
+              background $transition-slow $easing-smooth;
+
+  &:hover {
+    border-color: rgba($accent-primary, 0.3);
+  }
+
+  .empty-state-icon {
+    font-size: 3.5rem;
+    margin-bottom: $spacing-lg;
+    line-height: 1;
+  }
+
+  .empty-state-title {
+    font-size: $font-size-xl;
+    font-weight: 700;
+    color: $gray-800;
+    margin-bottom: $spacing-sm;
+    letter-spacing: -0.02em;
+  }
+
+  .empty-state-text {
+    font-size: $font-size-body;
+    color: $gray-500;
+    max-width: 420px;
+    line-height: 1.6;
+    margin-bottom: $spacing-xl;
+  }
+
+  [data-theme="dark"] & {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.10);
+
+    &:hover {
+      border-color: rgba($accent-primary, 0.4);
+    }
+
+    .empty-state-title {
+      color: #f1f5f9;
+    }
+
+    .empty-state-text {
+      color: #94a3b8;
+    }
+  }
+}
+
 // Responsive Design
 @media (max-width: 992px) {
   .publications-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: $spacing-xl;
   }
 

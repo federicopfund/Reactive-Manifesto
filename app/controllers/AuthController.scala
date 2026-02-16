@@ -8,7 +8,7 @@ import play.api.i18n.I18nSupport
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.Configuration
 import repositories.{UserRepository, BookmarkRepository, PublicationRepository}
-import services.EmailVerificationService
+import services.{EmailVerificationService, ReactiveAnalyticsAdapter, ReactiveNotificationAdapter}
 import models.{User, Publication}
 import org.mindrot.jbcrypt.BCrypt
 import java.time.Instant
@@ -24,6 +24,8 @@ class AuthController @Inject()(
   bookmarkRepository: BookmarkRepository,
   publicationRepository: PublicationRepository,
   emailVerificationService: EmailVerificationService,
+  analyticsAdapter: ReactiveAnalyticsAdapter,
+  notificationAdapter: ReactiveNotificationAdapter,
   config: Configuration
 )(implicit ec: ExecutionContext) extends AbstractController(cc) with I18nSupport {
 
@@ -137,6 +139,11 @@ class AuthController @Inject()(
         } else {
           // Usuario verificado o verificación no requerida: login normal
           userRepository.updateLastLogin(user.id.get).map { _ =>
+            // Track login via AnalyticsEngine
+            analyticsAdapter.trackEvent("user.login", Some(user.id.get), Map(
+              "username" -> user.username,
+              "role" -> user.role
+            ))
             Redirect(routes.AuthController.userDashboard())
               .withSession("userId" -> user.id.get.toString, "username" -> user.username, "userRole" -> user.role)
               .flashing("success" -> s"Bienvenido, ${user.fullName}")
@@ -161,6 +168,11 @@ class AuthController @Inject()(
           )
         } else {
           userRepository.updateLastLogin(user.id.get).map { _ =>
+            // Track admin login via AnalyticsEngine
+            analyticsAdapter.trackEvent("admin.login", Some(user.id.get), Map(
+              "username" -> user.username,
+              "role" -> user.role
+            ))
             Redirect(routes.AdminController.dashboard(0, None))
               .withSession(
                 "userId" -> user.id.get.toString,
@@ -247,6 +259,11 @@ class AuthController @Inject()(
                   )
 
                   userRepository.create(newUser).map { _ =>
+                    // Track registration via AnalyticsEngine
+                    analyticsAdapter.trackEvent("user.registered", None, Map(
+                      "username" -> registerData.username,
+                      "role" -> role
+                    ))
                     val flashMsg = role match {
                       case "super_admin"  => "¡Registro exitoso! Eres el Super Administrador del sistema. Inicia sesión para acceder."
                       case "pending_admin" => "¡Registro exitoso! Tu solicitud de administrador está pendiente de aprobación por el Super Admin."

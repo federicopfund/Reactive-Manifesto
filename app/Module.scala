@@ -8,9 +8,10 @@ import scala.concurrent.ExecutionContext
 class Module extends AbstractModule {
 
   // ══════════════════════════════════════════════════════════════
-  //  EXISTING AGENTS
+  //  LAYER 1 — DOMAIN AGENTS (core business logic)
   // ══════════════════════════════════════════════════════════════
 
+  // ── ContactEngine: formularios de contacto ──
   @Provides
   @Singleton
   def provideContactActorSystem(repository: ContactRepository)(implicit ec: ExecutionContext): ActorSystem[ContactCommand] =
@@ -21,6 +22,7 @@ class Module extends AbstractModule {
   def provideContactAdapter(system: ActorSystem[ContactCommand])(implicit ec: ExecutionContext): ReactiveContactAdapter =
     new ReactiveContactAdapter(system)
 
+  // ── MessageEngine: mensajería privada ──
   @Provides
   @Singleton
   def provideMessageActorSystem(
@@ -34,11 +36,7 @@ class Module extends AbstractModule {
   def provideMessageAdapter(system: ActorSystem[MessageCommand])(implicit ec: ExecutionContext): ReactiveMessageAdapter =
     new ReactiveMessageAdapter(system)
 
-  // ══════════════════════════════════════════════════════════════
-  //  DOMAIN AGENTS
-  // ══════════════════════════════════════════════════════════════
-
-  // ── PublicationEngine ──
+  // ── PublicationEngine: ciclo de vida de publicaciones ──
   @Provides
   @Singleton
   def providePublicationActorSystem(
@@ -52,7 +50,7 @@ class Module extends AbstractModule {
   def providePublicationAdapter(system: ActorSystem[PublicationCommand])(implicit ec: ExecutionContext): ReactivePublicationAdapter =
     new ReactivePublicationAdapter(system)
 
-  // ── GamificationEngine ──
+  // ── GamificationEngine: badges y logros ──
   @Provides
   @Singleton
   def provideGamificationActorSystem(
@@ -65,7 +63,11 @@ class Module extends AbstractModule {
   def provideGamificationAdapter(system: ActorSystem[GamificationCommand])(implicit ec: ExecutionContext): ReactiveGamificationAdapter =
     new ReactiveGamificationAdapter(system)
 
-  // ── NotificationEngine (with Circuit Breaker) ──
+  // ══════════════════════════════════════════════════════════════
+  //  LAYER 2 — CROSS-CUTTING AGENTS (notificaciones, moderación, analytics)
+  // ══════════════════════════════════════════════════════════════
+
+  // ── NotificationEngine: hub multi-canal + Circuit Breaker ──
   @Provides
   @Singleton
   def provideNotificationActorSystem(
@@ -79,7 +81,7 @@ class Module extends AbstractModule {
   def provideNotificationAdapter(system: ActorSystem[NotificationCommand])(implicit ec: ExecutionContext): ReactiveNotificationAdapter =
     new ReactiveNotificationAdapter(system)
 
-  // ── ModerationEngine ──
+  // ── ModerationEngine: auto-filtrado de contenido ──
   @Provides
   @Singleton
   def provideModerationActorSystem()(implicit ec: ExecutionContext): ActorSystem[ModerationCommand] =
@@ -90,7 +92,7 @@ class Module extends AbstractModule {
   def provideModerationAdapter(system: ActorSystem[ModerationCommand])(implicit ec: ExecutionContext): ReactiveModerationAdapter =
     new ReactiveModerationAdapter(system)
 
-  // ── AnalyticsEngine ──
+  // ── AnalyticsEngine: métricas y tracking in-memory ──
   @Provides
   @Singleton
   def provideAnalyticsActorSystem()(implicit ec: ExecutionContext): ActorSystem[AnalyticsCommand] =
@@ -102,10 +104,10 @@ class Module extends AbstractModule {
     new ReactiveAnalyticsAdapter(system)
 
   // ══════════════════════════════════════════════════════════════
-  //  INFRASTRUCTURE AGENTS (inter-agent communication)
+  //  LAYER 3 — INFRASTRUCTURE AGENTS (orquestación inter-agente)
   // ══════════════════════════════════════════════════════════════
 
-  // ── EventBusEngine (Pub/Sub) ──
+  // ── EventBusEngine: Pub/Sub + DeathWatch ──
   @Provides
   @Singleton
   def provideEventBusActorSystem()(implicit ec: ExecutionContext): ActorSystem[EventBusCommand] =
@@ -116,7 +118,7 @@ class Module extends AbstractModule {
   def provideEventBusAdapter(system: ActorSystem[EventBusCommand])(implicit ec: ExecutionContext): ReactiveEventBusAdapter =
     new ReactiveEventBusAdapter(system)
 
-  // ── PublicationPipelineEngine (Saga Orchestrator) ──
+  // ── PublicationPipelineEngine: Saga Orchestrator ──
   @Provides
   @Singleton
   def providePipelineActorSystem(

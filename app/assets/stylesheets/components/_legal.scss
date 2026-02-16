@@ -1,0 +1,320 @@
+// ============================================
+// Components - Legal Pages
+// Estilo sobrio, profesional, sin efectos decorativos.
+// ============================================
+
+// ── Page wrapper ──
+.legal-page {
+  background: $bg-white;
+  min-height: 100vh;
+  font-family: $font-family-base;
+  transition: background $transition-base $easing-smooth;
+
+  [data-theme="dark"] & {
+    background: #0c1220;
+  }
+}
+
+// ── Header ──
+.legal-header {
+  background: $gray-900;
+  color: $gray-200;
+  padding: $spacing-5xl 0 $spacing-4xl;
+  text-align: center;
+  position: relative;
+
+  // Thin accent rule at top
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: $accent-primary;
+  }
+
+  [data-theme="dark"] & {
+    background: #060b14;
+
+    &::before {
+      background: $accent-dark;
+    }
+  }
+
+  &__inner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 $spacing-lg;
+  }
+
+  &__label {
+    display: inline-block;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-semibold;
+    letter-spacing: $tracking-widest;
+    text-transform: uppercase;
+    color: $accent-light;
+    margin-bottom: $spacing-lg;
+  }
+
+  &__title {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-weight: $font-weight-extrabold;
+    color: #ffffff;
+    letter-spacing: $tracking-tight;
+    line-height: $line-height-tight;
+    margin: 0 0 $spacing-md;
+  }
+
+  &__subtitle {
+    font-size: $font-size-body-sm;
+    color: $gray-400;
+    font-weight: $font-weight-normal;
+    margin: 0 0 $spacing-xl;
+    line-height: $line-height-normal;
+  }
+
+  &__meta {
+    font-size: $font-size-xs;
+    color: $gray-500;
+    font-weight: $font-weight-medium;
+    letter-spacing: $tracking-wide;
+  }
+
+  &__separator {
+    display: inline-block;
+    margin: 0 $spacing-sm;
+    opacity: 0.4;
+  }
+}
+
+// ── Body (TOC sidebar + content) ──
+.legal-body {
+  display: flex;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: $spacing-4xl $spacing-lg $spacing-5xl;
+  gap: $spacing-4xl;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    padding: $spacing-2xl $spacing-md $spacing-3xl;
+    gap: $spacing-2xl;
+  }
+}
+
+// ── Table of Contents ──
+.legal-toc {
+  flex: 0 0 220px;
+  position: sticky;
+  top: 100px;
+  align-self: flex-start;
+
+  @media (max-width: $breakpoint-md) {
+    position: static;
+    flex: none;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: $spacing-xl;
+  }
+
+  &__title {
+    font-size: $font-size-label;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: $tracking-widest;
+    color: $accent-dark;
+    margin: 0 0 $spacing-lg;
+
+    [data-theme="dark"] & {
+      color: $accent-light;
+    }
+  }
+
+  &__list {
+    list-style: none;
+    counter-reset: toc;
+    padding: 0;
+    margin: 0;
+
+    li {
+      counter-increment: toc;
+      margin-bottom: $spacing-sm;
+    }
+
+    a {
+      display: block;
+      font-size: $font-size-body-sm;
+      font-weight: $font-weight-normal;
+      color: $gray-500;
+      text-decoration: none;
+      padding: $spacing-1 0;
+      line-height: $line-height-snug;
+      transition: color $transition-fast $easing-smooth;
+      border-left: 2px solid transparent;
+      padding-left: $spacing-md;
+
+      &:hover {
+        color: $accent-dark;
+        border-left-color: $accent-primary;
+      }
+
+      [data-theme="dark"] &:hover {
+        color: $accent-light;
+        border-left-color: $accent-light;
+      }
+    }
+  }
+}
+
+// ── Content area ──
+.legal-content {
+  flex: 1;
+  min-width: 0;
+}
+
+// ── Section ──
+.legal-section {
+  margin-bottom: $spacing-3xl;
+  padding-bottom: $spacing-3xl;
+  border-bottom: 1px solid var(--border-color);
+
+  &:last-of-type {
+    border-bottom: none;
+    margin-bottom: $spacing-2xl;
+    padding-bottom: 0;
+  }
+
+  &__heading {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin: 0 0 $spacing-lg;
+    letter-spacing: $tracking-tight;
+    line-height: $line-height-snug;
+  }
+
+  &__number {
+    color: $accent-primary;
+    margin-right: $spacing-xs;
+    font-weight: $font-weight-extrabold;
+
+    [data-theme="dark"] & {
+      color: $accent-light;
+    }
+  }
+
+  h3 {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary);
+    margin: $spacing-xl 0 $spacing-md;
+    letter-spacing: $tracking-normal;
+  }
+
+  p {
+    font-size: $font-size-body;
+    line-height: $line-height-relaxed;
+    color: var(--text-secondary);
+    margin: 0 0 $spacing-lg;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  ul {
+    margin: $spacing-md 0 0;
+    padding-left: $spacing-xl;
+    list-style: none;
+
+    li {
+      position: relative;
+      font-size: $font-size-body;
+      line-height: $line-height-relaxed;
+      color: var(--text-secondary);
+      margin-bottom: $spacing-sm;
+      padding-left: $spacing-md;
+
+      &::before {
+        content: '—';
+        position: absolute;
+        left: -$spacing-md;
+        color: $accent-primary;
+        font-weight: $font-weight-bold;
+        opacity: 0.6;
+
+        [data-theme="dark"] & {
+          color: $accent-light;
+        }
+      }
+
+      strong {
+        color: var(--text-primary);
+        font-weight: $font-weight-semibold;
+      }
+    }
+  }
+
+  a {
+    color: $accent-dark;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: $font-weight-medium;
+    transition: color $transition-fast $easing-smooth;
+
+    &:hover {
+      color: $accent-primary;
+    }
+
+    [data-theme="dark"] & {
+      color: $accent-light;
+
+      &:hover {
+        color: $accent-lighter;
+      }
+    }
+  }
+}
+
+// ── Footer of the document ──
+.legal-footer {
+  margin-top: $spacing-3xl;
+  padding-top: $spacing-2xl;
+  border-top: 2px solid var(--border-color);
+  text-align: center;
+
+  &__update {
+    font-size: $font-size-label;
+    font-weight: $font-weight-semibold;
+    letter-spacing: $tracking-wide;
+    text-transform: uppercase;
+    color: $gray-400;
+    margin-bottom: $spacing-sm;
+  }
+
+  &__links {
+    font-size: $font-size-body-sm;
+    color: var(--text-secondary);
+
+    a {
+      color: $accent-dark;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      font-weight: $font-weight-medium;
+      transition: color $transition-fast $easing-smooth;
+
+      &:hover {
+        color: $accent-primary;
+      }
+
+      [data-theme="dark"] & {
+        color: $accent-light;
+
+        &:hover {
+          color: $accent-lighter;
+        }
+      }
+    }
+  }
+}

@@ -134,7 +134,7 @@
     <!-- Publications Section -->
     <section class="publications">
         <div class="container">
-            <h2 class="section-title">Publicaciones Destacadas</h2>
+            <h2 class="section-title">Publicaciones de la Comunidad</h2>
             <p class="section-subtitle">Explora artículos sobre programación reactiva y sistemas distribuidos</p>
             <div class="publications-grid">
                 @if(communityPublications.nonEmpty) {
@@ -146,17 +146,15 @@
                             </div>
                             <h3 class="publication-title">@pub.publication.title</h3>
                             <p class="publication-excerpt">@pub.publication.excerpt.getOrElse(pub.publication.content.take(150) + "...")</p>
-                            <a href="@routes.HomeController.publicacion(pub.publication.slug)" class="publication-link">Leer más →</a>
+                            <a href="@routes.HomeController.publicacion(pub.publication.slug)" class="publication-link">Leer más</a>
                         </div>
                     }
                 } else {
-                    <div class="publication-card">
-                        <div class="publication-header">
-                            <span class="publication-category">Comunidad</span>
-                        </div>
-                        <h3 class="publication-title">Próximamente</h3>
-                        <p class="publication-excerpt">Aún no hay publicaciones aprobadas. ¡Sé el primero en contribuir!</p>
-                        <a href="@routes.HomeController.publicaciones()" class="publication-link">Ver publicaciones →</a>
+                    <div class="publications-empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <h3 class="empty-state-title">Próximamente</h3>
+                        <p class="empty-state-text">Aún no hay publicaciones aprobadas de la comunidad. ¡Sé el primero en contribuir!</p>
+                        <a href="@routes.HomeController.publicaciones()" class="btn btn-primary">Explorar publicaciones →</a>
                     </div>
                 }
             </div>
