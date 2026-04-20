@@ -1,368 +1,77 @@
-@(user: models.User, bookmarkedPublications: List[models.Publication], userPublications: List[models.Publication] = Nil)(implicit request: RequestHeader, flash: Flash)
+@(user: models.User, bookmarkedPublications: List[models.Publication], userPublications: List[models.Publication] = Nil)(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
-@main("Dashboard - " + user.fullName) {
-    <!-- Dashboard Hero Section -->
-    <section class="dashboard-hero">
-        <div class="container">
-            <div class="dashboard-welcome">
-                <div class="welcome-badge">
-                    <span class="badge-icon">🎯</span>
-                    <span class="badge-text">Centro de Control Personal</span>
-                </div>
-                <h1 class="dashboard-title-simple">
-                    <span class="title-greeting">¡Bienvenido de vuelta!</span>
-                    <span class="title-main-simple">@user.fullName</span>
-                </h1>
-                <p class="dashboard-subtitle">
-                    Tu espacio personal · Miembro @user.role · Acceso completo a contenido reactivo
-                </p>
+@main("Mi espacio · " + user.username) {
+  <section class="ed-dashboard">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">Tu espacio editorial</div>
+      <h1 class="ed-dash-title">Hola, @user.fullName</h1>
+      <p class="ed-dash-sub">Aquí están tus publicaciones, marcadores y la actividad reciente de tu cuenta.</p>
+    </header>
+
+    @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+    @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+
+    <div class="ed-dash-stats">
+      <div class="ed-dash-stat">
+        <div class="ed-dash-stat__num">@userPublications.size</div>
+        <div class="ed-dash-stat__label">Publicaciones</div>
+      </div>
+      <div class="ed-dash-stat">
+        <div class="ed-dash-stat__num">@userPublications.count(_.status == "approved")</div>
+        <div class="ed-dash-stat__label">Aprobadas</div>
+      </div>
+      <div class="ed-dash-stat">
+        <div class="ed-dash-stat__num">@userPublications.count(_.status == "pending")</div>
+        <div class="ed-dash-stat__label">En revisión</div>
+      </div>
+      <div class="ed-dash-stat">
+        <div class="ed-dash-stat__num">@bookmarkedPublications.size</div>
+        <div class="ed-dash-stat__label">Marcadas</div>
+      </div>
+    </div>
+
+    <div class="ed-dash-actions">
+      <a href="@routes.UserPublicationController.newPublicationForm()" class="ed-btn-primary">Nueva publicación</a>
+      <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Ver todas mis piezas</a>
+      <a href="@routes.AuthController.userProfile()" class="ed-btn-ghost">Editar perfil</a>
+    </div>
+
+    <section class="ed-dash-section">
+      <h2 class="ed-dash-section__title">Mis publicaciones</h2>
+      @if(userPublications.isEmpty) {
+        <p class="ed-dash-empty">Aún no has publicado nada. Empieza por una pieza.</p>
+      } else {
+        <div class="ed-submission-list">
+          @userPublications.take(8).map { p =>
+            <div class="ed-submission">
+              <div class="ed-submission__main">
+                <div class="ed-submission__title">@p.title</div>
+                <div class="ed-submission__meta">@p.category · @p.createdAt.toString.take(10)</div>
+              </div>
+              <span class="ed-sub-badge ed-sub-badge--@p.status">@p.status</span>
+              <a href="@routes.UserPublicationController.editPublicationForm(p.id.get)" class="ed-link-btn">Editar</a>
             </div>
-
-            <!-- Quick Access Dashboard Cards -->
-            <div class="dashboard-grid">
-                <a href="@routes.UserPublicationController.dashboard()" class="dashboard-card card-create">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 20h9"/>
-                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                            </svg>
-                        </div>
-                        <span class="card-badge">🔥 NUEVO</span>
-                    </div>
-                    <h3 class="card-title">Mis Publicaciones</h3>
-                    <p class="card-description">Crea y gestiona tus propios artículos, envíalos para revisión y publica contenido reactivo</p>
-                    <div class="card-stats">
-                        <div class="stat-item">
-                            <span class="stat-number">✍️</span>
-                            <span class="stat-label">Crear</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">📝</span>
-                            <span class="stat-label">Gestionar</span>
-                        </div>
-                    </div>
-                    <div class="card-action">
-                        <span>Gestionar Publicaciones</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </div>
-                </a>
-
-                <a href="@routes.HomeController.portafolio()" class="dashboard-card card-portfolio">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                                <rect x="14" y="14" width="7" height="7" rx="1"/>
-                                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                            </svg>
-                        </div>
-                        <span class="card-badge">Proyectos</span>
-                    </div>
-                    <h3 class="card-title">Portafolio</h3>
-                    <p class="card-description">Accede a aplicaciones reactivas, demos interactivos y repositorios completos</p>
-                    <div class="card-stats">
-                        <div class="stat-item">
-                            <span class="stat-number">6+</span>
-                            <span class="stat-label">Proyectos</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">100%</span>
-                            <span class="stat-label">Acceso</span>
-                        </div>
-                    </div>
-                    <div class="card-action">
-                        <span>Explorar Proyectos</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </div>
-                </a>
-
-                <a href="@routes.HomeController.publicaciones()" class="dashboard-card card-publications">
-                    <div class="card-header">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                            </svg>
-                        </div>
-                        <span class="card-badge">Conocimiento</span>
-                    </div>
-                    <h3 class="card-title">Publicaciones</h3>
-                    <p class="card-description">Artículos técnicos profundos sobre Akka, Play Framework y arquitecturas reactivas</p>
-                    <div class="card-stats">
-                        <div class="stat-item">
-                            <span class="stat-number">7+</span>
-                            <span class="stat-label">Artículos</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number">Deep</span>
-                            <span class="stat-label">Dive</span>
-                        </div>
-                    </div>
-                    <div class="card-action">
-                        <span>Leer Artículos</span>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Governance Bar -->
-            <div class="governance-bar">
-                <div class="governance-content">
-                    <div class="governance-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                        </svg>
-                    </div>
-                    <div class="governance-text">
-                        <span class="governance-title">Cuenta Verificada</span>
-                        <span class="governance-subtitle">@user.email · Rol: @user.role · Registrado @{
-                            val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
-                            user.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
-                        }</span>
-                    </div>
-                    <div class="governance-status">
-                        <span class="status-dot"></span>
-                        <span class="status-text">Activo</span>
-                    </div>
-                </div>
-            </div>
+          }
         </div>
+      }
     </section>
 
-    <!-- Recursos Favoritos -->
-    <section class="favorites-section">
-        <div class="container">
-            <h2 class="section-title">⭐ Tus Recursos Favoritos</h2>
-            <p class="section-subtitle">Accesos directos a tus contenidos más consultados</p>
-            
-            <div class="favorites-grid">
-                @if(bookmarkedPublications.isEmpty) {
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
-                        <span style="font-size: 2rem;">🔖</span>
-                        <p style="color: #94a3b8; margin-top: 0.5rem;">Aún no tienes publicaciones guardadas en favoritos.</p>
-                        <a href="@routes.HomeController.publicaciones()" style="color: #60a5fa; text-decoration: underline; font-size: 0.875rem;">Explorar publicaciones</a>
-                    </div>
-                } else {
-                    @defining(Seq("favorite-primary", "favorite-success", "favorite-warning", "favorite-purple")) { colors =>
-                        @for((pub, idx) <- bookmarkedPublications.take(4).zipWithIndex) {
-                            <a href="@routes.HomeController.publicacion(pub.slug)" class="favorite-item @colors(idx % colors.size)">
-                                <span class="favorite-icon">@{
-                                    pub.category.toLowerCase match {
-                                        case c if c.contains("akka") => "📘"
-                                        case c if c.contains("stream") => "🌊"
-                                        case c if c.contains("play") || c.contains("async") => "⚡"
-                                        case c if c.contains("resilien") || c.contains("patron") => "🛡️"
-                                        case c if c.contains("scala") => "💎"
-                                        case c if c.contains("react") => "⚛️"
-                                        case c if c.contains("docker") || c.contains("deploy") => "🐳"
-                                        case c if c.contains("test") => "🧪"
-                                        case _ => "📄"
-                                    }
-                                }</span>
-                                <span class="favorite-title">@pub.title</span>
-                                <span class="favorite-views">@pub.viewCount visitas</span>
-                            </a>
-                        }
-                    }
-                }
+    <section class="ed-dash-section">
+      <h2 class="ed-dash-section__title">Marcadores</h2>
+      @if(bookmarkedPublications.isEmpty) {
+        <p class="ed-dash-empty">Aún no has marcado ninguna publicación.</p>
+      } else {
+        <div class="ed-submission-list">
+          @bookmarkedPublications.take(6).map { p =>
+            <div class="ed-submission">
+              <div class="ed-submission__main">
+                <a href="@routes.HomeController.publicacion(p.slug)" class="ed-submission__title">@p.title</a>
+                <div class="ed-submission__meta">@p.category</div>
+              </div>
             </div>
+          }
         </div>
+      }
     </section>
-
-    <!-- User Statistics Section -->
-    <section class="user-stats-section">
-        <div class="container">
-            <h2 class="section-title">📊 Tu Actividad</h2>
-            <p class="section-subtitle">Seguimiento de tu interacción con la plataforma</p>
-
-            <div class="stats-cards-grid">
-                <div class="stat-card stat-primary">
-                    <div class="stat-icon">�</div>
-                    <div class="stat-content">
-                        <span class="stat-value">@userPublications.size</span>
-                        <span class="stat-label">Publicaciones Creadas</span>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-success">
-                    <div class="stat-icon">👁️</div>
-                    <div class="stat-content">
-                        <span class="stat-value">@userPublications.map(_.viewCount).sum</span>
-                        <span class="stat-label">Visitas Totales</span>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-warning">
-                    <div class="stat-icon">⭐</div>
-                    <div class="stat-content">
-                        <span class="stat-value" style="text-transform: capitalize;">@user.role</span>
-                        <span class="stat-label">Tu Nivel de Acceso</span>
-                    </div>
-                </div>
-
-                <div class="stat-card stat-info">
-                    <div class="stat-icon">📅</div>
-                    <div class="stat-content">
-                        <span class="stat-value">
-                            @{
-                                val formatter = java.time.format.DateTimeFormatter.ofPattern("dd MMM")
-                                user.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
-                            }
-                        </span>
-                        <span class="stat-label">Fecha de Registro</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Activity Chart -->
-            <div class="activity-chart-container">
-                <h3 class="chart-title">📈 Visitas por Publicación</h3>
-                @if(userPublications.nonEmpty) {
-                    <canvas id="activityChart"></canvas>
-                } else {
-                    <p style="text-align: center; color: #94a3b8; padding: 2rem 0; font-size: 0.875rem;">Crea tu primera publicación para ver las estadísticas de visitas.</p>
-                }
-            </div>
-
-            <!-- Learning Progress -->
-            <div class="learning-progress">
-                <h3 class="progress-title">🎓 Tu Progreso de Aprendizaje</h3>
-                <div class="progress-grid">
-                    <div class="progress-item">
-                        <div class="progress-header">
-                            <span class="progress-label">Fundamentos Reactivos</span>
-                            <span class="progress-percentage">85%</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 85%;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-item">
-                        <div class="progress-header">
-                            <span class="progress-label">Akka Toolkit</span>
-                            <span class="progress-percentage">60%</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill progress-fill-success" style="width: 60%;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-item">
-                        <div class="progress-header">
-                            <span class="progress-label">Play Framework</span>
-                            <span class="progress-percentage">45%</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill progress-fill-warning" style="width: 45%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Quick Actions -->
-    <section class="quick-actions-section">
-        <div class="container">
-            <h2 class="section-title">⚡ Acciones Rápidas</h2>
-            <div class="actions-grid">
-                <a href="@routes.HomeController.index()" class="action-item action-home">
-                    <span class="action-icon">🏠</span>
-                    <span class="action-text">Ir al Inicio</span>
-                </a>
-                <a href="@routes.AuthController.userProfile()" class="action-item action-profile">
-                    <span class="action-icon">👤</span>
-                    <span class="action-text">Editar Perfil</span>
-                </a>
-                <a href="@routes.HomeController.index()#contact" class="action-item action-contact">
-                    <span class="action-icon">✉️</span>
-                    <span class="action-text">Soporte</span>
-                </a>
-                <a href="@routes.AuthController.logout()" class="action-item action-danger">
-                    <span class="action-icon">🚪</span>
-                    <span class="action-text">Cerrar Sesión</span>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.1/dist/chart.umd.js"></script>
-    @if(userPublications.nonEmpty) {
-    <script>
-        const pubLabels = [@for((pub, idx) <- userPublications.sortBy(-_.viewCount).take(10).zipWithIndex) {'@Html(pub.title.replace("'", "\\'").take(30))@if(pub.title.length > 30){...}'@if(idx < userPublications.sortBy(-_.viewCount).take(10).size - 1){,}}];
-        const pubViews = [@for((pub, idx) <- userPublications.sortBy(-_.viewCount).take(10).zipWithIndex) {@pub.viewCount@if(idx < userPublications.sortBy(-_.viewCount).take(10).size - 1){,}}];
-        const pubStatuses = [@for((pub, idx) <- userPublications.sortBy(-_.viewCount).take(10).zipWithIndex) {'@pub.status'@if(idx < userPublications.sortBy(-_.viewCount).take(10).size - 1){,}}];
-
-        const barColors = pubStatuses.map(function(s) {
-            switch(s) {
-                case 'approved': return '#6b8f71';
-                case 'pending': return '#d4a853';
-                case 'draft': return '#94a3b8';
-                case 'rejected': return '#c0392b';
-                default: return '#6b8caa';
-            }
-        });
-
-        const ctx = document.getElementById('activityChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: pubLabels,
-                datasets: [{
-                    label: 'Visitas',
-                    data: pubViews,
-                    backgroundColor: barColors,
-                    borderRadius: 6,
-                    borderSkipped: false,
-                    maxBarThickness: 48
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                indexAxis: pubLabels.length > 5 ? 'y' : 'x',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: function(items) { return items[0].label; },
-                            label: function(item) {
-                                var status = pubStatuses[item.dataIndex];
-                                var statusLabel = status === 'approved' ? 'Aprobada' : status === 'pending' ? 'Pendiente' : status === 'draft' ? 'Borrador' : status;
-                                return item.formattedValue + ' visitas · ' + statusLabel;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0,
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666'
-                        },
-                        grid: { color: 'rgba(0,0,0,0.04)' }
-                    },
-                    x: {
-                        ticks: {
-                            color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary') || '#666',
-                            maxRotation: 45
-                        },
-                        grid: { display: false }
-                    }
-                }
-            }
-        });
-    </script>
-    }
+  </section>
 }

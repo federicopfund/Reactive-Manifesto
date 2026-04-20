@@ -1,175 +1,71 @@
-@(registerForm: Form[controllers.UserRegisterForm])(implicit request: RequestHeader, flash: Flash)
+@(registerForm: Form[controllers.UserRegisterForm])(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
-@main("Crear Cuenta") {
-    <div class="auth-page">
-        <div class="register-container">
-            <div class="register-header">
-                <span class="header-icon">✨</span>
-                <h1>Crear Cuenta</h1>
-                <p>Únete a Reactive Manifesto</p>
-            </div>
-            
-            <div class="register-body">
-                @flash.get("success").map { msg =>
-                    <div class="flash-message success">@msg</div>
-                }
-                @flash.get("error").map { msg =>
-                    <div class="flash-message error">@msg</div>
-                }
-                @flash.get("info").map { msg =>
-                    <div class="flash-message info">@msg</div>
-                }
-                
-                @if(registerForm.hasGlobalErrors) {
-                    <div class="error">
-                        @registerForm.globalErrors.map(_.message).mkString(", ")
-                    </div>
-                }
-                
-                <form method="POST" action="@routes.AuthController.register()">
-                    @helper.CSRF.formField
-                    
-                    <div class="form-group">
-                        <label for="fullName">Nombre Completo</label>
-                        <input 
-                            type="text" 
-                            id="fullName" 
-                            name="fullName" 
-                            placeholder="Juan Pérez"
-                            value="@registerForm("fullName").value.getOrElse("")"
-                            required 
-                            autofocus
-                        >
-                        @if(registerForm("fullName").hasErrors) {
-                            <div class="error">@registerForm("fullName").errors.map(_.message).mkString(", ")</div>
-                        }
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="username">Nombre de Usuario</label>
-                        <input 
-                            type="text" 
-                            id="username" 
-                            name="username" 
-                            placeholder="usuario123"
-                            value="@registerForm("username").value.getOrElse("")"
-                            required
-                        >
-                        @if(registerForm("username").hasErrors) {
-                            <div class="error">@registerForm("username").errors.map(_.message).mkString(", ")</div>
-                        }
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            name="email" 
-                            placeholder="correo@@example.com"
-                            value="@registerForm("email").value.getOrElse("")"
-                            required
-                        >
-                        @if(registerForm("email").hasErrors) {
-                            <div class="error">@registerForm("email").errors.map(_.message).mkString(", ")</div>
-                        }
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="password">Contraseña</label>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            placeholder="Mínimo 6 caracteres"
-                            required
-                        >
-                        @if(registerForm("password").hasErrors) {
-                            <div class="error">@registerForm("password").errors.map(_.message).mkString(", ")</div>
-                        }
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="confirmPassword">Confirmar Contraseña</label>
-                        <input 
-                            type="password" 
-                            id="confirmPassword" 
-                            name="confirmPassword" 
-                            placeholder="Repite tu contraseña"
-                            required
-                        >
-                        @if(registerForm("confirmPassword").hasErrors) {
-                            <div class="error">@registerForm("confirmPassword").errors.map(_.message).mkString(", ")</div>
-                        }
-                    </div>
+@main("Crear cuenta") {
+  <section class="ed-auth-page">
+    <aside class="ed-auth-side">
+      <div class="ed-auth-side__eyebrow">Únete a la edición</div>
+      <h1 class="ed-auth-side__title">Tu nombre,<br/>en la portada.</h1>
+      <p class="ed-auth-side__desc">Crea una cuenta para publicar piezas, guardar lecturas y participar en la conversación editorial.</p>
+      <div class="ed-auth-side__list">
+        <div>· Acceso a la edición completa</div>
+        <div>· Espacio personal con borradores</div>
+        <div>· Conversaciones privadas</div>
+      </div>
+    </aside>
 
-                    <div class="form-group admin-toggle">
-                        <label class="toggle-label" for="registerAsAdmin">
-                            <input
-                                type="checkbox"
-                                id="registerAsAdmin"
-                                name="registerAsAdmin"
-                                value="true"
-                                @if(registerForm("registerAsAdmin").value.contains("true")) { checked }
-                            />
-                            <span class="toggle-text">🛡️ Registrarme como Administrador</span>
-                        </label>
-                        <p class="admin-note" id="adminNote" style="display:none;">
-                            Si eres el primer administrador registrado, obtendrás el rol de <strong>Super Admin</strong>.
-                            De lo contrario, tu solicitud será revisada y aprobada por el Super Admin existente.
-                        </p>
-                    </div>
-                    <input type="hidden" name="registerAsAdmin" value="false" />
-                    
-                    <button type="submit" class="btn-register">Crear Cuenta</button>
-                </form>
-                
-                <div class="links">
-                    <p>¿Ya tienes cuenta?</p>
-                    <a href="@routes.AuthController.loginPage()">Iniciar sesión →</a>
-                    <span style="margin: 0 10px;">|</span>
-                    <a href="@routes.HomeController.index()">Volver al inicio →</a>
-                </div>
-            </div>
+    <div class="ed-auth-form-wrap">
+      <div class="ed-auth-form-eyebrow">Registro</div>
+      <h2 class="ed-auth-form-title">Crear cuenta</h2>
+
+      @flash.get("error").map { m => <div class="ed-flash ed-flash--error">@m</div> }
+      @registerForm.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
+
+      <form method="POST" action="@routes.AuthController.register()" class="ed-form">
+        @helper.CSRF.formField
+
+        <div class="ed-field">
+          <label for="fullName">Nombre completo</label>
+          <input type="text" id="fullName" name="fullName" value="@registerForm("fullName").value.getOrElse("")" required>
+          @registerForm("fullName").error.map { e => <div class="ed-field-error">@e.message</div> }
         </div>
-    </div>
 
-    <style>
-        .admin-toggle { margin-top: 0.5rem; }
-        .toggle-label {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            cursor: pointer;
-            padding: 0.75rem 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-        .toggle-label:hover { border-color: #9ca3af; background: #f9fafb; }
-        .toggle-label input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-        .toggle-label input[type="checkbox"]:checked ~ .toggle-text { color: #374151; }
-        .admin-note {
-            font-size: 0.8125rem;
-            color: #6b7280;
-            margin-top: 0.5rem;
-            padding: 0.75rem 1rem;
-            background: #fffbeb;
-            border: 1px solid #fde68a;
-            border-radius: 6px;
-            line-height: 1.5;
-        }
-    </style>
-    <script>
-        (function() {
-            var cb   = document.getElementById('registerAsAdmin');
-            var note = document.getElementById('adminNote');
-            if (cb && note) {
-                function toggle() { note.style.display = cb.checked ? 'block' : 'none'; }
-                cb.addEventListener('change', toggle);
-                toggle();
-            }
-        })();
-    </script>
+        <div class="ed-field">
+          <label for="username">Nombre de usuario</label>
+          <input type="text" id="username" name="username" value="@registerForm("username").value.getOrElse("")" required minlength="3" maxlength="50">
+          @registerForm("username").error.map { e => <div class="ed-field-error">@e.message</div> }
+        </div>
+
+        <div class="ed-field">
+          <label for="email">Correo electrónico</label>
+          <input type="email" id="email" name="email" value="@registerForm("email").value.getOrElse("")" required>
+          @registerForm("email").error.map { e => <div class="ed-field-error">@e.message</div> }
+        </div>
+
+        <div class="ed-field-row">
+          <div class="ed-field">
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+            @registerForm("password").error.map { e => <div class="ed-field-error">@e.message</div> }
+          </div>
+          <div class="ed-field">
+            <label for="confirmPassword">Repite contraseña</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6" autocomplete="new-password">
+            @registerForm("confirmPassword").error.map { e => <div class="ed-field-error">@e.message</div> }
+          </div>
+        </div>
+
+        <label class="ed-field-check">
+          <input type="checkbox" name="registerAsAdmin" value="true">
+          <span>Solicito acceso editorial (revisión por Super Admin)</span>
+        </label>
+
+        <button type="submit" class="ed-btn-primary ed-btn-block">Crear cuenta</button>
+      </form>
+
+      <div class="ed-auth-aux">
+        ¿Ya tienes cuenta?
+        <a href="@routes.AuthController.loginPage()">Inicia sesión</a>
+      </div>
+    </div>
+  </section>
 }

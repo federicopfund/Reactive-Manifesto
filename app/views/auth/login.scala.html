@@ -1,110 +1,50 @@
-@(loginForm: Form[controllers.UserLoginForm])(implicit request: RequestHeader, flash: Flash)
+@(loginForm: Form[controllers.UserLoginForm])(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
-@main("Iniciar Sesión") {
-    <div class="auth-page">
-        <div class="login-container">
-            <div class="login-header">
-                <span class="header-icon">🔐</span>
-                <h1>Reactive Manifesto</h1>
-                <p>Accede a tu cuenta para continuar</p>
-            </div>
-            
-            <div class="login-body">
-                @flash.get("success").map { msg =>
-                    <div class="flash-message success">@msg</div>
-                }
-                @flash.get("error").map { msg =>
-                    <div class="flash-message error">@msg</div>
-                }
-                @flash.get("info").map { msg =>
-                    <div class="flash-message info">@msg</div>
-                }
-                
-                @if(loginForm.hasGlobalErrors) {
-                    <div class="error">
-                        @loginForm.globalErrors.map(_.message).mkString(", ")
-                    </div>
-                }
-                
-                <div class="tab-container">
-                    <button type="button" class="tab active" onclick="switchTab('user')" id="userTab">
-                        👤 Usuario
-                    </button>
-                    <button type="button" class="tab" onclick="switchTab('admin')" id="adminTab">
-                        🛡️ Admin / Super Admin
-                    </button>
-                </div>
-                
-                <form method="POST" id="loginForm">
-                    @helper.CSRF.formField
-                    <input type="hidden" id="loginType" name="loginType" value="user">
-                    
-                    <div class="form-group">
-                        <label for="username">Usuario</label>
-                        <input 
-                            type="text" 
-                            id="username" 
-                            name="username" 
-                            placeholder="Ingresa tu nombre de usuario"
-                            value="@loginForm("username").value.getOrElse("")"
-                            required 
-                            autofocus
-                        >
-                        @if(loginForm("username").hasErrors) {
-                            <div class="error">@loginForm("username").errors.map(_.message).mkString(", ")</div>
-                        }
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="password">Contraseña</label>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            placeholder="Ingresa tu contraseña"
-                            required
-                        >
-                        @if(loginForm("password").hasErrors) {
-                            <div class="error">@loginForm("password").errors.map(_.message).mkString(", ")</div>
-                        }
-                    </div>
-                    
-                    <button type="submit" class="btn-login">Iniciar Sesión</button>
-                </form>
-                
-                <div class="links">
-                    <p>¿No tienes cuenta?</p>
-                    <a href="@routes.AuthController.registerPage()">Crear cuenta nueva →</a>
-                    <span style="margin: 0 10px;">|</span>
-                    <a href="@routes.HomeController.index()">Volver al inicio →</a>
-                </div>
-            </div>
+@main("Iniciar sesión") {
+  <section class="ed-auth-page">
+    <aside class="ed-auth-side">
+      <div class="ed-auth-side__eyebrow">Edición Reactiva</div>
+      <h1 class="ed-auth-side__title">Vuelve a tu<br/>espacio editorial.</h1>
+      <p class="ed-auth-side__desc">Tus borradores, publicaciones y conversaciones siguen donde las dejaste. Inicia sesión para continuar.</p>
+      <div class="ed-auth-side__list">
+        <div>· Publica tus piezas</div>
+        <div>· Guarda lecturas</div>
+        <div>· Sigue la conversación</div>
+      </div>
+    </aside>
+
+    <div class="ed-auth-form-wrap">
+      <div class="ed-auth-form-eyebrow">Acceso</div>
+      <h2 class="ed-auth-form-title">Iniciar sesión</h2>
+
+      @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+      @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
+      @loginForm.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
+
+      <form method="POST" action="@routes.AuthController.login()" class="ed-form">
+        @helper.CSRF.formField
+
+        <div class="ed-field">
+          <label for="username">Usuario o email</label>
+          <input type="text" id="username" name="username" value="@loginForm("username").value.getOrElse("")" required autocomplete="username">
+          @loginForm("username").error.map { e => <div class="ed-field-error">@e.message</div> }
         </div>
-    </div>
 
-    <script>
-        const loginForm = document.getElementById('loginForm');
-        let currentType = 'user';
-        
-        // Establecer la acción inicial del formulario
-        loginForm.action = '@routes.AuthController.login()';
-        
-        function switchTab(type) {
-            const userTab = document.getElementById('userTab');
-            const adminTab = document.getElementById('adminTab');
-            currentType = type;
-            
-            if (type === 'user') {
-                userTab.classList.add('active');
-                adminTab.classList.remove('active');
-                    loginForm.action = '@routes.AuthController.login()';
-                    document.getElementById('loginType').value = 'user';
-            } else {
-                adminTab.classList.add('active');
-                userTab.classList.remove('active');
-                    loginForm.action = '@routes.AuthController.login()';
-                    document.getElementById('loginType').value = 'admin';
-            }
-        }
-    </script>
+        <div class="ed-field">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" name="password" required autocomplete="current-password">
+          @loginForm("password").error.map { e => <div class="ed-field-error">@e.message</div> }
+        </div>
+
+        <input type="hidden" name="loginType" value="user">
+
+        <button type="submit" class="ed-btn-primary ed-btn-block">Entrar a la edición</button>
+      </form>
+
+      <div class="ed-auth-aux">
+        ¿Aún no tienes cuenta?
+        <a href="@routes.AuthController.registerPage()">Crear una cuenta</a>
+      </div>
+    </div>
+  </section>
 }

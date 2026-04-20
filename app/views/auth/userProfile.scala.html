@@ -1,62 +1,32 @@
-@(user: models.User)(implicit request: RequestHeader, flash: Flash)
+@(user: models.User)(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
-@views.html.user.userLayout("Mi Perfil", user.username) {
-    <div style="max-width: 640px;">
-        <h2 style="font-size: 1.125rem; font-weight: 700; color: #1a202c; margin-bottom: 1.25rem;">Mi Perfil</h2>
+@main("Perfil · " + user.username) {
+  <section class="ed-profile-page">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">Tu perfil</div>
+      <h1 class="ed-dash-title">@user.fullName</h1>
+      <p class="ed-dash-sub">@user.email</p>
+    </header>
 
-        <div class="u-card">
-            <!-- Avatar + Name -->
-            <div style="display: flex; align-items: center; gap: 1rem; padding-bottom: 1.25rem; border-bottom: 1px solid #f1f5f9; margin-bottom: 1.25rem;">
-                <div style="width: 52px; height: 52px; border-radius: 50%; background: #e8ecf0; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; color: #64748b; flex-shrink: 0;">
-                    @user.fullName.substring(0,1).toUpperCase
-                </div>
-                <div>
-                    <div style="font-size: 1rem; font-weight: 700; color: #1a202c;">@user.fullName</div>
-                    <div style="font-size: 0.8125rem; color: #94a3b8;">@@@user.username</div>
-                </div>
-            </div>
+    @flash.get("success").map { m => <div class="ed-flash ed-flash--success">@m</div> }
+    @flash.get("error").map   { m => <div class="ed-flash ed-flash--error">@m</div> }
 
-            <!-- Info rows -->
-            <div style="display: grid; gap: 0.75rem;">
-                <div style="display: flex; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f8fafc;">
-                    <span style="font-size: 0.8125rem; font-weight: 600; color: #64748b;">Email</span>
-                    <span style="font-size: 0.8125rem; color: #374151;">@user.email</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f8fafc;">
-                    <span style="font-size: 0.8125rem; font-weight: 600; color: #64748b;">Usuario</span>
-                    <span style="font-size: 0.8125rem; color: #374151;">@user.username</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f8fafc;">
-                    <span style="font-size: 0.8125rem; font-weight: 600; color: #64748b;">Rol</span>
-                    <span style="font-size: 0.8125rem; color: #374151; text-transform: capitalize;">@user.role</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f8fafc;">
-                    <span style="font-size: 0.8125rem; font-weight: 600; color: #64748b;">Miembro desde</span>
-                    <span style="font-size: 0.8125rem; color: #374151;">
-                        @{
-                            val formatter = java.time.format.DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", java.util.Locale.forLanguageTag("es"))
-                            user.createdAt.atZone(java.time.ZoneId.systemDefault()).format(formatter)
-                        }
-                    </span>
-                </div>
-                @if(user.lastLogin.isDefined) {
-                    <div style="display: flex; justify-content: space-between; padding: 0.625rem 0; border-bottom: 1px solid #f8fafc;">
-                        <span style="font-size: 0.8125rem; font-weight: 600; color: #64748b;">Último acceso</span>
-                        <span style="font-size: 0.8125rem; color: #374151;">
-                            @{
-                                val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-                                user.lastLogin.get.atZone(java.time.ZoneId.systemDefault()).format(formatter)
-                            }
-                        </span>
-                    </div>
-                }
-                <div style="display: flex; justify-content: space-between; padding: 0.625rem 0;">
-                    <span style="font-size: 0.8125rem; font-weight: 600; color: #64748b;">Estado</span>
-                    <span class="u-badge @if(user.isActive){u-badge-approved}else{u-badge-rejected}">
-                        @if(user.isActive) { Activo } else { Inactivo }
-                    </span>
-                </div>
-            </div>
+    <article class="ed-profile-card">
+      <div class="ed-profile-row"><span>Usuario</span><strong>@user.username</strong></div>
+      <div class="ed-profile-row"><span>Rol</span><strong>@user.role</strong></div>
+      <div class="ed-profile-row"><span>Email verificado</span><strong>@if(user.emailVerified){Sí}else{No}</strong></div>
+      <div class="ed-profile-row"><span>Miembro desde</span><strong>@user.createdAt.toString.take(10)</strong></div>
+      @if(user.bio.nonEmpty) {
+        <div class="ed-profile-bio">
+          <h3>Bio</h3>
+          <p>@user.bio</p>
         </div>
+      }
+    </article>
+
+    <div class="ed-dash-actions">
+      <a href="@routes.UserPublicationController.editProfileForm()" class="ed-btn-primary">Editar perfil</a>
+      <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Ir a mi espacio</a>
     </div>
+  </section>
 }
