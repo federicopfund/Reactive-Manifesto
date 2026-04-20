@@ -1,375 +1,67 @@
-@(form: Form[controllers.PublicationFormData], publication: Option[models.Publication], username: String)(implicit request: RequestHeader, flash: Flash)
+@(form: Form[controllers.PublicationFormData], publication: Option[models.Publication], username: String)(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
-@main(if(publication.isDefined) "Editar Publicación" else "Nueva Publicación") {
+@isEdit = @{ publication.isDefined }
+@formAction = @{ publication.flatMap(_.id) match {
+  case Some(id) => routes.UserPublicationController.updatePublication(id)
+  case None     => routes.UserPublicationController.createPublication()
+}}
 
-    <!-- FULLSCREEN EDITOR OVERLAY -->
-    <div class="fullscreen-overlay" id="fullscreenOverlay">
-        <div class="fullscreen-header">
-            <h3>📝 Editor de Contenido</h3>
-            <div style="display:flex;gap:0.5rem;align-items:center;">
-                <button type="button" class="md-toolbar-toggle" id="fsPreviewToggle" onclick="toggleFullscreenPreview()">👁 Preview</button>
-                <button type="button" class="fullscreen-close" onclick="closeFullscreen()">✕ Cerrar <span class="kbd">Esc</span></button>
-            </div>
+@main(if(isEdit) "Editar publicación" else "Nueva publicación") {
+  <section class="ed-pub-form-page">
+    <header class="ed-dash-header">
+      <div class="ed-dash-eyebrow">@if(isEdit){Editar}else{Nueva pieza}</div>
+      <h1 class="ed-dash-title">@if(isEdit){@publication.map(_.title)}else{Cuenta tu pieza}</h1>
+      <p class="ed-dash-sub">Recuerda: las piezas pasan por revisión editorial antes de publicarse.</p>
+    </header>
+
+    @flash.get("error").map { m => <div class="ed-flash ed-flash--error">@m</div> }
+    @form.globalError.map { e => <div class="ed-flash ed-flash--error">@e.message</div> }
+
+    <form method="POST" action="@formAction" class="ed-pub-form ed-form">
+      @helper.CSRF.formField
+
+      <div class="ed-field">
+        <label for="title">Título</label>
+        <input type="text" id="title" name="title" value="@form("title").value.getOrElse("")" required maxlength="200">
+        @form("title").error.map { e => <div class="ed-field-error">@e.message</div> }
+      </div>
+
+      <div class="ed-field-row">
+        <div class="ed-field">
+          <label for="category">Categoría</label>
+          <select id="category" name="category" required>
+            @for(c <- List("Tutorial","Artículo","Guía","Caso de Estudio","Recurso")) {
+              <option value="@c" @if(form("category").value.contains(c)){selected}>@c</option>
+            }
+          </select>
+          @form("category").error.map { e => <div class="ed-field-error">@e.message</div> }
         </div>
-        <div class="fullscreen-body">
-            <textarea id="fsContent" placeholder="Escribe tu contenido aquí..."></textarea>
-            <div class="preview-pane" id="fsPreview"></div>
+        <div class="ed-field">
+          <label for="tags">Tags <span class="ed-field-hint">(separados por coma)</span></label>
+          <input type="text" id="tags" name="tags" value="@form("tags").value.getOrElse("")" placeholder="akka, actores, resiliencia">
         </div>
-        <div class="fullscreen-stats">
-            <span class="stat-item">📝 <span class="stat-value" id="fsWordCount">0</span> palabras</span>
-            <span class="stat-item">⏱ <span class="stat-value" id="fsReadTime">0</span> min lectura</span>
-            <span class="stat-item">📏 <span class="stat-value" id="fsCharCount">0</span> caracteres</span>
-        </div>
-    </div>
+      </div>
 
-    <div class="publication-container">
-        <div class="publication-header">
-            <h1>@if(publication.isDefined) { ✏️ Editar Publicación } else { ✨ Nueva Publicación }</h1>
-            <a href="@routes.UserPublicationController.dashboard()">← Volver al Dashboard</a>
-        </div>
+      <div class="ed-field">
+        <label for="excerpt">Resumen <span class="ed-field-hint">(opcional, ~200 caracteres)</span></label>
+        <textarea id="excerpt" name="excerpt" rows="3" maxlength="280">@form("excerpt").value.getOrElse("")</textarea>
+      </div>
 
-        <div class="form-wrapper">
-            <!-- PROGRESS BAR -->
-            <div class="form-progress">
-                <span class="progress-label">Progreso</span>
-                <div class="progress-bar-track">
-                    <div class="progress-bar-fill" id="progressFill"></div>
-                </div>
-                <span class="progress-text" id="progressText">0%</span>
-            </div>
+      <div class="ed-field">
+        <label for="coverImage">URL de imagen de portada <span class="ed-field-hint">(opcional)</span></label>
+        <input type="url" id="coverImage" name="coverImage" value="@form("coverImage").value.getOrElse("")" placeholder="https://…">
+      </div>
 
-            <!-- AUTOSAVE INDICATOR -->
-            <div class="autosave-indicator" id="autosaveIndicator">
-                <span class="autosave-dot"></span>
-                <span id="autosaveText">Auto-guardado activo</span>
-                <div class="autosave-actions">
-                    <button type="button" class="autosave-btn restore" id="restoreDraftBtn" style="display:none;" onclick="restoreDraft()">🔄 Restaurar borrador</button>
-                    <button type="button" class="autosave-btn" onclick="clearDraft()">🗑 Limpiar borrador</button>
-                </div>
-            </div>
+      <div class="ed-field">
+        <label for="content">Contenido <span class="ed-field-hint">(soporta markdown ligero)</span></label>
+        <textarea id="content" name="content" class="ed-editor-textarea" rows="22" required>@form("content").value.getOrElse("")</textarea>
+        @form("content").error.map { e => <div class="ed-field-error">@e.message</div> }
+      </div>
 
-            <div class="form-header">
-                <h2>@if(publication.isDefined) { Editar tu Publicación } else { Comparte tu Conocimiento }</h2>
-                <p>@if(publication.isDefined) { Actualiza el contenido de tu publicación } else { Crea contenido de calidad para nuestra comunidad }</p>
-            </div>
-
-            <div class="form-content">
-                @if(form.hasGlobalErrors) {
-                    <div class="error">
-                        <strong>Errores en el formulario:</strong>
-                        <ul class="error-list">
-                            @for(err <- form.globalErrors) {
-                                <li>@err.message</li>
-                            }
-                        </ul>
-                    </div>
-                }
-
-                @if(publication.isDefined) {
-                    <div class="publication-info">
-                        <div class="info-header">
-                            <span>📋</span>
-                            <h3>Estado de la Publicación</h3>
-                        </div>
-                        <div class="info-content">
-                            <p>
-                                <strong>Estado:</strong>
-                                <span class="status-badge @publication.get.status.toLowerCase">
-                                    @{
-                                        publication.get.status match {
-                                            case "draft" => "📝 Borrador"
-                                            case "pending" => "⏳ Pendiente de Revisión"
-                                            case "approved" => "✅ Aprobada"
-                                            case "rejected" => "❌ Rechazada"
-                                            case _ => publication.get.status
-                                        }
-                                    }
-                                </span>
-                            </p>
-                            <p><strong>Creada:</strong> @publication.get.createdAt.toString.substring(0, 10)</p>
-                            <p><strong>Última actualización:</strong> @publication.get.updatedAt.toString.substring(0, 10)</p>
-                        </div>
-                    </div>
-                }
-
-                <form method="POST" action="@if(publication.isDefined) { @routes.UserPublicationController.updatePublication(publication.get.id.get) } else { @routes.UserPublicationController.createPublication() }" class="publication-form">
-                    @helper.CSRF.formField
-
-                    <!-- SECCIÓN: INFORMACIÓN BÁSICA -->
-                    <div class="form-section">
-                        <div class="form-section-title">
-                            <span>📝</span>
-                            <span>Información Básica</span>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="title">
-                                Título
-                                <span class="required">*</span>
-                                <span class="char-count"><span id="titleCount">0</span>/200</span>
-                            </label>
-                            <input
-                                type="text"
-                                id="title"
-                                name="title"
-                                value="@form("title").value.getOrElse("")"
-                                placeholder="Ej: Introducción a Akka Actors en Scala"
-                                required
-                                minlength="5"
-                                maxlength="200"
-                                autofocus
-                                @if(form("title").hasErrors) { class="has-error" }
-                            />
-                            <div class="title-preview">
-                                <div class="title-preview-label">Vista Previa:</div>
-                                <div class="title-preview-text" id="titlePreview">Tu título aparecerá aquí</div>
-                            </div>
-                            <div class="character-indicator" id="titleIndicator"></div>
-                            <div class="help-text">
-                                Mínimo <strong>5 caracteres</strong>, máximo <strong>200</strong>.
-                                Sé descriptivo y atractivo - este será el primer contacto del lector.
-                            </div>
-                            @if(form("title").hasErrors) {
-                                <div class="field-error">@form("title").errors.map(_.message).mkString(", ")</div>
-                            }
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="category">
-                                    Categoría
-                                    <span class="required">*</span>
-                                </label>
-                                <select id="category" name="category" required @if(form("category").hasErrors) { class="has-error" }>
-                                    <option value="">📂 Selecciona una categoría</option>
-                                    <option value="Scala" @if(form("category").value.contains("Scala")) { selected }>🎯 Scala</option>
-                                    <option value="Akka" @if(form("category").value.contains("Akka")) { selected }>⚡ Akka</option>
-                                    <option value="Play Framework" @if(form("category").value.contains("Play Framework")) { selected }>🎮 Play Framework</option>
-                                    <option value="Reactive Streams" @if(form("category").value.contains("Reactive Streams")) { selected }>🌊 Reactive Streams</option>
-                                    <option value="Arquitectura" @if(form("category").value.contains("Arquitectura")) { selected }>🏗️ Arquitectura</option>
-                                    <option value="Patterns" @if(form("category").value.contains("Patterns")) { selected }>🧩 Patterns</option>
-                                    <option value="Testing" @if(form("category").value.contains("Testing")) { selected }>✅ Testing</option>
-                                    <option value="DevOps" @if(form("category").value.contains("DevOps")) { selected }>🚀 DevOps</option>
-                                </select>
-                                <div class="help-text">Elige la categoría más representativa de tu contenido.</div>
-                                @if(form("category").hasErrors) {
-                                    <div class="field-error">@form("category").errors.map(_.message).mkString(", ")</div>
-                                }
-                            </div>
-
-                            <div class="form-group">
-                                <label for="tags">
-                                    Etiquetas
-                                    <span class="char-count" id="tagsLabel">(0)</span>
-                                </label>
-                                <input type="hidden" id="tags" name="tags" value="@form("tags").value.getOrElse("")" />
-                                <div class="tags-container">
-                                    <div class="tag-chips" id="tagChips" onclick="document.getElementById('tagInputInline').focus()">
-                                        <input type="text" class="tag-input-inline" id="tagInputInline" placeholder="Escribe y presiona Enter..." autocomplete="off" />
-                                    </div>
-                                    <div class="tag-count-badge" id="tagCountBadge"></div>
-                                </div>
-                                <div class="help-text">
-                                    Presiona <span class="kbd">Enter</span> o <span class="kbd">,</span> para agregar.
-                                    Click en ✕ para eliminar. <strong>Máximo 7 etiquetas</strong>
-                                </div>
-                                <div class="tag-suggestions-row" id="tagSuggestions">
-                                    <span class="tag-suggestion" data-tag="scala" onclick="addTagFromSuggestion(this)">🎯 scala</span>
-                                    <span class="tag-suggestion" data-tag="akka" onclick="addTagFromSuggestion(this)">⚡ akka</span>
-                                    <span class="tag-suggestion" data-tag="play-framework" onclick="addTagFromSuggestion(this)">🎮 play-framework</span>
-                                    <span class="tag-suggestion" data-tag="reactive" onclick="addTagFromSuggestion(this)">🌊 reactive</span>
-                                    <span class="tag-suggestion" data-tag="arquitectura" onclick="addTagFromSuggestion(this)">🏗️ arquitectura</span>
-                                    <span class="tag-suggestion" data-tag="patterns" onclick="addTagFromSuggestion(this)">🧩 patterns</span>
-                                    <span class="tag-suggestion" data-tag="testing" onclick="addTagFromSuggestion(this)">✅ testing</span>
-                                    <span class="tag-suggestion" data-tag="devops" onclick="addTagFromSuggestion(this)">🚀 devops</span>
-                                    <span class="tag-suggestion" data-tag="docker" onclick="addTagFromSuggestion(this)">🐳 docker</span>
-                                    <span class="tag-suggestion" data-tag="functional" onclick="addTagFromSuggestion(this)">λ functional</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SECCIÓN: DESCRIPCIÓN Y CONTENIDO -->
-                    <div class="form-section">
-                        <div class="form-section-title">
-                            <span>📄</span>
-                            <span>Descripción y Contenido</span>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="excerpt">
-                                Extracto / Descripción
-                                <span class="char-count"><span id="excerptCount">0</span>/500</span>
-                            </label>
-                            <textarea
-                                id="excerpt"
-                                name="excerpt"
-                                rows="3"
-                                maxlength="500"
-                                placeholder="Breve resumen de tu publicación (lo que verán en listados)"
-                            >@form("excerpt").value.getOrElse("")</textarea>
-                            <div class="character-indicator" id="excerptIndicator"></div>
-                            <div class="help-text">Opcional pero recomendado. Se mostrará en listados y vistas previas. Máximo <strong>500 caracteres</strong></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="content">
-                                Contenido Principal
-                                <span class="required">*</span>
-                                <span class="char-count"><span id="contentCount">0</span> caracteres</span>
-                            </label>
-
-                            <!-- MARKDOWN TOOLBAR -->
-                            <div class="md-toolbar" id="mdToolbar">
-                                <div class="md-toolbar-group">
-                                    <button type="button" class="md-toolbar-btn" title="Negrita (Ctrl+B)" onclick="insertMd('bold')"><b>B</b></button>
-                                    <button type="button" class="md-toolbar-btn" title="Cursiva (Ctrl+I)" onclick="insertMd('italic')"><i>I</i></button>
-                                    <button type="button" class="md-toolbar-btn" title="Tachado" onclick="insertMd('strike')"><s>S</s></button>
-                                </div>
-                                <div class="md-toolbar-group">
-                                    <button type="button" class="md-toolbar-btn" title="Encabezado 1" onclick="insertMd('h1')">H1</button>
-                                    <button type="button" class="md-toolbar-btn" title="Encabezado 2" onclick="insertMd('h2')">H2</button>
-                                    <button type="button" class="md-toolbar-btn" title="Encabezado 3" onclick="insertMd('h3')">H3</button>
-                                </div>
-                                <div class="md-toolbar-group">
-                                    <button type="button" class="md-toolbar-btn" title="Lista" onclick="insertMd('ul')">☰</button>
-                                    <button type="button" class="md-toolbar-btn" title="Lista Numerada" onclick="insertMd('ol')">1.</button>
-                                    <button type="button" class="md-toolbar-btn" title="Cita" onclick="insertMd('quote')">❝</button>
-                                </div>
-                                <div class="md-toolbar-group">
-                                    <button type="button" class="md-toolbar-btn" title="Código Inline" onclick="insertMd('code')">⟨/⟩</button>
-                                    <button type="button" class="md-toolbar-btn" title="Bloque de Código" onclick="insertMd('codeblock')">{ }</button>
-                                    <button type="button" class="md-toolbar-btn" title="Enlace" onclick="insertMd('link')">🔗</button>
-                                    <button type="button" class="md-toolbar-btn" title="Imagen" onclick="insertMd('image')">🖼</button>
-                                    <button type="button" class="md-toolbar-btn" title="Línea Horizontal" onclick="insertMd('hr')">─</button>
-                                    <button type="button" class="md-toolbar-btn" title="Tabla" onclick="insertMd('table')">▦</button>
-                                </div>
-                                <div class="md-toolbar-spacer"></div>
-                                <button type="button" class="md-toolbar-toggle" id="previewToggle" onclick="togglePreview()">👁 Preview</button>
-                                <button type="button" class="md-toolbar-toggle" id="tocToggle" onclick="toggleTOC()">📑 TOC</button>
-                                <button type="button" class="md-toolbar-toggle" onclick="openFullscreen()">⛶ Expandir</button>
-                            </div>
-
-                            <!-- EDITOR + PREVIEW SPLIT -->
-                            <div class="editor-container" id="editorContainer">
-                                <div class="editor-pane">
-                                    <textarea
-                                        id="content"
-                                        name="content"
-                                        rows="14"
-                                        minlength="50"
-                                        required
-                                        placeholder="Escribe aquí el contenido...
-
-# Título de Sección
-
-Usa **negrita** y *cursiva*.
-
-```scala
-val x = 42
-```
-
-- Elemento 1
-- Elemento 2"
-                                        @if(form("content").hasErrors) { class="has-error" }
-                                    >@form("content").value.getOrElse("")</textarea>
-                                </div>
-                                <div class="preview-pane" id="previewPane">
-                                    <div class="preview-empty">Escribe contenido para ver la vista previa...</div>
-                                </div>
-                            </div>
-
-                            <!-- CONTENT STATS BAR -->
-                            <div class="content-stats">
-                                <span class="stat-item">📝 Palabras: <span class="stat-value" id="wordCount">0</span></span>
-                                <span class="stat-item">⏱ Lectura: <span class="stat-value" id="readTime">0 min</span></span>
-                                <span class="stat-item">📏 Caracteres: <span class="stat-value" id="charCount">0</span></span>
-                                <span class="stat-item">📄 Líneas: <span class="stat-value" id="lineCount">0</span></span>
-                            </div>
-
-                            <!-- TABLE OF CONTENTS -->
-                            <div class="toc-panel" id="tocPanel">
-                                <div class="toc-title">📑 Tabla de Contenidos</div>
-                                <ul class="toc-list" id="tocList">
-                                    <li class="toc-empty">Agrega encabezados (#, ##, ###) para generar la tabla de contenidos</li>
-                                </ul>
-                            </div>
-
-                            <div class="character-indicator" id="contentIndicator"></div>
-                            <div class="help-text">
-                                Mínimo <strong>50 caracteres</strong>. Soporta <strong>Markdown</strong>.
-                                <span class="kbd">Ctrl+B</span> Negrita
-                                <span class="kbd">Ctrl+I</span> Cursiva
-                                <span class="kbd">Ctrl+Shift+F</span> Pantalla completa
-                            </div>
-                            <div class="content-tip">
-                                <strong>💡 Consejo:</strong> Estructura tu contenido con encabezados, párrafos cortos y ejemplos de código.
-                                Esto facilita la lectura y mejora el SEO.
-                            </div>
-                            @if(form("content").hasErrors) {
-                                <div class="field-error">@form("content").errors.map(_.message).mkString(", ")</div>
-                            }
-                        </div>
-                    </div>
-
-                    <!-- SECCIÓN: IMAGEN Y DETALLES -->
-                    <div class="form-section">
-                        <div class="form-section-title">
-                            <span>🎨</span>
-                            <span>Imagen de Portada y Detalles</span>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="coverImage">Imagen de Portada (URL)</label>
-                            <input
-                                type="url"
-                                id="coverImage"
-                                name="coverImage"
-                                value="@form("coverImage").value.getOrElse("")"
-                                placeholder="https://ejemplo.com/imagen.jpg"
-                            />
-                            <div class="help-text">
-                                Opcional. Proporciona una URL completa. Recomendaciones:
-                                <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
-                                    <li>Tamaño: <strong>1200x630px</strong> (ratio 16:9)</li>
-                                    <li>Formato: JPG o PNG</li>
-                                    <li>Tamaño archivo: &lt; 500KB</li>
-                                </ul>
-                            </div>
-                            <!-- IMAGE LIVE PREVIEW -->
-                            <div class="image-preview-container" id="imagePreviewContainer">
-                                <div class="image-preview-header">
-                                    <span>🖼 Vista previa de imagen</span>
-                                    <span class="image-dimensions" id="imageDimensions"></span>
-                                </div>
-                                <div class="image-preview-body" id="imagePreviewBody">
-                                    <img id="imagePreviewImg" style="display:none;" alt="Preview de portada" />
-                                    <span class="image-preview-loading" id="imagePreviewLoading">Cargando imagen...</span>
-                                    <span class="image-preview-error" id="imagePreviewError" style="display:none;">⚠️ No se pudo cargar la imagen</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ACCIONES -->
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20" style="display: inline;">
-                                <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z"/>
-                            </svg>
-                            @if(publication.isDefined) { 📤 Actualizar Publicación } else { 🚀 Publicar Contenido }
-                        </button>
-                        <a href="@routes.UserPublicationController.dashboard()" class="btn btn-secondary">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20" style="display: inline;">
-                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                            </svg>
-                            Cancelar
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <script src="@routes.Assets.versioned("javascripts/publicationForm.js")"></script>
+      <div class="ed-form-actions">
+        <a href="@routes.UserPublicationController.dashboard()" class="ed-btn-ghost">Cancelar</a>
+        <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios}else{Enviar a revisión}</button>
+      </div>
+    </form>
+  </section>
 }
