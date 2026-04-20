@@ -1,185 +1,91 @@
 // ============================================
-// Components - Email Verification
+// Verification — Email verification page
 // ============================================
 
-.verification-section {
-  min-height: 100vh;
-  background: linear-gradient(135deg, $accent-dark 0%, $message-primary 100%);
-  padding: $spacing-5xl 0;
-  display: flex;
-  align-items: center;
-}
-
-.verification-container {
-  max-width: 900px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: $spacing-6;
-
-  @media (max-width: $breakpoint-md) {
-    grid-template-columns: 1fr;
-    max-width: 500px;
-  }
-}
-
-.verification-card {
-  background: white;
-  border-radius: $border-radius-2xl;
-  padding: $spacing-8;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-
-  [data-theme="dark"] & {
-    background: rgba(30, 30, 30, 0.95);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  }
-}
-
-.verification-header {
-  text-align: center;
-  margin-bottom: $spacing-6;
-}
-
-.verification-icon {
-  font-size: 4rem;
-  margin-bottom: $spacing-3;
-  animation: bounce 2s ease-in-out infinite;
-}
-
-.verification-header h1 {
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
-  color: var(--text-primary);
-  margin-bottom: $spacing-2;
-}
-
-.verification-subtitle {
-  font-size: $font-size-base;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.email-display {
+.ed-verify-page {
+  min-height: calc(100vh - 0px);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-2;
-  background: rgba($accent-primary, 0.1);
-  padding: $spacing-3 $spacing-4;
-  border-radius: $border-radius-lg;
-  margin-bottom: $spacing-5;
-  border: 2px solid rgba($accent-primary, 0.2);
-
-  [data-theme="dark"] & {
-    background: rgba($accent-primary, 0.15);
-    border-color: rgba($accent-primary, 0.3);
-  }
+  padding: 3rem 1.5rem;
 }
 
-.email-icon {
-  font-size: $font-size-xl;
-}
-
-.email-text {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $accent-primary;
-  
-  [data-theme="dark"] & {
-    color: $accent-light;
-  }
-}
-
-.verification-form {
-  margin-bottom: $spacing-6;
-}
-
-.code-input {
+.ed-verify-card {
+  background: var(--ed-bg2);
+  border: 1px solid var(--ed-border-strong);
+  padding: 2.5rem 2rem;
+  max-width: 440px;
+  width: 100%;
   text-align: center;
-  font-size: $font-size-3xl;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.5em;
-  font-family: 'JetBrains Mono', monospace;
-  padding: $spacing-4;
-  
-  &:focus {
-    letter-spacing: 0.5em;
-  }
-}
 
-.verification-footer {
-  text-align: center;
-}
-
-.expiration-notice {
-  font-size: $font-size-sm;
-  color: $warning-color;
-  font-weight: $font-weight-semibold;
-  margin-bottom: $spacing-4;
-  padding: $spacing-2 $spacing-3;
-  background: rgba(245, 158, 11, 0.1);
-  border-radius: $border-radius-md;
-  display: inline-block;
-
-  [data-theme="dark"] & {
-    background: rgba(245, 158, 11, 0.15);
-  }
-}
-
-.resend-section {
-  margin-top: $spacing-4;
-  padding-top: $spacing-4;
-  border-top: 1px solid var(--border-color);
-
-  p {
-    font-size: $font-size-sm;
-    color: var(--text-secondary);
-    margin-bottom: $spacing-2;
-  }
-}
-
-.help-card {
-  background: white;
-  border-radius: $border-radius-2xl;
-  padding: $spacing-6;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-
-  [data-theme="dark"] & {
-    background: rgba(30, 30, 30, 0.95);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  &__icon {
+    font-size: 2rem;
+    color: var(--ed-accent);
+    margin-bottom: 1rem;
   }
 
-  @media (max-width: $breakpoint-md) {
-    display: none;
+  &__title {
+    font-family: $font-display;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--ed-text);
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
   }
 
-  h3 {
-    font-size: $font-size-lg;
-    font-weight: $font-weight-bold;
-    color: var(--text-primary);
-    margin-bottom: $spacing-4;
+  &__sub {
+    font-size: 0.85rem;
+    color: var(--ed-text-dim);
+    margin-bottom: 2rem;
+    line-height: 1.5;
   }
 
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  &__email {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--ed-border-strong);
+    margin-bottom: 1.5rem;
+    font-family: $font-mono;
+    font-size: 0.78rem;
+    color: var(--ed-text);
+  }
 
-    li {
-      padding: $spacing-2 0;
-      font-size: $font-size-sm;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: flex-start;
-      gap: $spacing-2;
+  &__code-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
 
-      &::before {
-        content: '✓';
-        color: $success-color;
-        font-weight: $font-weight-bold;
-        flex-shrink: 0;
-      }
+    input {
+      width: 56px;
+      height: 64px;
+      text-align: center;
+      font-family: $font-display;
+      font-size: 1.4rem;
+      font-weight: 900;
+      background: var(--ed-bg3);
+      border: 1px solid var(--ed-border-strong);
+      color: var(--ed-text);
+      outline: none;
+      transition: border-color 0.15s;
+
+      &:focus { border-color: var(--ed-accent); }
+    }
+  }
+
+  &__resend {
+    margin-top: 1.25rem;
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    color: var(--ed-text-faint);
+    letter-spacing: 0.05em;
+
+    a {
+      color: var(--ed-accent);
+      text-decoration: none;
+      &:hover { opacity: 0.8; }
     }
   }
 }
-

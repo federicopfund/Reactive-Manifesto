@@ -1,365 +1,157 @@
 // ============================================
-// Components - Authentication (Login & Register)
+// Auth — Login / Register pages (full-page)
 // ============================================
 
-// Auth Page Background
-.auth-page {
+.ed-auth-page {
   min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  background: var(--ed-bg);
+}
+
+.ed-auth-side {
+  padding: 4rem 3.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid var(--ed-border);
+  background: var(--ed-bg);
+
+  &__brand {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ed-accent);
+    margin-bottom: 0.5rem;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: clamp(2rem, 3.5vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ed-text);
+    margin-bottom: 1.25rem;
+
+    em { font-style: italic; color: var(--ed-accent); }
+  }
+
+  &__lead {
+    font-family: $font-body;
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--ed-text-dim);
+    max-width: 38ch;
+  }
+
+  &__footer {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--ed-text-faint);
+
+    a {
+      color: var(--ed-accent);
+      text-decoration: none;
+      &:hover { opacity: 0.8; }
+    }
+  }
+}
+
+.ed-auth-form-wrap {
+  padding: 4rem 3rem;
+  background: var(--ed-bg2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ed-auth-form {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+
+  &__label {
+    font-family: $font-mono;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ed-accent);
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--ed-text);
+    margin-bottom: 0.4rem;
+    line-height: 1.1;
+  }
+
+  &__sub {
+    font-size: 0.82rem;
+    color: var(--ed-text-dim);
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  }
+
+  &__footer {
+    margin-top: 1.5rem;
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    color: var(--ed-text-faint);
+    text-align: center;
+    letter-spacing: 0.05em;
+
+    a {
+      color: var(--ed-accent);
+      text-decoration: none;
+      &:hover { opacity: 0.8; }
+    }
+  }
+}
+
+// Modal overlay (cuando login se invoca como modal)
+.ed-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-8 $spacing-4;
-  background-color: $gray-50;
+  backdrop-filter: blur(4px);
 }
 
-// Login & Register Container
-.login-container,
-.register-container {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
-  border-radius: $border-radius-xl;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04),
-              0 1px 4px rgba(0, 0, 0, 0.02);
-  max-width: 440px;
-  width: 100%;
-  overflow: hidden;
-  animation: fadeInUp 0.4s ease-out;
+.ed-modal-box {
+  background: var(--ed-bg2);
+  border: 1px solid var(--ed-border-strong);
+  width: 380px;
+  max-width: 92vw;
+  padding: 2.5rem;
 }
 
-// Header Section
-.login-header,
-.register-header {
-  background: linear-gradient(135deg, 
-    rgba(59, 130, 246, 0.05) 0%, 
-    rgba(139, 92, 246, 0.05) 100%
-  );
-  padding: $spacing-8 $spacing-6;
-  text-align: center;
-  border-bottom: 1px solid $gray-200;
-
-  .header-icon {
-    font-size: $font-size-4xl;
-    margin-bottom: $spacing-2;
-    display: block;
-    opacity: 0.8;
-  }
-
-  h1 {
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    margin-bottom: $spacing-1;
-    color: $gray-800;
-
-    @include respond-to('md') {
-      font-size: $font-size-3xl;
-    }
-  }
-
-  p {
-    color: $gray-600;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-normal;
-  }
-}
-
-// Body Section
-.login-body,
-.register-body {
-  padding: $spacing-8 $spacing-6;
-  background: $bg-white;
-}
-
-// Tab Container (only for login)
-.tab-container {
-  display: flex;
-  gap: $spacing-2;
-  margin-bottom: $spacing-6;
-  background: $gray-100;
-  padding: 4px;
-  border-radius: $border-radius-md;
-
-  .tab {
-    flex: 1;
-    padding: $spacing-2 $spacing-3;
-    text-align: center;
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: $gray-600;
-    transition: all 0.2s ease;
-    border-radius: calc($border-radius-md - 2px);
-
-    &:hover {
-      color: $gray-900;
-      background: rgba(255, 255, 255, 0.6);
-    }
-
-    &.active {
-      color: $gray-900;
-      background: $bg-white;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-  }
-}
-
-// Form Elements
-.login-body,
-.register-body {
-  .form-group {
-    margin-bottom: $spacing-5;
-
-    label {
-      display: block;
-      margin-bottom: $spacing-2;
-      color: $gray-700;
-      font-weight: $font-weight-medium;
-      font-size: $font-size-sm;
-    }
-
-    input[type="text"],
-    input[type="email"],
-    input[type="password"] {
-      width: 100%;
-      padding: $spacing-3;
-      border: 1px solid $gray-300;
-      border-radius: $border-radius-md;
-      font-size: $font-size-base;
-      transition: all 0.2s ease;
-      background: $bg-white;
-      color: $gray-900;
-
-      &:focus {
-        outline: none;
-        border-color: $gray-400;
-        box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.1);
-      }
-
-      &::placeholder {
-        color: $gray-400;
-      }
-    }
-  }
-
-  .error {
-    background: $gray-50;
-    border: 1px solid $gray-300;
-    border-left: 2px solid $gray-600;
-    color: $gray-700;
-    padding: $spacing-2 $spacing-3;
-    border-radius: $border-radius-sm;
-    margin-bottom: $spacing-4;
-    font-size: $font-size-sm;
-    line-height: $line-height-relaxed;
-  }
-}
-
-// Submit Buttons
-.btn-login,
-.btn-register {
-  width: 100%;
-  padding: $spacing-3;
-  background: $gray-800;
-  color: $text-white;
+.ed-modal-close {
+  float: right;
+  background: none;
   border: none;
-  border-radius: $border-radius-md;
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  color: var(--ed-text-faint);
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: $spacing-2;
+  font-size: 1.1rem;
+  margin-top: -0.25rem;
 
-  &:hover {
-    background: $gray-900;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  &:hover { color: var(--ed-text); }
 }
 
-// Links Section
-.links {
-  text-align: center;
-  margin-top: $spacing-6;
-  padding-top: $spacing-6;
-  border-top: 1px solid $gray-200;
-
-  p {
-    color: $gray-600;
-    margin-bottom: $spacing-2;
-    font-size: $font-size-sm;
+@include respond-to(md) {
+  .ed-auth-page {
+    grid-template-columns: 1fr;
   }
-
-  a {
-    color: $gray-700;
-    text-decoration: none;
-    font-weight: $font-weight-medium;
-    font-size: $font-size-sm;
-    transition: color 0.2s ease;
-
-    &:hover {
-      color: $gray-900;
-      text-decoration: underline;
-    }
-  }
-}
-
-// Flash Messages
-.flash-message {
-  padding: $spacing-3;
-  margin-bottom: $spacing-4;
-  border-radius: $border-radius-md;
-  font-size: $font-size-sm;
-  line-height: $line-height-relaxed;
-  border-left: 2px solid;
-
-  &.success {
-    background: rgba(16, 185, 129, 0.06);
-    border-left-color: $resilient-primary;
-    color: #047857;
-  }
-
-  &.error {
-    background: $gray-50;
-    border-left-color: $gray-600;
-    color: $gray-700;
-  }
-
-  &.info {
-    background: rgba(59, 130, 246, 0.06);
-    border-left-color: $responsive-primary;
-    color: #1e40af;
-  }
-}
-
-// Dark Mode
-[data-theme="dark"] {
-  .auth-page {
-    background-color: $dark-bg-secondary;
-  }
-
-  .login-container,
-  .register-container {
-    background: rgba(31, 41, 55, 0.98);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .login-header,
-  .register-header {
-    background: linear-gradient(135deg, 
-      rgba(59, 130, 246, 0.08) 0%, 
-      rgba(139, 92, 246, 0.08) 100%
-    );
-    border-bottom-color: $dark-border-color;
-
-    h1 {
-      color: $dark-text-primary;
-    }
-
-    p {
-      color: $gray-400;
-    }
-  }
-
-  .login-body,
-  .register-body {
-    background: $dark-bg-primary;
-
-    .tab-container {
-      background: $dark-bg-secondary;
-
-      .tab {
-        color: $gray-400;
-
-        &:hover {
-          color: $gray-200;
-          background: rgba(255, 255, 255, 0.05);
-        }
-
-        &.active {
-          color: $gray-200;
-          background: $dark-bg-primary;
-        }
-      }
-    }
-
-    .form-group {
-      label {
-        color: $gray-300;
-      }
-
-      input[type="text"],
-      input[type="email"],
-      input[type="password"] {
-        background: $dark-bg-secondary;
-        border-color: $dark-border-color;
-        color: $dark-text-primary;
-
-        &:focus {
-          border-color: $gray-600;
-        }
-
-        &::placeholder {
-          color: $gray-500;
-        }
-      }
-    }
-
-    .error {
-      background: $dark-bg-secondary;
-      border-color: $dark-border-color;
-      color: $gray-400;
-    }
-  }
-
-  .btn-login,
-  .btn-register {
-    background: $gray-700;
-
-    &:hover {
-      background: $gray-600;
-    }
-  }
-
-  .links {
-    border-top-color: $dark-border-color;
-
-    p {
-      color: $gray-400;
-    }
-
-    a {
-      color: $gray-300;
-
-      &:hover {
-        color: $gray-100;
-      }
-    }
-  }
-
-  .flash-message {
-    &.success {
-      background: rgba(16, 185, 129, 0.1);
-      color: #6ee7b7;
-    }
-
-    &.error {
-      background: $dark-bg-secondary;
-      color: $gray-400;
-    }
-
-    &.info {
-      background: rgba(59, 130, 246, 0.1);
-      color: #93c5fd;
-    }
-  }
+  .ed-auth-side { border-right: none; border-bottom: 1px solid var(--ed-border); padding: 2rem 1.5rem; }
+  .ed-auth-form-wrap { padding: 2rem 1.5rem; }
 }

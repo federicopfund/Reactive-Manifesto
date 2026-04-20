@@ -1,189 +1,119 @@
 // ============================================
-// Components - Hero Sections
+// Hero — Editorial Reactiva (portada)
 // ============================================
 
-.hero {
-  // Gradiente suave: grises neutros con toque sage
-  background: linear-gradient(150deg, 
-                              $gray-800 0%,
-                              $gray-700 40%,
-                              $accent-darker 80%,
-                              $accent-dark 100%);
-  color: white;
-  padding: $spacing-5xl 0;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+.ed-hero {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  border-bottom: 1px solid var(--ed-border);
+}
 
-  // Glow ambiental sutil
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: 
-      radial-gradient(ellipse at 30% 40%, rgba($accent-primary, 0.12) 0%, transparent 55%),
-      radial-gradient(ellipse at 75% 65%, rgba($accent-light, 0.08) 0%, transparent 50%);
-    pointer-events: none;
-  }
+.ed-hero-main {
+  padding: 3rem 3.5rem;
+  border-right: 1px solid var(--ed-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
-  // Dark Mode
-  [data-theme="dark"] & {
-    background: linear-gradient(150deg, 
-                                $gray-950 0%,
-                                $gray-800 40%,
-                                $accent-darker 85%,
-                                $accent-dark 100%);
-    
-    &::before {
-      background: 
-        radial-gradient(ellipse at 30% 40%, rgba($accent-primary, 0.15) 0%, transparent 55%),
-        radial-gradient(ellipse at 75% 65%, rgba($accent-light, 0.1) 0%, transparent 50%);
-    }
-  }
+.ed-hero-issue {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
 
-  &-content {
-    max-width: 800px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
-  }
+.ed-hero-issue-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ed-accent);
+  display: inline-block;
+  flex-shrink: 0;
+}
 
-  &-title {
-    font-size: $font-size-3xl;
-    font-weight: 700;
-    margin-bottom: $spacing-md;
-    line-height: $line-height-tight;
-    letter-spacing: -0.02em;
-    position: relative;
-    color: white;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+.ed-hero-title {
+  font-family: $font-display;
+  font-size: clamp(2.4rem, 4vw, 3.8rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--ed-text);
+  text-wrap: pretty;
 
-    // Underline accent — estático, sin glow
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 48%;
-      height: 3px;
-      background: linear-gradient(90deg,
-                                  transparent 0%,
-                                  $accent-lighter 30%,
-                                  $accent-light 50%,
-                                  $accent-lighter 70%,
-                                  transparent 100%);
-      border-radius: 2px;
-      opacity: 0.7;
-    }
-  }
-
-  &-subtitle {
-    font-size: $font-size-md;
-    margin-bottom: $spacing-xl;
-    line-height: $line-height-relaxed;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.88);
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
-  }
-
-  &-cta {
-    display: flex;
-    gap: $spacing-lg;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: $spacing-2xl;
-
-    // Sin efectos hover en los botones del hero
-    .btn {
-      &::before {
-        display: none !important;
-      }
-
-      &:hover {
-        transform: none !important;
-        filter: none !important;
-      }
-
-      &-primary:hover {
-        box-shadow: 0 4px 15px rgba($accent-darker, 0.4),
-                    0 2px 8px rgba($accent-dark, 0.3),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-
-        &::after {
-          opacity: 0 !important;
-        }
-      }
-
-      &-secondary:hover {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.25);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-
-        &::after {
-          opacity: 0 !important;
-        }
-      }
-    }
+  em {
+    font-style: italic;
+    color: var(--ed-accent);
   }
 }
 
-// Hero Secondary — limpio, sin animación
-.hero-secondary {
-  background: linear-gradient(150deg,
-                              $gray-700 0%,
-                              $accent-darker 60%,
-                              $accent-dark 100%);
-  padding: $spacing-3xl 0;
-  position: relative;
-  overflow: hidden;
+.ed-hero-rule {
+  display: block;
+  height: 3px;
+  background: var(--ed-accent);
+  width: 100%;
+  margin: 0.4rem 0;
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 50% 40%,
-                                rgba($accent-light, 0.1) 0%,
-                                transparent 55%);
-    pointer-events: none;
-  }
+.ed-hero-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ed-border);
+}
 
-  [data-theme="dark"] & {
-    background: linear-gradient(150deg,
-                                $gray-800 0%,
-                                $accent-darker 65%,
-                                $accent-dark 100%);
+.ed-hero-subtitle {
+  font-family: $font-body;
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--ed-text-dim);
+  max-width: 36ch;
+  line-height: 1.65;
+}
+
+.ed-hero-aside {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--ed-bg2);
+}
+
+.ed-aside-stat {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--ed-border);
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
   }
 }
 
-// CTA Section (canonical en _portfolio.scss)
-// Removida de aquí para evitar duplicación
+.ed-aside-stat-num {
+  font-family: $font-display;
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ed-text);
+  margin-bottom: 0.25rem;
 
-// Responsive
-@media (max-width: $breakpoint-md) {
-  .hero {
-    padding: $spacing-3xl 0;
-
-    &-title {
-      font-size: $font-size-3xl;
-    }
-
-    &-subtitle {
-      font-size: $font-size-base;
-    }
-
-    &-cta {
-      flex-direction: column;
-      align-items: stretch;
-    }
-  }
+  span { color: var(--ed-accent); }
 }
 
-@media (max-width: $breakpoint-sm) {
-  .hero {
-    padding: $spacing-2xl 0;
-  }
+.ed-aside-stat-label {
+  font-family: $font-mono;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ed-text-faint);
+  line-height: 1.6;
+  white-space: pre-line;
 }
-
-// Keyframes centralizados en _animations.scss

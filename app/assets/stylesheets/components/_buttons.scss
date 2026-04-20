@@ -1,207 +1,116 @@
 // ============================================
-// Components - Buttons Sistema Profesional
+// Buttons — Editorial Reactiva
 // ============================================
 
-.btn {
-  padding: 0.875rem 2rem;
-  border-radius: $border-radius-lg;
-  font-weight: $font-weight-semibold;
-  text-decoration: none;
+%ed-btn-base {
+  font-family: $font-mono;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.25rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  transition: all $transition-slow $easing-smooth;
-  border: none;
-  cursor: pointer;
-  font-size: $font-size-base;
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-  letter-spacing: 0.3px;
+  gap: 0.4rem;
+  text-decoration: none;
+  @include focus-ring;
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s $easing-smooth, height 0.6s $easing-smooth;
-    z-index: -1;
-  }
+.ed-btn {
+  @extend %ed-btn-base;
+}
 
-  &:hover::before {
-    width: 300px;
-    height: 300px;
-  }
+.ed-btn-primary {
+  @extend %ed-btn-base;
+  color: var(--ed-bg);
+  background: var(--ed-accent);
 
-  &:active {
-    transform: scale(0.96);
-  }
+  &:hover { opacity: 0.85; }
+}
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+.ed-btn-secondary {
+  @extend %ed-btn-base;
+  color: var(--ed-text-dim);
+  background: none;
+  border: 1px solid var(--ed-border-strong);
 
-  // Primary Button con efectos premium
-  &-primary {
-    background: linear-gradient(135deg, $accent-primary 0%, $accent-dark 50%, $accent-darker 100%);
-    color: white;
-    box-shadow: 0 4px 15px rgba($accent-darker, 0.4),
-                0 2px 8px rgba($accent-dark, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    font-weight: 700;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: -4px;
-      background: radial-gradient(circle at center, rgba(0, 0, 0, 0.15), transparent 70%);
-      opacity: 0;
-      transition: opacity $transition-slow $easing-smooth;
-      z-index: -1;
-      border-radius: $border-radius-xl;
-      filter: blur(15px);
-    }
-
-    &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba($accent-darker, 0.5),
-                  0 6px 16px rgba($accent-dark, 0.4),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.3);
-      background: linear-gradient(135deg, $accent-primary 0%, $accent-dark 50%, $accent-darker 100%);
-
-      &::after {
-        opacity: 0.5;
-      }
-    }
-
-    &:active {
-      transform: translateY(-2px) scale(0.98);
-    }
-  }
-
-  // Secondary Button - Glass morphism sutil
-  &-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-    color: rgba(255, 255, 255, 0.92);
-    border: 2px solid rgba(255, 255, 255, 0.25);
-    position: relative;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    font-weight: 600;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
-      opacity: 0;
-      transition: opacity $transition-slow $easing-smooth;
-      border-radius: $border-radius-lg;
-      z-index: -1;
-    }
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(15px);
-      border-color: rgba(255, 255, 255, 0.45);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.25);
-
-      &::after {
-        opacity: 1;
-      }
-    }
-
-    &:active {
-      transform: translateY(-1px) scale(0.98);
-    }
-  }
-
-  // Outline Button
-  &-outline {
-    background: transparent;
-    color: var(--primary-color);
-    border: 2px solid var(--primary-color);
-    box-shadow: 0 0 10px rgba($accent-primary, 0.1);
-
-    &:hover {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-      color: white;
-      border-color: transparent;
-      transform: translateY(-4px);
-      box-shadow: 0 10px 30px rgba($accent-primary, 0.5);
-    }
-  }
-
-  // Glow Button (efecto neón)
-  &-glow {
-    background: linear-gradient(135deg, $accent-primary 0%, $message-primary 100%);
-    color: white;
-    border: none;
-    box-shadow: 0 0 25px rgba($accent-primary, 0.6),
-                0 4px 15px rgba($accent-primary, 0.5);
-    animation: pulseGlow 2s ease-in-out infinite;
-
-    &:hover {
-      box-shadow: 0 0 40px rgba($accent-primary, 1),
-                  0 8px 25px rgba($accent-primary, 0.6);
-      transform: translateY(-4px);
-      filter: brightness(1.15);
-    }
-  }
-
-  // Button Sizes
-  &-sm {
-    padding: 0.5rem 1rem;
-    font-size: $font-size-sm;
-    border-radius: $border-radius-md;
-  }
-
-  &-lg {
-    padding: 1.125rem 2.5rem;
-    font-size: $font-size-lg;
-    border-radius: 14px;
-  }
-
-  // Full width
-  &-block {
-    width: 100%;
-    display: block;
+  &:hover {
+    color: var(--ed-text);
+    border-color: var(--ed-text-dim);
   }
 }
 
-// Keyframes centralizados en _animations.scss
+.ed-btn-ghost {
+  @extend %ed-btn-base;
+  color: var(--ed-text-faint);
+  background: none;
 
-// Responsive
-@media (max-width: $breakpoint-sm) {
-  .btn {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.9375rem;
-
-    &::before {
-      display: none;
-    }
-  }
-
-  .btn-lg {
-    padding: 1rem 2rem;
-    font-size: $font-size-base;
-  }
-
-  .btn-glow {
-    animation: none;
-  }
+  &:hover { color: var(--ed-text); }
 }
 
+.ed-btn-danger {
+  @extend %ed-btn-base;
+  color: $color-danger;
+  background: none;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+
+  &:hover { background: rgba(239, 68, 68, 0.1); }
+}
+
+.ed-btn-success {
+  @extend %ed-btn-base;
+  color: $color-success;
+  background: none;
+  border: 1px solid rgba(107, 143, 113, 0.4);
+
+  &:hover { background: rgba(107, 143, 113, 0.1); }
+}
+
+.ed-btn-block {
+  width: 100%;
+  text-align: center;
+}
+
+.ed-btn-sm {
+  font-size: 0.58rem;
+  padding: 0.4rem 0.85rem;
+  letter-spacing: 0.1em;
+}
+
+.ed-btn-lg {
+  font-size: 0.75rem;
+  padding: 0.85rem 2rem;
+}
+
+// Login/Register botones del sidebar
+.ed-btn-login {
+  @extend %ed-btn-base;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--ed-bg);
+  background: var(--ed-accent);
+  padding: 0.55rem 1rem;
+  text-align: center;
+
+  &:hover { opacity: 0.85; }
+}
+
+.ed-btn-register {
+  @extend %ed-btn-base;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--ed-text-dim);
+  background: none;
+  border: 1px solid var(--ed-border-strong);
+  padding: 0.55rem 1rem;
+  text-align: center;
+
+  &:hover {
+    color: var(--ed-text);
+    border-color: var(--ed-text-dim);
+  }
+}

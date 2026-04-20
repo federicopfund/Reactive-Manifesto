@@ -1,283 +1,42 @@
 // ============================================
-// Graph Popup Component
+// Graph popup — Popup explicativo (legacy, mantenido vacío para compatibilidad)
 // ============================================
 
-.graph-icon-trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin-left: 12px;
-  background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  vertical-align: middle;
-  position: relative;
-  animation: pulseShadow 2s infinite;
-
-  svg {
-    color: white;
-    width: 20px;
-    height: 20px;
-  }
-
-  &:hover {
-    transform: scale(1.1) rotate(15deg);
-    box-shadow: 0 8px 20px rgba(var(--accent-color-rgb), 0.4);
-    animation: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid var(--accent-color);
-    animation: ripple 2s infinite;
-  }
-}
-
-.graph-popup {
+.ed-popup {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: var(--ed-bg2);
+  border: 1px solid var(--ed-border-strong);
+  padding: 1.25rem 1.5rem;
+  width: 280px;
+  z-index: 1000;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
 
-  &.active {
-    opacity: 1;
-    visibility: visible;
-
-    .graph-popup-content {
-      transform: scale(1) translateY(0);
-      opacity: 1;
-    }
-  }
-}
-
-.graph-popup-content {
-  background: linear-gradient(135deg, $gray-900 0%, $gray-800 100%);
-  border-radius: 24px;
-  padding: 40px;
-  max-width: 800px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transform: scale(0.8) translateY(20px);
-  opacity: 0;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  position: relative;
-
-  &::-webkit-scrollbar {
-    width: 8px;
+  &__title {
+    font-family: $font-mono;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ed-accent);
+    margin-bottom: 1rem;
   }
 
-  &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--accent-color);
-    border-radius: 4px;
-
-    &:hover {
-      background: var(--secondary-color);
-    }
-  }
-}
-
-.graph-popup-title {
-  font-size: $font-size-2xl;
-  font-weight: 700;
-  color: white;
-  margin-bottom: $spacing-2;
-  text-align: center;
-  background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.graph-popup-subtitle {
-  font-size: $font-size-base;
-  color: rgba(255, 255, 255, 0.7);
-  text-align: center;
-  margin-bottom: $spacing-8;
-}
-
-.graph-container {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 50% 50%, rgba(var(--accent-color-rgb), 0.1) 0%, transparent 70%);
-    pointer-events: none;
-  }
-}
-
-#graphSvg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-
-  .connection-line {
-    stroke: rgba(255, 255, 255, 0.2);
-    stroke-width: 2;
-    fill: none;
-    transition: all 0.3s ease;
-
-    &.active {
-      stroke: var(--accent-color);
-      stroke-width: 3;
-      filter: drop-shadow(0 0 8px var(--accent-color));
-    }
-  }
-
-  .connection-arrow {
-    fill: rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-
-    &.active {
-      fill: var(--accent-color);
-    }
-  }
-
-  .node-group {
+  &__close {
+    background: none;
+    border: none;
+    color: var(--ed-text-faint);
     cursor: pointer;
-    transition: all 0.3s ease;
+    font-size: 1rem;
+    line-height: 1;
+    float: right;
 
-    &:hover,
-    &.active {
-      .node-circle {
-        filter: drop-shadow(0 0 15px currentColor);
-        stroke-width: 4;
-      }
-
-      .node-text {
-        font-weight: 700;
-      }
-    }
-
-    &.node-responsive .node-circle {
-      fill: #4CAF50;
-      stroke: #66BB6A;
-    }
-
-    &.node-resilient .node-circle {
-      fill: #2196F3;
-      stroke: #42A5F5;
-    }
-
-    &.node-elastic .node-circle {
-      fill: #FF9800;
-      stroke: #FFA726;
-    }
-
-    &.node-message .node-circle {
-      fill: #9C27B0;
-      stroke: #AB47BC;
-    }
+    &:hover { color: var(--ed-text); }
   }
 
-  .node-circle {
-    stroke-width: 3;
-    transition: all 0.3s ease;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-  }
-
-  .node-icon {
-    font-size: $font-size-xl;
-    text-anchor: middle;
-    alignment-baseline: middle;
-    user-select: none;
-  }
-
-  .node-text {
-    fill: white;
-    font-size: $font-size-body-sm;
-    font-weight: 600;
-    text-anchor: middle;
-    user-select: none;
-    transition: all 0.3s ease;
-  }
-}
-
-.graph-info {
-  background: rgba(var(--accent-color-rgb), 0.1);
-  border-left: 4px solid var(--accent-color);
-  padding: 16px 20px;
-  border-radius: 8px;
-  color: white;
-  font-size: $font-size-body-sm;
-  line-height: 1.6;
-  min-height: 60px;
-  transition: all 0.3s ease;
-
-  p {
-    margin: 0;
-  }
-
-  strong {
-    color: var(--accent-color);
-    display: block;
-    margin-bottom: $spacing-2;
-    font-size: $font-size-base;
-  }
-}
-
-// Responsive
-@media (max-width: 768px) {
-  .graph-popup-content {
-    padding: 24px;
-    width: 95%;
-  }
-
-  .graph-popup-title {
-    font-size: $font-size-xl;
-  }
-
-  .graph-popup-subtitle {
-    font-size: $font-size-body-sm;
-  }
-
-  #graphSvg {
-    height: 300px;
-  }
-
-  .graph-icon-trigger {
-    width: 28px;
-    height: 28px;
-    margin-left: 8px;
-
-    svg {
-      width: 18px;
-      height: 18px;
-    }
+  &__body {
+    font-size: 0.8rem;
+    color: var(--ed-text-dim);
+    line-height: 1.6;
   }
 }

@@ -1,232 +1,109 @@
 // ============================================
-// Base - Reset y Estilos Fundamentales
+// Base — Reset + variables CSS + body
 // ============================================
 
-*,
-*::before,
-*::after {
+*, *::before, *::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
-html {
-  // Tamaño base fluido: 14px en móvil → 16px en desktop (proporcional)
-  font-size: clamp(14px, calc(13.2px + 0.2vw), 16px);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+:root {
+  --ed-bg:            #{$ed-bg};
+  --ed-bg2:           #{$ed-bg2};
+  --ed-bg3:           #{$ed-bg3};
+  --ed-text:          #{$ed-text};
+  --ed-text-dim:      #{$ed-text-dim};
+  --ed-text-faint:    #{$ed-text-faint};
+  --ed-accent:        #{$ed-accent};
+  --ed-border:        #{$ed-border};
+  --ed-border-strong: #{$ed-border-strong};
+
+  --font-display: #{inspect($font-display)};
+  --font-body:    #{inspect($font-body)};
+  --font-mono:    #{inspect($font-mono)};
+}
+
+// Tema negro (modo oscuro editorial)
+[data-theme="negro"] {
+  --ed-bg:            #09090f;
+  --ed-bg2:           #0f0f1a;
+  --ed-bg3:           #141420;
+  --ed-text:          #f2edd6;
+  --ed-text-dim:      #a09880;
+  --ed-text-faint:    #5a5448;
+  --ed-accent:        #d4ff00;
+  --ed-border:        rgba(242, 237, 214, 0.08);
+  --ed-border-strong: rgba(242, 237, 214, 0.15);
+}
+
+// Tema azul
+[data-theme="azul"] {
+  --ed-bg:            #070d1a;
+  --ed-bg2:           #0b1224;
+  --ed-bg3:           #101830;
+  --ed-text:          #e8f0f8;
+  --ed-text-dim:      #8095b0;
+  --ed-text-faint:    #3a4a60;
+  --ed-accent:        #7ec8e3;
+  --ed-border:        rgba(232, 240, 248, 0.08);
+  --ed-border-strong: rgba(232, 240, 248, 0.15);
+}
+
+// Alias: data-theme="crema" sigue funcionando aunque ya es el default
+[data-theme="crema"] {
+  --ed-bg:            #f5f0e8;
+  --ed-bg2:           #ede8de;
+  --ed-bg3:           #e0dbd0;
+  --ed-text:          #1a1612;
+  --ed-text-dim:      #6a6058;
+  --ed-text-faint:    #a09888;
+  --ed-accent:        #c1440e;
+  --ed-border:        rgba(26, 22, 18, 0.10);
+  --ed-border-strong: rgba(26, 22, 18, 0.18);
+}
+
+html, body {
+  height: 100%;
 }
 
 body {
-  font-family: $font-family-base;
-  font-size: $font-size-base;
-  font-weight: $font-weight-normal;
-  line-height: $line-height-normal;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-  transition: background-color $transition-slow $easing-smooth,
-              color $transition-slow $easing-smooth;
-  min-height: 100vh;
+  background: var(--ed-bg);
+  color: var(--ed-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-// Scrollbar Styling (Webkit)
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+// Scrollbar fina
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--ed-border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ed-text-faint); }
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: $border-radius-full;
-  
-  &:hover {
-    background: var(--accent-color);
-  }
-}
-
-// Selection
-::selection {
-  background: var(--accent-color);
-  color: white;
-}
-
-::-moz-selection {
-  background: var(--accent-color);
-  color: white;
-}
-
-// Focus Visible (mejorar accesibilidad)
-*:focus {
-  outline: none;
-}
-
-*:focus-visible {
-  outline: 2px solid var(--accent-color);
-  outline-offset: 2px;
-  border-radius: $border-radius-sm;
-}
-
-// Images y Media
-img,
-picture,
-video,
-canvas,
-svg {
+img, svg {
   display: block;
   max-width: 100%;
-  height: auto;
 }
 
-// Forms
-input,
-button,
-textarea,
-select {
-  font: inherit;
-}
-
-// Prevent font size adjustment
-input,
-textarea,
-button,
-select,
-a {
-  -webkit-tap-highlight-color: transparent;
-}
-
-// Tables
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
-  width: 100%;
-}
-
-// Remove button default styles
 button {
-  background: none;
-  border: none;
+  font-family: inherit;
   cursor: pointer;
+}
+
+input, textarea, select {
   font-family: inherit;
 }
 
-// Lists
-ul,
-ol {
-  list-style: none;
-}
-
-// Headings - Se sobrescriben en typography.scss
-h1, h2, h3, h4, h5, h6 {
-  font-weight: $font-weight-bold;
-  line-height: $line-height-tight;
-  color: var(--text-primary);
-}
-
-// Links - Se sobrescriben en typography.scss
-a {
-  color: var(--accent-color);
-  text-decoration: none;
-  transition: color $transition-fast $easing-smooth;
-  
-  &:hover {
-    color: var(--responsive-primary);
-  }
-}
-
-// Sections
-section {
-  padding: $spacing-20 0;
-  
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-12 0;
-  }
-}
-
-// Utility: Skip to content (accesibilidad)
-.skip-to-content {
-  position: absolute;
-  top: -100px;
-  left: 0;
-  background: var(--accent-color);
-  color: white;
-  padding: $spacing-2 $spacing-4;
-  text-decoration: none;
-  border-radius: $border-radius-md;
-  z-index: 9999;
-  
-  &:focus {
-    top: $spacing-2;
-    left: $spacing-2;
-  }
-}
-
-// Reduced Motion (accesibilidad)
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-// Global Loading State
-body.loading {
-  overflow: hidden;
-  
-  &::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--bg-primary);
-    z-index: 9999;
-    opacity: 0.9;
-  }
-}
-
-// Print Styles
-@media print {
-  *,
-  *::before,
-  *::after {
-    background: transparent !important;
-    color: #000 !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-  }
-  
-  a,
-  a:visited {
-    text-decoration: underline;
-  }
-  
-  a[href]::after {
-    content: " (" attr(href) ")";
-  }
-  
-  img {
-    page-break-inside: avoid;
-  }
-  
-  p,
-  h2,
-  h3 {
-    orphans: 3;
-    widows: 3;
-  }
-  
-  h2,
-  h3 {
-    page-break-after: avoid;
-  }
+// Selección de texto
+::selection {
+  background: var(--ed-accent);
+  color: var(--ed-bg);
 }
