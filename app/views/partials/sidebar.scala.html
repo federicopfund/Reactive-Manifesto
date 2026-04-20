@@ -1,0 +1,118 @@
+@()(implicit request: RequestHeader)
+
+@* ============================================
+ * Sidebar editorial — navegación lateral
+ * Se incluye en main.scala.html como navbar principal
+ * ============================================ *@
+
+@isActive(prefix: String) = @{
+  val p = request.path
+  if (prefix == "/") p == "/"
+  else p == prefix || p.startsWith(prefix + "/")
+}
+
+@userId   = @{ request.session.get("userId") }
+@userName = @{ request.session.get("userName").getOrElse("Invitado") }
+@userRole = @{ request.session.get("userRole").getOrElse("guest") }
+@initials = @{
+  val parts = userName.split("\\s+").filter(_.nonEmpty)
+  (if (parts.length >= 2) parts(0).take(1) + parts(1).take(1) else userName.take(2)).toUpperCase
+}
+@roleLabel = @{
+  userRole match {
+    case "super_admin"    => "Super Admin"
+    case "admin"          => "Admin"
+    case "pending_admin"  => "Admin Pendiente"
+    case "user"           => "Autor"
+    case _                => "Lector"
+  }
+}
+
+<aside class="ed-sidebar">
+  <div class="ed-sidebar-brand">
+    <a href="@routes.HomeController.index()">
+      <span class="ed-brand-label">Edición Digital</span>
+      <div class="ed-brand-name">Manifiesto<br/>Reactivo</div>
+    </a>
+  </div>
+
+  <nav class="ed-sidebar-nav">
+    <div class="ed-nav-section">
+      <span class="ed-nav-section-label">Explorar</span>
+      <a href="@routes.HomeController.index()"
+         class="ed-nav-item @if(isActive("/")) {active}">
+        <span class="ed-nav-dot"></span>Portada
+      </a>
+      <a href="@routes.HomeController.publicaciones()"
+         class="ed-nav-item @if(isActive("/publicaciones")) {active}">
+        <span class="ed-nav-dot"></span>Artículos
+      </a>
+      <a href="@routes.HomeController.portafolio()"
+         class="ed-nav-item @if(isActive("/portafolio")) {active}">
+        <span class="ed-nav-dot"></span>Colecciones
+      </a>
+      <a href="@routes.HomeController.index()#contact"
+         class="ed-nav-item">
+        <span class="ed-nav-dot"></span>Contacto
+      </a>
+    </div>
+
+    @if(userId.isDefined) {
+      <div class="ed-nav-section">
+        <span class="ed-nav-section-label">Mi espacio</span>
+        <a href="@routes.UserPublicationController.dashboard()"
+           class="ed-nav-item @if(isActive("/user/dashboard") || isActive("/user/publications")) {active}">
+          <span class="ed-nav-dot"></span>Mis propuestas
+        </a>
+        <a href="@routes.UserPublicationController.editProfileForm()"
+           class="ed-nav-item @if(isActive("/user/profile")) {active}">
+          <span class="ed-nav-dot"></span>Mi perfil
+        </a>
+        <a href="@routes.UserPublicationController.inbox()"
+           class="ed-nav-item @if(isActive("/user/messages")) {active}">
+          <span class="ed-nav-dot"></span>Mensajes
+        </a>
+        <a href="@routes.UserPublicationController.notifications()"
+           class="ed-nav-item @if(isActive("/user/notifications")) {active}">
+          <span class="ed-nav-dot"></span>Notificaciones
+        </a>
+        <a href="@routes.UserPublicationController.bookmarks()"
+           class="ed-nav-item @if(isActive("/user/bookmarks")) {active}">
+          <span class="ed-nav-dot"></span>Guardados
+        </a>
+      </div>
+
+      @if(userRole == "admin" || userRole == "super_admin") {
+        <div class="ed-nav-section">
+          <span class="ed-nav-section-label">Administración</span>
+          <a href="@routes.AdminController.dashboard()"
+             class="ed-nav-item @if(isActive("/admin")) {active}">
+            <span class="ed-nav-dot"></span>Panel Admin
+          </a>
+        </div>
+      }
+    }
+  </nav>
+
+  <div class="ed-sidebar-auth">
+    @if(userId.isDefined) {
+      <div class="ed-user-block">
+        <span class="ed-user-avatar">@initials</span>
+        <div class="ed-user-info">
+          <div class="ed-user-name">@userName</div>
+          <div class="ed-user-role">@roleLabel</div>
+        </div>
+        <a href="@routes.AuthController.logout()" class="ed-user-logout" title="Cerrar sesión">↪</a>
+      </div>
+    } else {
+      <div class="ed-auth-cta">
+        <a href="@routes.AuthController.loginPage()" class="ed-btn-login">Iniciar sesión</a>
+        <a href="@routes.AuthController.registerPage()" class="ed-btn-register">Registrarse</a>
+      </div>
+    }
+  </div>
+
+  <div class="ed-sidebar-footer">
+    Año Cero · <span>2025</span>
+  </div>
+</aside>
