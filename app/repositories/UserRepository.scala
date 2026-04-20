@@ -62,6 +62,20 @@ class UserRepository @Inject()(
   }
 
   /**
+   * Busca usuarios por lote de emails (case-insensitive).
+   * Usado por el broadcaster de newsletter para resolver qué suscriptores
+   * son usuarios registrados y por lo tanto pueden recibir una
+   * notificación in-app además del email externo.
+   */
+  def findByEmails(emails: Seq[String]): Future[List[User]] = {
+    if (emails.isEmpty) Future.successful(Nil)
+    else {
+      val normalized = emails.map(_.trim.toLowerCase).distinct
+      db.run(users.filter(u => u.email.inSet(normalized) && u.isActive).result).map(_.toList)
+    }
+  }
+
+  /**
    * Crea un nuevo usuario
    */
   def create(user: User): Future[User] = {
@@ -189,20 +203,45 @@ class UserRepository @Inject()(
     db.run(users.filter(u => u.role === "pending_admin" && u.isActive).sortBy(_.adminRequestedAt.desc).result)
 
   /**
-   * Lista todos los administradores aprobados (admin + super_admin)
+   * Lista todos los administradores aprobados (cualquier rol del backoffice).
+   * Se basa en la lista declarada en `utils.RolePolicy.backofficeRoleKeys`
+   * para mantener una única fuente de verdad.
    */
-  def findApprovedAdmins(): Future[Seq[User]] =
-    db.run(users.filter(u => (u.role === "admin" || u.role === "super_admin") && u.isActive).sortBy(_.createdAt.desc).result)
+  def findApprovedAdmins(): Future[Seq[User]] = {
+    val staffRoles = utils.RolePolicy.backofficeRoleKeys
+    db.run(users.filter(u => u.role.inSet(staffRoles) && u.isActive).sortBy(_.createdAt.desc).result)
+  }
 
   /**
-   * Aprueba un admin pendiente — cambia role de pending_admin a admin
+   * Aprueba un admin pendiente asignándole un rol concreto.
+   * Roles permitidos: cualquiera declarado en `utils.RolePolicy.assignableRoles`.
    */
-  def approveAdmin(userId: Long, approvedBy: Long): Future[Int] =
+  def approveAdmin(userId: Long, approvedBy: Long, role: String = "editor_jefe"): Future[Int] = {
+    val safeRole = utils.RolePolicy.assignableRoles.find(_.key == role)
+      .map(_.key)
+      .getOrElse("editor_jefe")
     db.run(
       users.filter(u => u.id === userId && u.role === "pending_admin")
         .map(u => (u.role, u.adminApproved, u.adminApprovedBy))
-        .update(("admin", true, Some(approvedBy)))
+        .update((safeRole, true, Some(approvedBy)))
     )
+  }
+
+  /**
+   * Cambia el rol de un administrador YA aprobado a otro rol del backoffice.
+   * Solo se permite mover entre roles de `assignableRoles`.
+   */
+  def changeAdminRole(userId: Long, newRole: String): Future[Int] = {
+    val safeRole = utils.RolePolicy.assignableRoles.find(_.key == newRole)
+      .map(_.key)
+      .getOrElse(throw new IllegalArgumentException(s"Rol inválido: $newRole"))
+    val staffRoles = utils.RolePolicy.backofficeRoleKeys
+    db.run(
+      users.filter(u => u.id === userId && u.role.inSet(staffRoles))
+        .map(_.role)
+        .update(safeRole)
+    )
+  }
 
   /**
    * Rechaza un admin pendiente — vuelve a role user
@@ -215,14 +254,18 @@ class UserRepository @Inject()(
     )
 
   /**
-   * Revoca permisos de admin — vuelve a role user
+   * Revoca permisos de admin (cualquier rol del backoffice salvo super_admin)
+   * y devuelve al usuario al rol "user".
+   * Por seguridad, NO permite degradar a un super_admin desde aquí.
    */
-  def revokeAdmin(userId: Long): Future[Int] =
+  def revokeAdmin(userId: Long): Future[Int] = {
+    val revokableRoles = utils.RolePolicy.backofficeRoleKeys - "super_admin"
     db.run(
-      users.filter(u => u.id === userId && u.role === "admin")
+      users.filter(u => u.id === userId && u.role.inSet(revokableRoles))
         .map(u => (u.role, u.adminApproved, u.adminApprovedBy))
         .update(("user", false, None))
     )
+  }
 
   /**
    * Actualiza el rol de un usuario

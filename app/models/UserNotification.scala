@@ -16,12 +16,19 @@ object NotificationType extends Enumeration {
   val PublicationApproved   = Value("publication_approved")
   val PublicationRejected   = Value("publication_rejected")
   val PrivateMessage        = Value("private_message")
+  val AdminRoleAssigned     = Value("admin_role_assigned")
+  val AdminRoleRejected     = Value("admin_role_rejected")
+  val AdminRoleRevoked      = Value("admin_role_revoked")
 
   def icon(nt: String): String = nt match {
     case "feedback_sent"          => "💬"
     case "publication_approved"   => "✅"
     case "publication_rejected"   => "❌"
     case "private_message"        => "✉️"
+    case "admin_role_assigned"    => "🔑"
+    case "admin_role_rejected"    => "⛔"
+    case "admin_role_revoked"     => "🚫"
+    case "community_publication"  => "📰"
     case _                        => "🔔"
   }
 }

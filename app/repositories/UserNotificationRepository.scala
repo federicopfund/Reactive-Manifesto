@@ -41,12 +41,53 @@ class UserNotificationRepository @Inject()(
     db.run(q += notification)
   }
 
+  /**
+   * Emitir una misma notificación a un lote de usuarios en un solo INSERT.
+   * Usado por el broadcaster de newsletter cuando una pieza entra a
+   * `published` y todos los suscriptores registrados reciben aviso.
+   */
+  def createBroadcast(
+    userIds: Seq[Long],
+    notificationType: String,
+    title: String,
+    message: String,
+    publicationId: Option[Long] = None
+  ): Future[Int] = {
+    if (userIds.isEmpty) Future.successful(0)
+    else {
+      val now = Instant.now()
+      val rows = userIds.map { uid =>
+        UserNotification(
+          userId           = uid,
+          notificationType = notificationType,
+          title            = title,
+          message          = message,
+          publicationId    = publicationId,
+          createdAt        = now
+        )
+      }
+      db.run(notifications ++= rows).map(_.getOrElse(0))
+    }
+  }
+
   /** Obtener notificaciones de un usuario (más recientes primero) */
   def findByUserId(userId: Long, limit: Int = 30): Future[List[UserNotification]] = {
     val q = notifications
       .filter(_.userId === userId)
       .sortBy(_.createdAt.desc)
       .take(limit)
+    db.run(q.result).map(_.toList)
+  }
+
+  /**
+   * Notificaciones asociadas a una publicación de un usuario,
+   * ordenadas cronológicamente (más viejas primero) — base del hilo
+   * de trazabilidad mostrado al autor.
+   */
+  def findByPublicationForUser(userId: Long, publicationId: Long): Future[List[UserNotification]] = {
+    val q = notifications
+      .filter(n => n.userId === userId && n.publicationId === publicationId)
+      .sortBy(_.createdAt.asc)
     db.run(q.result).map(_.toList)
   }
 

@@ -81,4 +81,12 @@ class NewsletterRepository @Inject()(
     val normalizedEmail = email.trim.toLowerCase
     db.run(subscribers.filter(s => s.email === normalizedEmail && s.isActive).exists.result)
   }
+
+  /**
+   * Lista de emails activos — usada por el broadcaster cuando una pieza
+   * entra a la etapa `published` para difundir a la comunidad suscrita.
+   */
+  def findActiveEmails(): Future[List[String]] = {
+    db.run(subscribers.filter(_.isActive).map(_.email).result).map(_.toList)
+  }
 }
