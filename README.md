@@ -170,7 +170,138 @@ graph TB
 
 ---
 
-## 📰 Pipeline Editorial (9 etapas)
+## � Documentación formal — Diagrama de Secuencia UML
+
+Especificación normativa de la interacción entre agentes durante el caso de uso crítico **«Crear publicación»**, donde el `PipelineEngine` actúa como **Saga Orchestrator** coordinando los 9 agentes del sistema reactivo.
+
+### Convenciones del diagrama
+
+| Notación | Semántica |
+|----------|-----------|
+| `->>` | Mensaje **síncrono lógico** (`Ask` pattern, con `replyTo` y timeout) |
+| `-->>` | Mensaje **fire-and-forget** (`Tell` pattern, no espera respuesta) |
+| `-)`   | Mensaje **asíncrono paralelo** (efectos colaterales del Saga) |
+| `--)`  | Notificación **externa** (email saliente vía SMTP) |
+| `alt / else` | Bifurcación lógica del Saga (resultado de moderación) |
+| `par / and` | Ejecución **concurrente** de side-effects (no-bloqueante) |
+| `opt` | Rama opcional condicional |
+| `Note over` | Invariante, etapa del Saga o restricción de dominio |
+
+### Caso de uso: `ProcessNewPublication`
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as 👤 Autor
+    participant C as UserPublicationController
+    participant A as ReactivePipelineAdapter
+    participant P as PipelineEngine<br/>«Saga Orchestrator»
+    participant EB as EventBusEngine<br/>«Pub/Sub»
+    participant M as ModerationEngine
+    participant PE as PublicationEngine
+    participant N as NotificationEngine<br/>«⚡ Circuit Breaker»
+    participant G as GamificationEngine
+    participant AN as AnalyticsEngine
+    participant DB as 🗄️ PostgreSQL
+
+    U->>+C: POST /user/publications/create
+    C->>+A: submitPublication(payload)
+    A->>+P: ProcessNewPublication(replyTo)
+    Note over P: Stage 1/4 — RECEIVE<br/>genera correlationId
+
+    par Eventos no-bloqueantes (Tell)
+        P-->>EB: PublishEvent(PublicationSubmittedEvent)
+        EB-->>AN: publication.submitted
+    and Telemetría
+        P-->>AN: TrackEvent("pipeline.started")
+    end
+
+    P->>+M: ModerateContent (Ask, timeout 5s)
+    Note over M: Análisis automático<br/>(reglas + score)
+    M-->>-P: ModerationResult(verdict, score, flags)
+
+    alt verdict == "auto_rejected" — Compensación
+        Note over P: Stage 2/4 — REJECT
+        P-->>EB: ContentModeratedEvent(rejected)
+        P-->>N: SendNotification("moderation_rejected")
+        N->>DB: INSERT user_notifications
+        N--)U: 📧 Email (vía Circuit Breaker)
+        P-->>AN: TrackEvent("pipeline.rejected")
+        P-->>A: PipelineRejected(reason, flags)
+        A-->>C: Future[Rejected]
+        C-->>U: 422 + flash "Contenido rechazado"
+
+    else verdict == "approved"
+        Note over P: Stage 3/4 — CREATE
+        P->>+PE: CreatePublication (Ask, timeout 10s)
+        PE->>DB: INSERT publications + revisions
+        PE->>DB: INSERT publication_stage_history(draft)
+        Note right of DB: trigger trg_close_previous_stage<br/>cierra etapa anterior
+        PE-->>-P: PublicationCreatedOk(publicationId)
+
+        Note over P: Stage 4/4 — SIDE EFFECTS (paralelo, fire-and-forget)
+        par Notificación al autor
+            P-)N: SendNotification("publication_created")
+            N->>DB: INSERT user_notifications
+        and Gamificación
+            P-)G: CheckBadges(triggerType="publication")
+            G->>DB: SELECT/INSERT user_badges
+            opt Nuevo badge desbloqueado
+                G-)N: SendNotification("badge_unlocked")
+            end
+        and Analítica
+            P-)AN: TrackEvent("pipeline.completed", elapsedMs)
+        and Domain Event
+            P-)EB: PublishEvent(PipelineCompletedEvent)
+            EB-)AN: pipeline.completed
+        end
+
+        P-->>-A: PipelineSuccess(publicationId, elapsedMs)
+        A-->>-C: Future[Success]
+        C-->>-U: 303 redirect → /user/publications/:id
+
+    else Falla técnica (timeout / DB error)
+        Note over P: Compensación parcial
+        P-->>AN: TrackEvent("pipeline.error", stage)
+        P-->>A: PipelineError(reason, stage, correlationId)
+        A-->>C: Future.failed
+        C-->>U: 500 errors/serverError
+    end
+```
+
+### Trazabilidad de mensajes
+
+| # | Mensaje | Tipo | Origen → Destino | Garantía |
+|---|---------|------|------------------|----------|
+| 3 | `ProcessNewPublication` | Ask | Adapter → Pipeline | At-most-once, timeout 30s |
+| 7 | `ModerateContent` | Ask | Pipeline → Moderation | At-most-once, timeout 5s |
+| 8 | `ModerationResult` | Reply | Moderation → Pipeline | Vía `messageAdapter` (tipado) |
+| — | `PublishEvent(*)` | Tell | Pipeline → EventBus | At-most-once, fan-out Pub/Sub |
+| — | `CreatePublication` | Ask | Pipeline → Publication | At-most-once, timeout 10s |
+| — | `SendNotification` | Tell | Pipeline → Notification | At-most-once + Circuit Breaker |
+| — | `CheckBadges` | Tell | Pipeline → Gamification | At-most-once, fire-and-forget |
+| — | `TrackEvent` | Tell | Pipeline → Analytics | At-most-once, en-memoria |
+
+### Garantías reactivas verificadas en el flujo
+
+| Principio | Evidencia en el diagrama |
+|-----------|--------------------------|
+| **Responsive** | Todo `Ask` lleva timeout explícito; `replyTo` resuelve el `Future` del controller sin bloquear hilos |
+| **Resilient** | Compensación en rama `auto_rejected`; `NotificationEngine` aislado por Circuit Breaker; falla en gamificación/analytics no aborta el Saga |
+| **Elastic** | Bloque `par` ejecuta side-effects concurrentes; cada `correlationId` permite N pipelines simultáneos sin estado compartido |
+| **Message-Driven** | Toda interacción es un `Command`/`Event` tipado; cero llamadas síncronas entre agentes |
+
+### Invariantes del Saga
+
+1. **Atomicidad lógica**: si `verdict == auto_rejected`, **no** se persiste `publications` (compensación preventiva).
+2. **Trazabilidad**: el `correlationId` (8 chars, generado en Stage 1) viaja en *todos* los eventos, notificaciones y métricas asociadas.
+3. **Idempotencia del trigger**: `trg_close_previous_stage` garantiza `exited_at IS NULL` único por publicación incluso bajo concurrencia.
+4. **Ordenamiento causal**: `PublicationCreatedOk` siempre **precede** a los side-effects de Stage 4 (garantizado por el `messageAdapter` y el modelo de actores).
+5. **No back-pressure perdida**: las respuestas `PipelineSuccess | PipelineRejected | PipelineError` son **mutuamente excluyentes** y exhaustivas (`sealed trait PipelineResponse`).
+
+---
+
+## �📰 Pipeline Editorial (9 etapas)
 
 Cada publicación recorre un workflow gobernado por la tabla `editorial_stages` y un **trigger de PostgreSQL** que mantiene la invariante `exited_at IS NULL` por publicación.
 
@@ -232,103 +363,6 @@ La sidebar (`adminLayout` → `sidebar.scala.html`) se renderiza dinámicamente 
 
 - **Mensajería privada** entre usuarios y entre usuarios ↔ admins. Vistas con composer y estado vacío amigable. Tema dual cream/admin-dark.
 - **Newsletter** con suscripción/baja desde el dashboard del usuario; broadcast automático cuando una publicación llega a `published`. Panel admin con KPIs, filtro por email e IP de registro.
-
----
-
-## 🖼️ Arquitectura de Vistas (Twirl)
-
-38 plantillas `.scala.html` distribuidas en 7 grupos funcionales y 3 layouts:
-
-```mermaid
-flowchart TB
-    subgraph Layouts["Layouts (chrome)"]
-        MAIN["main.scala.html<br/>tema cream"]
-        ADMINL["adminLayout.scala.html<br/>tema admin-dark"]
-        USERL["userLayout.scala.html<br/>reservado"]
-    end
-
-    subgraph Partials["Partials reutilizables"]
-        SIDE["sidebar.scala.html<br/>RBAC dinámico"]
-        PIPE["_publicationPipeline.scala.html<br/>widget 9 etapas"]
-    end
-
-    subgraph Public["Público"]
-        IDX[index]
-        PUBS[publicaciones]
-        PORT[portafolio]
-        ART[editorialArticleView]
-        LEG[legalDocument]
-    end
-
-    subgraph Auth["Autenticación"]
-        LOG[login]
-        REG[register]
-        VER[verifyEmail]
-        UDB[userDashboard]
-        UPR[userProfile]
-    end
-
-    subgraph UserSpace["Espacio de autor"]
-        UDASH[dashboard]
-        UEDIT[editProfile]
-        UPUB[publicProfile]
-        UBM[bookmarks]
-        UNOT[notifications]
-        UINB[inbox]
-        UMSG[viewMessage]
-        UPF[publicationForm]
-        UPP[publicationPreview]
-        UHIST[publicationHistory]
-    end
-
-    subgraph Backoffice["Backoffice"]
-        ADASH[dashboard]
-        APUBLIST[publicationsList]
-        APUBDET[publicationDetail]
-        APUBREV[publicationReview]
-        ASTATS[statistics]
-        ANEWS[newsletterSubscribers]
-        ACONT[contactForm]
-        ACDET[contactDetail]
-        ACEDIT[contactEdit]
-        AADM[adminManagement]
-    end
-
-    subgraph Errors["Errores"]
-        E404[notFound]
-        E500[serverError]
-    end
-
-    MAIN --> Public
-    MAIN --> Auth
-    MAIN --> UserSpace
-    MAIN --> Errors
-    ADMINL --> Backoffice
-    USERL -. "reservado" .- UDASH
-
-    SIDE --> MAIN
-    SIDE --> ADMINL
-    UHIST --> PIPE
-    APUBDET --> PIPE
-    APUBREV --> PIPE
-    APUBLIST --> PIPE
-
-    classDef layout fill:#1a365d,stroke:#63b3ed,color:#fff
-    classDef partial fill:#553c9a,stroke:#b794f4,color:#fff
-    classDef pub fill:#276749,stroke:#68d391,color:#fff
-    classDef auth fill:#9c4221,stroke:#f6ad55,color:#fff
-    classDef user fill:#2c5282,stroke:#90cdf4,color:#fff
-    classDef admin fill:#9b2c2c,stroke:#fc8181,color:#fff
-    classDef err fill:#4a5568,stroke:#a0aec0,color:#fff
-
-    class MAIN,ADMINL,USERL layout
-    class SIDE,PIPE partial
-    class IDX,PUBS,PORT,ART,LEG pub
-    class LOG,REG,VER,UDB,UPR auth
-    class UDASH,UEDIT,UPUB,UBM,UNOT,UINB,UMSG,UPF,UPP,UHIST user
-    class ADASH,APUBLIST,APUBDET,APUBREV,ASTATS,ANEWS,ACONT,ACDET,ACEDIT,AADM admin
-    class E404,E500 err
-```
 
 ### Sistema de estilos (BEM)
 
