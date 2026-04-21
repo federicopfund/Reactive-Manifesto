@@ -107,11 +107,16 @@ class Module extends AbstractModule {
   //  LAYER 3 — INFRASTRUCTURE AGENTS (orquestación inter-agente)
   // ══════════════════════════════════════════════════════════════
 
-  // ── EventBusEngine: Pub/Sub + DeathWatch ──
+  // ── EventBusEngine: Pub/Sub distribuido (Issue #14 — Akka Cluster) ──
+  // Carga la configuración `eventbus-cluster` definida en application.conf,
+  // de modo que SOLO este ActorSystem use provider=cluster + DistributedPubSub.
   @Provides
   @Singleton
-  def provideEventBusActorSystem()(implicit ec: ExecutionContext): ActorSystem[EventBusCommand] =
-    ActorSystem(EventBusEngine(), "eventbus-core")
+  def provideEventBusActorSystem()(implicit ec: ExecutionContext): ActorSystem[EventBusCommand] = {
+    val rootConfig    = com.typesafe.config.ConfigFactory.load()
+    val clusterConfig = rootConfig.getConfig("eventbus-cluster").withFallback(rootConfig)
+    ActorSystem(EventBusEngine(), "eventbus-core", clusterConfig)
+  }
 
   @Provides
   @Singleton

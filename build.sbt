@@ -20,6 +20,11 @@ libraryDependencies ++= Seq(
   // Reactive Manifesto - Core message-driven
   "com.typesafe.akka" %% "akka-actor-typed" % "2.8.5",
 
+  // Reactive Manifesto - Distribución (Issue #14: EventBus → DistributedPubSub)
+  "com.typesafe.akka" %% "akka-cluster-typed"          % "2.8.5",
+  "com.typesafe.akka" %% "akka-cluster-tools"          % "2.8.5",
+  "com.typesafe.akka" %% "akka-serialization-jackson"  % "2.8.5",
+
   // Database - Slick (Reactive ORM)
   "org.playframework" %% "play-slick" % "6.1.1",
   "org.playframework" %% "play-slick-evolutions" % "6.1.1",
@@ -42,7 +47,8 @@ libraryDependencies ++= Seq(
   "org.commonmark" % "commonmark-ext-autolink" % "0.22.0",
 
   // Testing
-  "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test
+  "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test,
+  "com.typesafe.akka"      %% "akka-actor-testkit-typed" % "2.8.5" % Test
 )
 
 // Seguridad ante conflictos transitivos

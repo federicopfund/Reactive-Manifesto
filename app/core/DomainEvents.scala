@@ -1,5 +1,6 @@
 package core
 
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import java.time.Instant
 
 /**
@@ -17,6 +18,21 @@ import java.time.Instant
  * Patrón: Event-Driven Architecture
  * Principio Reactivo: Message-Driven con desacoplamiento total
  */
+// Issue #14 — anotaciones para que Jackson pueda (de)serializar la jerarquía
+// cuando los eventos viajen entre nodos del cluster vía DistributedPubSub.
+// En modo 1-nodo no se ejercita, pero queda lista para multi-nodo.
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "_type")
+@JsonSubTypes(Array(
+  new JsonSubTypes.Type(value = classOf[PublicationSubmittedEvent],     name = "publication.submitted"),
+  new JsonSubTypes.Type(value = classOf[PublicationApprovedEvent],      name = "publication.approved"),
+  new JsonSubTypes.Type(value = classOf[PublicationRejectedEvent],      name = "publication.rejected"),
+  new JsonSubTypes.Type(value = classOf[ContentModeratedEvent],         name = "content.moderated"),
+  new JsonSubTypes.Type(value = classOf[BadgeEarnedEvent],              name = "badge.earned"),
+  new JsonSubTypes.Type(value = classOf[UserActionEvent],               name = "user.action"),
+  new JsonSubTypes.Type(value = classOf[NotificationDeliveredEvent],    name = "notification.delivered"),
+  new JsonSubTypes.Type(value = classOf[CircuitBreakerStateChangedEvent], name = "system.circuit_breaker"),
+  new JsonSubTypes.Type(value = classOf[PipelineCompletedEvent],        name = "pipeline.completed")
+))
 sealed trait DomainEvent {
   def eventType: String
   def timestamp: Instant
