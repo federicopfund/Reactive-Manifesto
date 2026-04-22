@@ -14,16 +14,12 @@
     border-bottom: 1px solid var(--ed-border);
   }
 
-  .ed-pillars-grid,
-  .ed-articles-grid {
+  .ed-pillars-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .ed-pillar:nth-child(2n),
-  .ed-article-card:nth-child(2n) { border-right: none; }
-  .ed-pillar:nth-child(3n),
-  .ed-article-card:nth-child(3n) { border-right: 1px solid var(--ed-border); }
-  .ed-article-card:nth-child(3n) { border-right: 1px solid var(--ed-border); }
+  .ed-pillar:nth-child(2n) { border-right: none; }
+  .ed-pillar:nth-child(3n) { border-right: 1px solid var(--ed-border); }
 
   .ed-process-stages {
     grid-template-columns: repeat(3, 1fr);
@@ -41,14 +37,15 @@
 }
 
 @include respond-to(md) {
-  .ed-shell,
+  // Issue #17-A: el sidebar deja de ser barra apilada y pasa a drawer
+  // (gestionado por _navbar.scss + sidebar.js). Conservamos overrides para
+  // el admin layout (que aún no migró a drawer) bajo .ed-admin-shell.
   .ed-admin-shell {
     flex-direction: column;
     height: auto;
     overflow: visible;
   }
 
-  .ed-sidebar,
   .ed-admin-sidebar {
     width: 100%;
     border-right: none;
@@ -56,7 +53,6 @@
     padding: 1rem 0;
   }
 
-  .ed-sidebar-nav,
   .ed-admin-nav {
     display: flex;
     flex-wrap: wrap;
@@ -64,16 +60,12 @@
     padding: 0 1rem;
   }
 
-  .ed-nav-section,
   .ed-admin-nav-label {
     width: 100%;
     margin-bottom: 0.5rem;
   }
 
-  .ed-nav-item,
-  .ed-admin-nav-item {
-    width: auto;
-  }
+  .ed-admin-nav-item { width: auto; }
 
   .ed-main,
   .ed-admin-main { height: auto; overflow-y: visible; }

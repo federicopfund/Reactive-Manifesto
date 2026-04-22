@@ -14,6 +14,12 @@
   overflow-y: auto;
   background: var(--ed-bg);
   color: var(--ed-text);
+  // Issue #17-H: scroll suave + offset para sticky headers.
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  // Issue #17-D: container query reference para .ed-hero y similares.
+  container-type: inline-size;
+  container-name: ed-main;
 }
 
 .ed-section {

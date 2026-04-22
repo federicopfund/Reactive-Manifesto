@@ -1,5 +1,6 @@
 // ============================================
 // Navbar — Sidebar editorial (la nav vertical es la nueva navbar)
+// Issue #17-A: variantes rail (desktop colapsado) y drawer (mobile).
 // ============================================
 
 .ed-sidebar {
@@ -11,6 +12,100 @@
   padding: 2rem 0;
   background: var(--ed-bg);
   z-index: 10;
+  transition: width $duration-base $ease-out, left $duration-base $ease-out;
+}
+
+// ── Variantes responsivas: rail (desktop ≥ lg) + drawer (mobile) ──
+@include respond-to(xl) {
+  .ed-sidebar:not(.ed-sidebar--rail) { width: 240px; }
+}
+
+.ed-sidebar--rail {
+  width: 64px;
+  overflow-x: hidden;
+
+  // Oculta todos los bloques con texto largo del rail
+  .ed-brand-label,
+  .ed-brand-name,
+  .ed-nav-section-label,
+  .ed-user-info,
+  .ed-user-name,
+  .ed-user-role,
+  .ed-auth-cta,
+  .ed-sidebar-footer,
+  .ed-theme-toggle { display: none !important; }
+
+  // Truco: los items contienen text-nodes sueltos ("Portada", "Artículos"…),
+  // por eso anulamos su font-size aquí y restauramos tamaños en hijos puntuales.
+  .ed-nav-item {
+    font-size: 0;
+    line-height: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    justify-content: center;
+    padding: 0.6rem 0;
+    gap: 0;
+    .ed-nav-dot { width: 8px; height: 8px; flex-shrink: 0; }
+  }
+
+  .ed-sidebar-brand { padding: 0 0 1rem; text-align: center; border-bottom: 1px solid var(--color-border-subtle); }
+  .ed-nav-section { padding: 0 0.5rem; }
+  .ed-sidebar-auth { padding: 0.5rem; text-align: center; }
+
+  // Botón "expandir": invertimos el chevron cuando está colapsado.
+  .ed-sidebar__rail-toggle svg { transform: rotate(180deg); }
+}
+
+// ── Drawer mobile (controlado por sidebar.js + .is-open) ──
+@media (max-width: $bp-md) {
+  .ed-sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    height: 100vh;
+    width: 280px;
+    z-index: 100;
+    overflow-y: auto;
+    box-shadow: $shadow-lg;
+
+    &.is-open { left: 0; }
+  }
+}
+
+.ed-drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+
+  &.is-visible { display: block; }
+}
+
+.ed-no-scroll { overflow: hidden; }
+
+// ── Botón de toggle del rail (oculto en mobile) ──
+// Reubicado debajo del brand mediante `order` (sidebar es flex column).
+.ed-sidebar__rail-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  order: 2; // brand=auto(1), toggle=2, nav=3, etc.
+  margin: 0 auto $space-4;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: $radius-md;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+
+  @include focus-ring(2px);
+  &:hover { color: var(--color-text-primary); background: var(--color-surface-sunken); }
+  svg { width: 14px; height: 14px; }
+
+  @media (min-width: $bp-md) { display: inline-flex; }
 }
 
 .ed-sidebar-brand {

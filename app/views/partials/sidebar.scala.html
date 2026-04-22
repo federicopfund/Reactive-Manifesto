@@ -32,7 +32,16 @@
   }
 }
 
-<aside class="ed-sidebar" aria-label="Navegación principal">
+<aside id="ed-sidebar" class="ed-sidebar" aria-label="Navegación principal">
+  <button type="button"
+          class="ed-sidebar__rail-toggle"
+          data-action="toggle-rail"
+          aria-label="Colapsar/expandir navegación">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  </button>
+
   <div class="ed-sidebar-brand">
     <a href="@routes.HomeController.index()">
       <span class="ed-brand-label">Edición Digital</span>
@@ -59,7 +68,7 @@
         <span class="ed-nav-dot" aria-hidden="true"></span>Colecciones
       </a>
       <a href="@routes.HomeController.index()#contact"
-         class="ed-nav-item">
+         class="ed-nav-item ed-nav-item--anchor">
         <span class="ed-nav-dot" aria-hidden="true"></span>Contacto
       </a>
     </div>

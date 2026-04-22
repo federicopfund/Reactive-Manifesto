@@ -19,31 +19,35 @@
   @request.flash.get("success").map { msg => <div class="ed-section"><div class="ed-flash ed-flash--success">@msg</div></div> }
   @request.flash.get("error").map   { msg => <div class="ed-section"><div class="ed-flash ed-flash--error">@msg</div></div> }
 
-  <header class="ed-pub-header">
-    <div>
-      <div class="ed-pub-count">@totalCount publicaciones · Edición Nº 01</div>
-      <h1 class="ed-pub-title">Artículos <em>de la edición</em></h1>
-    </div>
-    <form action="@routes.HomeController.searchPublicaciones()" method="GET" class="ed-search-wrap">
-      <span class="ed-search-icon">⌕</span>
-      <input type="text" name="q" value="@searchQuery" placeholder="Buscar por título, contenido o tags…" autocomplete="off">
-      @if(searchCategory.isDefined && searchCategory.exists(_.nonEmpty)) {
-        <input type="hidden" name="category" value="@searchCategory.get">
-      }
-      @if(searchQuery.nonEmpty) {
-        <a href="@routes.HomeController.publicaciones()" class="ed-search-clear" title="Limpiar">×</a>
-      }
-    </form>
-  </header>
+  <div class="ed-pub-toolbar">
+    <header class="ed-pub-header">
+      <div>
+        <div class="ed-pub-count">@totalCount publicaciones · Edición Nº 01</div>
+        <h1 class="ed-pub-title">Artículos <em>de la edición</em></h1>
+      </div>
+      <form action="@routes.HomeController.searchPublicaciones()" method="GET" class="ed-search-wrap">
+        <span class="ed-search-icon">⌕</span>
+        <input type="text" name="q" value="@searchQuery" placeholder="Buscar por título, contenido o tags…" autocomplete="off">
+        @if(searchCategory.isDefined && searchCategory.exists(_.nonEmpty)) {
+          <input type="hidden" name="category" value="@searchCategory.get">
+        }
+        @if(searchQuery.nonEmpty) {
+          <a href="@routes.HomeController.publicaciones()" class="ed-search-clear" title="Limpiar">×</a>
+        }
+      </form>
+    </header>
 
-  <nav class="ed-cat-row">
-    <a href="@routes.HomeController.publicaciones()"
-       class="ed-cat-pill @if(allActive){active}">Todas</a>
-    @categories.map { c =>
-      <a href="@routes.HomeController.searchPublicaciones(searchQuery, Some(c.name))"
-         class="ed-cat-pill @if(currentCategoryActive(c)){active}">@c.name</a>
-    }
-  </nav>
+    <nav class="ed-cat-row" aria-label="Filtro por categoría">
+      <a href="@routes.HomeController.publicaciones()"
+         class="ed-cat-pill @if(allActive){active}"
+         @if(allActive){aria-current="page"}>Todas</a>
+      @categories.map { c =>
+        <a href="@routes.HomeController.searchPublicaciones(searchQuery, Some(c.name))"
+           class="ed-cat-pill @if(currentCategoryActive(c)){active}"
+           @if(currentCategoryActive(c)){aria-current="page"}>@c.name</a>
+      }
+    </nav>
+  </div>
 
   @if(totalCount == 0) {
     <div class="ed-pub-empty">

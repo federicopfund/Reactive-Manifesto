@@ -1,11 +1,19 @@
 // ============================================
 // Hero — Editorial Reactiva (portada)
+// Issue #17-D: container queries + clamp para no desbordar.
 // ============================================
 
 .ed-hero {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: minmax(0, 1fr) clamp(260px, 24vw, 340px);
   border-bottom: 1px solid var(--ed-border);
+  container-type: inline-size;
+  container-name: ed-main;
+}
+
+@container ed-main (max-width: 900px) {
+  .ed-hero { grid-template-columns: 1fr; }
+  .ed-hero-main { border-right: none; border-bottom: 1px solid var(--ed-border); }
 }
 
 .ed-hero-main {
@@ -99,7 +107,7 @@
 
 .ed-aside-stat-num {
   font-family: $font-display;
-  font-size: 2.2rem;
+  font-size: #{"clamp(1.6rem, 2.2vw + 1rem, 2.4rem)"};
   font-weight: 900;
   line-height: 1;
   color: var(--ed-text);

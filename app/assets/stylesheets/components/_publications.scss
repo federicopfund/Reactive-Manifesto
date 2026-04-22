@@ -1,10 +1,21 @@
 // ============================================
 // Publications — Listado, búsqueda, categorías
+// Issue #17-F: toolbar sticky con header + categorías.
 // ============================================
 
+.ed-pub-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-subtle);
+  transition: box-shadow $duration-fast $ease-out;
+
+  &.is-stuck { box-shadow: $shadow-sm; }
+}
+
 .ed-pub-header {
-  padding: 3rem 3.5rem 2rem;
-  border-bottom: 1px solid var(--ed-border);
+  padding: 3rem 3.5rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -37,13 +48,12 @@
 //    en negro (no accent verde-lima — demasiado pop para este chrome).
 .ed-cat-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0;
-  margin: 1.5rem 0 2rem;
-  padding: 0;
+  margin: 0;
+  padding: 0 3.5rem;
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--ed-border);
   overflow-x: auto;
   position: relative;
 
@@ -112,7 +122,8 @@
 
 .ed-articles-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  // Issue #17-E: densidad inteligente, sin media queries manuales.
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }
 
 .ed-article-card {
@@ -125,7 +136,10 @@
   color: inherit;
   display: block;
 
-  &:nth-child(3n) { border-right: none; }
+  // Issue #17-E: borde derecho gestionado por el contenedor (auto-fill
+  // genera un número variable de columnas, así que dejamos el borde
+  // siempre puesto y la última de cada fila lo hereda; la transición a
+  // pantalla completa elimina el sobrante vía :nth-of-type útil).
   &:hover { background: var(--ed-bg2); }
 
   &--featured {

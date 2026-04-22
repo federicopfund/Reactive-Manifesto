@@ -55,6 +55,7 @@
   <div class="ed-shell">
     @partials.sidebar()
     <main id="ed-main" class="ed-main" tabindex="-1">
+      @partials.mobileTopbar()
       @if(fullBleed) {
         @content
       } else {
@@ -64,5 +65,7 @@
   </div>
 
   <script src="@routes.Assets.versioned("javascripts/theme.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/sidebar.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/searchFilters.js")"></script>
 </body>
 </html>
