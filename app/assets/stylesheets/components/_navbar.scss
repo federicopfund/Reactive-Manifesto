@@ -45,7 +45,64 @@
     justify-content: center;
     padding: 0.6rem 0;
     gap: 0;
+    position: relative;
     .ed-nav-dot { width: 8px; height: 8px; flex-shrink: 0; }
+
+    // Tooltip flotante en modo rail (Issue #18 follow-up).
+    // Se materializa con data-tip="…" en cada <a>.
+    &[data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: calc(100% + 10px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-4px);
+      padding: 0.4rem 0.65rem;
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      line-height: 1;
+      letter-spacing: 0.01em;
+      color: var(--color-bg-primary);
+      background: var(--color-text-primary);
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 140ms ease-out, transform 140ms ease-out, visibility 0s linear 140ms;
+      z-index: 1200;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    }
+    &[data-tip]::before {
+      content: "";
+      position: absolute;
+      left: calc(100% + 4px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-4px);
+      width: 0;
+      height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-right: 6px solid var(--color-text-primary);
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 140ms ease-out, transform 140ms ease-out, visibility 0s linear 140ms;
+      z-index: 1200;
+    }
+    &[data-tip]:hover::after,
+    &[data-tip]:focus-visible::after,
+    &[data-tip]:hover::before,
+    &[data-tip]:focus-visible::before {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(-50%) translateX(0);
+      transition-delay: 0s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ed-nav-item[data-tip]::after,
+    .ed-nav-item[data-tip]::before { transition: none; }
   }
 
   .ed-sidebar-brand { padding: 0 0 1rem; text-align: center; border-bottom: 1px solid var(--color-border-subtle); }
