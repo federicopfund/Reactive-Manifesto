@@ -5,6 +5,10 @@
 # Home page
 GET     /                           controllers.HomeController.index()
 
+# Health (Issue #15 — guardian-backed)
+GET     /health                     controllers.HealthController.health()
+GET     /health/detail              controllers.HealthController.healthDetail()
+
 # Publicaciones page
 GET     /publicaciones              controllers.HomeController.publicaciones()
 GET     /publicaciones/buscar       controllers.HomeController.searchPublicaciones(q: String ?= "", category: Option[String] ?= None)

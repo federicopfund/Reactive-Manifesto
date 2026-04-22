@@ -1,42 +1,30 @@
 package services
 
-import akka.actor.typed.ActorSystem
+import akka.actor.typed.{ActorRef, Scheduler}
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.util.Timeout
 import core._
+import core.guardian._
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
-/**
- * Adaptador reactivo para el sistema de gamificación.
- *
- * Encapsula la comunicación con el GamificationEngine (Akka Typed Actor).
- * Soporta tanto Ask (request-response) como Tell (fire-and-forget).
- */
 @Singleton
 class ReactiveGamificationAdapter @Inject()(
-  system: ActorSystem[GamificationCommand]
+  guardian: ActorRef[DomainGuardianCommand],
+  implicit val scheduler: Scheduler
 )(implicit ec: ExecutionContext) {
+  private implicit val timeout: Timeout = 5.seconds
 
-  implicit val timeout: Timeout = 5.seconds
-  implicit val scheduler: akka.actor.typed.Scheduler = system.scheduler
+  def checkBadges(userId: Long, triggerType: String, metadata: Map[String, Long]): Unit =
+    guardian ! ForwardGamification(CheckBadges(userId, triggerType, metadata, None))
 
-  /** Fire-and-forget: no espera respuesta */
-  def checkBadges(userId: Long, triggerType: String, metadata: Map[String, Long]): Unit = {
-    system ! CheckBadges(userId, triggerType, metadata, None)
-  }
-
-  /** Request-response: espera la lista de badges otorgados */
-  def checkBadgesAsync(userId: Long, triggerType: String, metadata: Map[String, Long]): Future[GamificationResponse] = {
-    system.ask[GamificationResponse] { replyTo =>
-      CheckBadges(userId, triggerType, metadata, Some(replyTo))
+  def checkBadgesAsync(userId: Long, triggerType: String, metadata: Map[String, Long]): Future[GamificationResponse] =
+    guardian.ask[GamificationResponse] { replyTo =>
+      ForwardGamification(CheckBadges(userId, triggerType, metadata, Some(replyTo)))
     }
-  }
 
-  /** Fire-and-forget award */
-  def awardBadge(userId: Long, badgeKey: String): Unit = {
-    system ! AwardBadge(userId, badgeKey, None)
-  }
+  def awardBadge(userId: Long, badgeKey: String): Unit =
+    guardian ! ForwardGamification(AwardBadge(userId, badgeKey, None))
 }

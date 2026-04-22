@@ -1,50 +1,34 @@
 package services
 
-import akka.actor.typed.ActorSystem
+import akka.actor.typed.{ActorRef, Scheduler}
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.util.Timeout
 import core._
+import core.guardian._
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
-/**
- * Adaptador reactivo para analytics y métricas.
- *
- * Encapsula la comunicación con el AnalyticsEngine (Akka Typed Actor).
- * Usa Tell (fire-and-forget) para tracking y Ask para consultar métricas.
- */
 @Singleton
 class ReactiveAnalyticsAdapter @Inject()(
-  system: ActorSystem[AnalyticsCommand]
+  guardian: ActorRef[CrossCutGuardianCommand],
+  implicit val scheduler: Scheduler
 )(implicit ec: ExecutionContext) {
+  private implicit val timeout: Timeout = 3.seconds
 
-  implicit val timeout: Timeout = 3.seconds
-  implicit val scheduler: akka.actor.typed.Scheduler = system.scheduler
+  def trackEvent(eventType: String, userId: Option[Long] = None, metadata: Map[String, String] = Map.empty): Unit =
+    guardian ! ForwardAnalytics(TrackEvent(eventType, userId, metadata))
 
-  /** Fire-and-forget: track a generic event */
-  def trackEvent(eventType: String, userId: Option[Long] = None, metadata: Map[String, String] = Map.empty): Unit = {
-    system ! TrackEvent(eventType, userId, metadata)
-  }
+  def trackPageView(path: String, userId: Option[Long] = None, referrer: Option[String] = None): Unit =
+    guardian ! ForwardAnalytics(TrackPageView(path, userId, referrer))
 
-  /** Fire-and-forget: track a page view */
-  def trackPageView(path: String, userId: Option[Long] = None, referrer: Option[String] = None): Unit = {
-    system ! TrackPageView(path, userId, referrer)
-  }
+  def trackPublicationView(publicationId: Long, userId: Option[Long] = None): Unit =
+    guardian ! ForwardAnalytics(TrackPublicationView(publicationId, userId))
 
-  /** Fire-and-forget: track a publication view */
-  def trackPublicationView(publicationId: Long, userId: Option[Long] = None): Unit = {
-    system ! TrackPublicationView(publicationId, userId)
-  }
+  def getMetrics: Future[AnalyticsResponse] =
+    guardian.ask[AnalyticsResponse](replyTo => ForwardAnalytics(GetMetrics(replyTo)))
 
-  /** Request-response: get current metrics snapshot */
-  def getMetrics: Future[AnalyticsResponse] = {
-    system.ask[AnalyticsResponse](replyTo => GetMetrics(replyTo))
-  }
-
-  /** Fire-and-forget: reset all metrics */
-  def resetMetrics(): Unit = {
-    system ! ResetMetrics
-  }
+  def resetMetrics(): Unit =
+    guardian ! ForwardAnalytics(ResetMetrics)
 }

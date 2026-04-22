@@ -1,31 +1,21 @@
 package services
 
-import akka.actor.typed.ActorSystem
+import akka.actor.typed.{ActorRef, Scheduler}
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.util.Timeout
 import core._
+import core.guardian._
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
-/**
- * Adaptador reactivo para el sistema de mensajería privada.
- *
- * Encapsula la comunicación con el MessageEngine (Akka Typed Actor)
- * mediante el patrón Ask, proporcionando una interfaz Future-based
- * para los controllers.
- *
- * Principio Reactive: Message-Driven — toda comunicación es asíncrona
- * y basada en mensajes tipados.
- */
 @Singleton
 class ReactiveMessageAdapter @Inject()(
-  system: ActorSystem[MessageCommand]
+  guardian: ActorRef[DomainGuardianCommand],
+  implicit val scheduler: Scheduler
 )(implicit ec: ExecutionContext) {
-
-  implicit val timeout: Timeout = 5.seconds
-  implicit val scheduler: akka.actor.typed.Scheduler = system.scheduler
+  private implicit val timeout: Timeout = 5.seconds
 
   def sendMessage(
     senderId: Long,
@@ -35,9 +25,8 @@ class ReactiveMessageAdapter @Inject()(
     publicationTitle: Option[String],
     subject: String,
     content: String
-  ): Future[MessageResponse] = {
-    system.ask[MessageResponse] { replyTo =>
-      SendPrivateMessage(senderId, senderUsername, receiverId, publicationId, publicationTitle, subject, content, replyTo)
+  ): Future[MessageResponse] =
+    guardian.ask[MessageResponse] { replyTo =>
+      ForwardMessage(SendPrivateMessage(senderId, senderUsername, receiverId, publicationId, publicationTitle, subject, content, replyTo))
     }
-  }
 }

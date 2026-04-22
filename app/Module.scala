@@ -1,153 +1,106 @@
 import akka.actor.typed.ActorSystem
 import com.google.inject.{AbstractModule, Provides, Singleton}
-import core._
+import com.typesafe.config.ConfigFactory
+import core.guardian._
+import repositories._
 import services._
-import repositories.{ContactRepository, PrivateMessageRepository, UserNotificationRepository, PublicationRepository, BadgeRepository}
-import scala.concurrent.ExecutionContext
 
+import scala.concurrent.{Await, ExecutionContext, Promise}
+import scala.concurrent.duration._
+
+/**
+ * Module — Guice bindings (Issue #15).
+ *
+ * Reemplaza los 9 ActorSystems independientes por un único `ActorSystem`
+ * llamado `reactive-manifesto`, cuya raíz (`RootGuardian`) spawnea las 3
+ * capas de guardians y devuelve sus ActorRefs vía un `Promise` que se
+ * resuelve durante el setup.
+ *
+ * Los adapters reciben directamente la `ActorRef[*GuardianCommand]` que
+ * necesitan (no el `ActorSystem`), eliminando el acoplamiento de
+ * infraestructura en sus constructores.
+ *
+ * El config de Akka Cluster (Issue #14) se aplica al ActorSystem completo
+ * a través del bloque `eventbus-cluster` en application.conf — necesario
+ * porque `EventBusEngine` ahora vive como hijo de `infra` dentro de este
+ * mismo sistema.
+ */
 class Module extends AbstractModule {
 
-  // ══════════════════════════════════════════════════════════════
-  //  LAYER 1 — DOMAIN AGENTS (core business logic)
-  // ══════════════════════════════════════════════════════════════
-
-  // ── ContactEngine: formularios de contacto ──
+  // ── ActorSystem único + 3 ActorRefs de guardians ──
   @Provides
   @Singleton
-  def provideContactActorSystem(repository: ContactRepository)(implicit ec: ExecutionContext): ActorSystem[ContactCommand] =
-    ActorSystem(ContactEngine(repository), "contact-core")
-
-  @Provides
-  @Singleton
-  def provideContactAdapter(system: ActorSystem[ContactCommand])(implicit ec: ExecutionContext): ReactiveContactAdapter =
-    new ReactiveContactAdapter(system)
-
-  // ── MessageEngine: mensajería privada ──
-  @Provides
-  @Singleton
-  def provideMessageActorSystem(
-    messageRepo: PrivateMessageRepository,
-    notificationRepo: UserNotificationRepository
-  )(implicit ec: ExecutionContext): ActorSystem[MessageCommand] =
-    ActorSystem(MessageEngine(messageRepo, notificationRepo), "message-core")
-
-  @Provides
-  @Singleton
-  def provideMessageAdapter(system: ActorSystem[MessageCommand])(implicit ec: ExecutionContext): ReactiveMessageAdapter =
-    new ReactiveMessageAdapter(system)
-
-  // ── PublicationEngine: ciclo de vida de publicaciones ──
-  @Provides
-  @Singleton
-  def providePublicationActorSystem(
-    publicationRepo: PublicationRepository,
-    notificationRepo: UserNotificationRepository
-  )(implicit ec: ExecutionContext): ActorSystem[PublicationCommand] =
-    ActorSystem(PublicationEngine(publicationRepo, notificationRepo), "publication-core")
-
-  @Provides
-  @Singleton
-  def providePublicationAdapter(system: ActorSystem[PublicationCommand])(implicit ec: ExecutionContext): ReactivePublicationAdapter =
-    new ReactivePublicationAdapter(system)
-
-  // ── GamificationEngine: badges y logros ──
-  @Provides
-  @Singleton
-  def provideGamificationActorSystem(
-    badgeRepo: BadgeRepository
-  )(implicit ec: ExecutionContext): ActorSystem[GamificationCommand] =
-    ActorSystem(GamificationEngine(badgeRepo), "gamification-core")
-
-  @Provides
-  @Singleton
-  def provideGamificationAdapter(system: ActorSystem[GamificationCommand])(implicit ec: ExecutionContext): ReactiveGamificationAdapter =
-    new ReactiveGamificationAdapter(system)
-
-  // ══════════════════════════════════════════════════════════════
-  //  LAYER 2 — CROSS-CUTTING AGENTS (notificaciones, moderación, analytics)
-  // ══════════════════════════════════════════════════════════════
-
-  // ── NotificationEngine: hub multi-canal + Circuit Breaker ──
-  @Provides
-  @Singleton
-  def provideNotificationActorSystem(
+  def provideRefs(
+    contactRepo:      ContactRepository,
+    messageRepo:      PrivateMessageRepository,
     notificationRepo: UserNotificationRepository,
-    emailService: EmailService
-  )(implicit ec: ExecutionContext): ActorSystem[NotificationCommand] =
-    ActorSystem(NotificationEngine(notificationRepo, emailService), "notification-core")
-
-  @Provides
-  @Singleton
-  def provideNotificationAdapter(system: ActorSystem[NotificationCommand])(implicit ec: ExecutionContext): ReactiveNotificationAdapter =
-    new ReactiveNotificationAdapter(system)
-
-  // ── ModerationEngine: auto-filtrado de contenido ──
-  @Provides
-  @Singleton
-  def provideModerationActorSystem()(implicit ec: ExecutionContext): ActorSystem[ModerationCommand] =
-    ActorSystem(ModerationEngine(), "moderation-core")
-
-  @Provides
-  @Singleton
-  def provideModerationAdapter(system: ActorSystem[ModerationCommand])(implicit ec: ExecutionContext): ReactiveModerationAdapter =
-    new ReactiveModerationAdapter(system)
-
-  // ── AnalyticsEngine: métricas y tracking in-memory ──
-  @Provides
-  @Singleton
-  def provideAnalyticsActorSystem()(implicit ec: ExecutionContext): ActorSystem[AnalyticsCommand] =
-    ActorSystem(AnalyticsEngine(), "analytics-core")
-
-  @Provides
-  @Singleton
-  def provideAnalyticsAdapter(system: ActorSystem[AnalyticsCommand])(implicit ec: ExecutionContext): ReactiveAnalyticsAdapter =
-    new ReactiveAnalyticsAdapter(system)
-
-  // ══════════════════════════════════════════════════════════════
-  //  LAYER 3 — INFRASTRUCTURE AGENTS (orquestación inter-agente)
-  // ══════════════════════════════════════════════════════════════
-
-  // ── EventBusEngine: Pub/Sub distribuido (Issue #14 — Akka Cluster) ──
-  // Carga la configuración `eventbus-cluster` definida en application.conf,
-  // de modo que SOLO este ActorSystem use provider=cluster + DistributedPubSub.
-  @Provides
-  @Singleton
-  def provideEventBusActorSystem()(implicit ec: ExecutionContext): ActorSystem[EventBusCommand] = {
-    val rootConfig    = com.typesafe.config.ConfigFactory.load()
+    publicationRepo:  PublicationRepository,
+    badgeRepo:        BadgeRepository,
+    emailService:     EmailService
+  )(implicit ec: ExecutionContext): RootGuardian.Refs = {
+    val rootConfig    = ConfigFactory.load()
     val clusterConfig = rootConfig.getConfig("eventbus-cluster").withFallback(rootConfig)
-    ActorSystem(EventBusEngine(), "eventbus-core", clusterConfig)
+
+    val promise = Promise[RootGuardian.Refs]()
+    val system = ActorSystem[Nothing](
+      RootGuardian(contactRepo, messageRepo, notificationRepo, publicationRepo, badgeRepo, emailService, promise),
+      "reactive-manifesto",
+      clusterConfig
+    )
+    // Anclamos el ActorSystem al ciclo de vida (lo bindeamos abajo).
+    _system = system
+    Await.result(promise.future, 10.seconds)
   }
 
-  @Provides
-  @Singleton
-  def provideEventBusAdapter(system: ActorSystem[EventBusCommand])(implicit ec: ExecutionContext): ReactiveEventBusAdapter =
-    new ReactiveEventBusAdapter(system)
-
-  // ── PublicationPipelineEngine: Saga Orchestrator ──
-  @Provides
-  @Singleton
-  def providePipelineActorSystem(
-    moderationSystem: ActorSystem[ModerationCommand],
-    publicationSystem: ActorSystem[PublicationCommand],
-    notificationSystem: ActorSystem[NotificationCommand],
-    gamificationSystem: ActorSystem[GamificationCommand],
-    analyticsSystem: ActorSystem[AnalyticsCommand],
-    eventBusSystem: ActorSystem[EventBusCommand]
-  )(implicit ec: ExecutionContext): ActorSystem[PipelineCommand] =
-    ActorSystem(
-      PublicationPipelineEngine(
-        moderationSystem,
-        publicationSystem,
-        notificationSystem,
-        gamificationSystem,
-        analyticsSystem,
-        eventBusSystem
-      ),
-      "pipeline-core"
-    )
+  // El sistema se mantiene vivo mientras el `Module` viva. Lo exponemos
+  // por si algún componente necesita el `Scheduler` o el `dispatcher`.
+  @volatile private var _system: ActorSystem[Nothing] = _
 
   @Provides
   @Singleton
-  def providePipelineAdapter(system: ActorSystem[PipelineCommand])(implicit ec: ExecutionContext): ReactivePipelineAdapter =
-    new ReactivePipelineAdapter(system)
+  def provideActorSystem(refs: RootGuardian.Refs): ActorSystem[Nothing] = _system
+
+  @Provides @Singleton
+  def domainRef(refs: RootGuardian.Refs): akka.actor.typed.ActorRef[DomainGuardianCommand]   = refs.domain
+  @Provides @Singleton
+  def crossCutRef(refs: RootGuardian.Refs): akka.actor.typed.ActorRef[CrossCutGuardianCommand] = refs.crossCut
+  @Provides @Singleton
+  def infraRef(refs: RootGuardian.Refs): akka.actor.typed.ActorRef[InfraGuardianCommand]     = refs.infra
+
+  // ── Adapters (ahora reciben ActorRef, no ActorSystem) ─────────────────
+  @Provides @Singleton
+  def provideContactAdapter(d: akka.actor.typed.ActorRef[DomainGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactiveContactAdapter =
+    new ReactiveContactAdapter(d, system.scheduler)
+
+  @Provides @Singleton
+  def provideMessageAdapter(d: akka.actor.typed.ActorRef[DomainGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactiveMessageAdapter =
+    new ReactiveMessageAdapter(d, system.scheduler)
+
+  @Provides @Singleton
+  def providePublicationAdapter(d: akka.actor.typed.ActorRef[DomainGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactivePublicationAdapter =
+    new ReactivePublicationAdapter(d, system.scheduler)
+
+  @Provides @Singleton
+  def provideGamificationAdapter(d: akka.actor.typed.ActorRef[DomainGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactiveGamificationAdapter =
+    new ReactiveGamificationAdapter(d, system.scheduler)
+
+  @Provides @Singleton
+  def provideNotificationAdapter(cc: akka.actor.typed.ActorRef[CrossCutGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactiveNotificationAdapter =
+    new ReactiveNotificationAdapter(cc, system.scheduler)
+
+  @Provides @Singleton
+  def provideModerationAdapter(cc: akka.actor.typed.ActorRef[CrossCutGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactiveModerationAdapter =
+    new ReactiveModerationAdapter(cc, system.scheduler)
+
+  @Provides @Singleton
+  def provideAnalyticsAdapter(cc: akka.actor.typed.ActorRef[CrossCutGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactiveAnalyticsAdapter =
+    new ReactiveAnalyticsAdapter(cc, system.scheduler)
+
+  @Provides @Singleton
+  def provideEventBusAdapter(infra: akka.actor.typed.ActorRef[InfraGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactiveEventBusAdapter =
+    new ReactiveEventBusAdapter(infra, system.scheduler)
+
+  @Provides @Singleton
+  def providePipelineAdapter(infra: akka.actor.typed.ActorRef[InfraGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactivePipelineAdapter =
+    new ReactivePipelineAdapter(infra, system.scheduler)
 }
