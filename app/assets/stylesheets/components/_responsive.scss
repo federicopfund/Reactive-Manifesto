@@ -40,6 +40,17 @@
   // Issue #17-A: el sidebar deja de ser barra apilada y pasa a drawer
   // (gestionado por _navbar.scss + sidebar.js). Conservamos overrides para
   // el admin layout (que aún no migró a drawer) bajo .ed-admin-shell.
+
+  // Fix navegación mobile: el shell debe dejar que el body sea el contenedor
+  // de scroll. Si lo dejamos en height:100vh + overflow:hidden, el contenido
+  // de .ed-main queda atrapado dentro del viewport y no se puede recorrer.
+  .ed-shell {
+    display: block;
+    height: auto;
+    width: 100%;
+    overflow: visible;
+  }
+
   .ed-admin-shell {
     flex-direction: column;
     height: auto;
