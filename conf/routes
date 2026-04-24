@@ -16,6 +16,8 @@ GET     /publicaciones/:slug        controllers.HomeController.publicacion(slug:
 
 # Portafolio page
 GET     /portafolio                 controllers.HomeController.portafolio()
+GET     /portafolio/:slug           controllers.HomeController.collectionDetail(slug: String)
+GET     /portafolio/:colSlug/pieza/:pieceSlug  controllers.HomeController.openFromCollection(colSlug: String, pieceSlug: String)
 
 # Legal pages
 GET     /privacidad                 controllers.HomeController.politicaPrivacidad()
@@ -181,6 +183,21 @@ POST    /admin/events/:id/status            controllers.AdminEventController.cha
 POST    /admin/events/:id/delete            controllers.AdminEventController.delete(id: Long)
 GET     /admin/events/:id/attendees         controllers.AdminEventController.attendees(id: Long)
 GET     /admin/events/:id/attendees.csv     controllers.AdminEventController.attendeesCsv(id: Long)
+
+# ============================================
+# COLECCIONES EDITORIALES — Issue #20
+# ============================================
+GET     /admin/collections                          controllers.AdminCollectionController.list(status: Option[String] ?= None)
+GET     /admin/collections/new                      controllers.AdminCollectionController.newForm()
+POST    /admin/collections/new                      controllers.AdminCollectionController.create()
+GET     /admin/collections/:id                      controllers.AdminCollectionController.view(id: Long)
+GET     /admin/collections/:id/edit                 controllers.AdminCollectionController.editForm(id: Long)
+POST    /admin/collections/:id/edit                 controllers.AdminCollectionController.update(id: Long)
+POST    /admin/collections/:id/transition           controllers.AdminCollectionController.transition(id: Long)
+GET     /admin/collections/:id/pickable             controllers.AdminCollectionController.pickableItems(id: Long, q: String ?= "")
+POST    /admin/collections/:id/items                controllers.AdminCollectionController.addItem(id: Long)
+POST    /admin/collections/:id/items/:itemRowId/delete  controllers.AdminCollectionController.removeItem(id: Long, itemRowId: Long)
+POST    /admin/collections/:id/items/reorder        controllers.AdminCollectionController.reorderItems(id: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

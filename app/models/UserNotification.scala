@@ -29,6 +29,10 @@ object NotificationType extends Enumeration {
     case "admin_role_rejected"    => "⛔"
     case "admin_role_revoked"     => "🚫"
     case "community_publication"  => "📰"
+    case "collection_submitted"   => "📋"
+    case "collection_approved"    => "✅"
+    case "collection_rejected"    => "🔁"
+    case "collection_published"   => "🏛️"
     case _                        => "🔔"
   }
 }

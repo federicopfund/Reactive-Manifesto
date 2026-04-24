@@ -43,6 +43,7 @@
     </div>
 
     <aside class="ed-article-aside">
+      @partials.collectionBackBar()
       <div class="ed-aside-card">
         <div class="ed-aside-eyebrow">Categoría</div>
         <a href="@routes.HomeController.searchPublicaciones("", Some(article.categoryLabel))" class="ed-aside-author">@article.categoryLabel</a>

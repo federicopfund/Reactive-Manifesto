@@ -38,6 +38,10 @@ object Capabilities {
     case object EventsManage           extends Cap { val key = "events.manage";            val label = "Crear y editar eventos" }
     case object EventsPublish          extends Cap { val key = "events.publish";           val label = "Publicar / cancelar eventos" }
 
+    case object CollectionsCurate      extends Cap { val key = "collections.curate";       val label = "Curar colecciones (crear, editar piezas)" }
+    case object CollectionsReview      extends Cap { val key = "collections.review";       val label = "Aprobar / devolver colecciones" }
+    case object CollectionsPublish     extends Cap { val key = "collections.publish";      val label = "Publicar / archivar colecciones" }
+
     val all: Seq[Cap] = Seq(
       GovernanceManageAdmins,
       PublicationsReview, PublicationsDelete, PublicationsEditNotes,
@@ -45,7 +49,8 @@ object Capabilities {
       ContactsView, ContactsEditStatus, ContactsDelete,
       NewsletterView, NewsletterManage,
       StatsView, DashboardView,
-      EventsView, EventsManage, EventsPublish
+      EventsView, EventsManage, EventsPublish,
+      CollectionsCurate, CollectionsReview, CollectionsPublish
     )
   }
 }
@@ -82,7 +87,8 @@ object RolePolicy {
         PublicationsReview, PublicationsDelete, PublicationsEditNotes,
         PublicationsFeedback, PublicationsExport,
         ContactsView,
-        EventsView, EventsManage, EventsPublish
+        EventsView, EventsManage, EventsPublish,
+        CollectionsCurate, CollectionsReview, CollectionsPublish
       )
     ),
     RoleDef(
@@ -92,7 +98,8 @@ object RolePolicy {
       caps = Set(
         DashboardView, StatsView,
         PublicationsReview, PublicationsEditNotes, PublicationsFeedback, PublicationsExport,
-        EventsView, EventsManage
+        EventsView, EventsManage,
+        CollectionsCurate, CollectionsReview
       )
     ),
     RoleDef(

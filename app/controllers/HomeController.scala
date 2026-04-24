@@ -138,7 +138,39 @@ class HomeController @Inject()(
     val isAuthenticated = request.userInfo.isDefined
     val username        = request.userInfo.map(_._2)
     collectionRepo.findPublishedWithCounts().map { collections =>
+      // Al volver al listado, limpiamos cualquier "breadcrumb" pendiente.
       Ok(views.html.portafolio(isAuthenticated, username, collections))
+        .removingFromSession("fromCollection", "fromCollectionName")
+    }
+  }
+
+  def collectionDetail(slug: String) = optionalAuth.async { implicit request: OptionalAuthRequest[AnyContent] =>
+    val isAuthenticated = request.userInfo.isDefined
+    val username        = request.userInfo.map(_._2)
+    collectionRepo.findBySlug(slug).flatMap {
+      case Some(c) if c.isLive =>
+        for {
+          items <- collectionRepo.resolveItems(c.id.get)
+          others <- collectionRepo.findPublishedWithCounts()
+        } yield {
+          val related = others.filter(_.collection.id != c.id).take(3)
+          // Estamos parados en una colección: si había otro breadcrumb, lo borramos.
+          Ok(views.html.collectionDetail(isAuthenticated, username, c, items, related))
+            .removingFromSession("fromCollection", "fromCollectionName")
+        }
+      case _ =>
+        Future.successful(NotFound(views.html.errors.notFound()))
+    }
+  }
+
+  /** Abre una pieza guardando en sesión la colección de origen para mostrar el botón "Volver". */
+  def openFromCollection(colSlug: String, pieceSlug: String) = Action.async { implicit request: Request[AnyContent] =>
+    collectionRepo.findBySlug(colSlug).map {
+      case Some(c) if c.isLive =>
+        Redirect(routes.HomeController.publicacion(pieceSlug))
+          .addingToSession("fromCollection" -> c.slug, "fromCollectionName" -> c.name)
+      case _ =>
+        Redirect(routes.HomeController.publicacion(pieceSlug))
     }
   }
 
