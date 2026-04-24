@@ -199,5 +199,9 @@ POST    /admin/collections/:id/items                controllers.AdminCollectionC
 POST    /admin/collections/:id/items/:itemRowId/delete  controllers.AdminCollectionController.removeItem(id: Long, itemRowId: Long)
 POST    /admin/collections/:id/items/reorder        controllers.AdminCollectionController.reorderItems(id: Long)
 
+# Observabilidad — Issue #21
+GET     /admin/agents                               controllers.AdminAgentsController.dashboard()
+GET     /admin/agents/health.json                   controllers.AdminAgentsController.healthJson()
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

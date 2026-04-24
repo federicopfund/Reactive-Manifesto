@@ -42,6 +42,8 @@ object Capabilities {
     case object CollectionsReview      extends Cap { val key = "collections.review";       val label = "Aprobar / devolver colecciones" }
     case object CollectionsPublish     extends Cap { val key = "collections.publish";      val label = "Publicar / archivar colecciones" }
 
+    case object ObservabilityView      extends Cap { val key = "observability.view";      val label = "Ver dashboard de agentes y guardians" }
+
     val all: Seq[Cap] = Seq(
       GovernanceManageAdmins,
       PublicationsReview, PublicationsDelete, PublicationsEditNotes,
@@ -50,7 +52,8 @@ object Capabilities {
       NewsletterView, NewsletterManage,
       StatsView, DashboardView,
       EventsView, EventsManage, EventsPublish,
-      CollectionsCurate, CollectionsReview, CollectionsPublish
+      CollectionsCurate, CollectionsReview, CollectionsPublish,
+      ObservabilityView
     )
   }
 }
