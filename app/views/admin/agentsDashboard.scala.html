@@ -1,4 +1,4 @@
-@(username: String, role: String)(implicit request: RequestHeader)
+@(username: String, role: String, pollingSec: Int)(implicit request: RequestHeader)
 
 @admin.adminLayout("Agentes y Guardians", "agents") {
 
@@ -7,7 +7,7 @@
       <h1 class="ed-bo__page-title">Agentes &amp; Guardians</h1>
       <p class="ed-bo__page-lead">
         Estado en vivo de los actores supervisados por los 3 guardians del <code>ActorSystem</code>.
-        Polling cada <strong>5 s</strong>.
+        Polling cada <strong>@pollingSec s</strong>.
       </p>
     </div>
     <div class="ed-agents__global">
@@ -143,7 +143,7 @@
 
       btn.addEventListener('click', tick);
       tick();
-      setInterval(tick, 5000);
+      setInterval(tick, @{pollingSec * 1000});
     })();
   </script>
 }

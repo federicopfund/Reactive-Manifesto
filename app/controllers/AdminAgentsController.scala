@@ -8,6 +8,7 @@ import play.api.libs.json._
 import play.api.mvc._
 import controllers.actions.AdminOnlyAction
 import utils.{Capabilities, RolePolicy}
+import services.AgentSettingsService
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -28,6 +29,7 @@ class AdminAgentsController @Inject()(
   domain:      ActorRef[DomainGuardianCommand],
   crossCut:    ActorRef[CrossCutGuardianCommand],
   infra:       ActorRef[InfraGuardianCommand],
+  settings:    AgentSettingsService,
   adminAction: AdminOnlyAction
 )(implicit ec: ExecutionContext, scheduler: Scheduler) extends AbstractController(cc) {
 
@@ -47,7 +49,9 @@ class AdminAgentsController @Inject()(
   def dashboard: Action[AnyContent] = adminAction.async { implicit request =>
     requireCap(request.role) match {
       case Some(deny) => Future.successful(deny)
-      case None       => Future.successful(Ok(views.html.admin.agentsDashboard(request.username, request.role)))
+      case None       =>
+        val polling = math.max(2, settings.getInt("dashboard.pollingSec"))
+        Future.successful(Ok(views.html.admin.agentsDashboard(request.username, request.role, polling)))
     }
   }
 

@@ -36,14 +36,15 @@ class Module extends AbstractModule {
     notificationRepo: UserNotificationRepository,
     publicationRepo:  PublicationRepository,
     badgeRepo:        BadgeRepository,
-    emailService:     EmailService
+    emailService:     EmailService,
+    agentSettings:    AgentSettingsService
   )(implicit ec: ExecutionContext): RootGuardian.Refs = {
     val rootConfig    = ConfigFactory.load()
     val clusterConfig = rootConfig.getConfig("eventbus-cluster").withFallback(rootConfig)
 
     val promise = Promise[RootGuardian.Refs]()
     val system = ActorSystem[Nothing](
-      RootGuardian(contactRepo, messageRepo, notificationRepo, publicationRepo, badgeRepo, emailService, promise),
+      RootGuardian(contactRepo, messageRepo, notificationRepo, publicationRepo, badgeRepo, emailService, promise, agentSettings),
       "reactive-manifesto",
       clusterConfig
     )

@@ -4,6 +4,7 @@ import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy, Terminated}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import core._
 import repositories.{ContactRepository, PrivateMessageRepository, UserNotificationRepository, PublicationRepository, BadgeRepository}
+import services.AgentSettingsLookup
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext
@@ -68,19 +69,26 @@ object DomainGuardian {
     messageRepo:      PrivateMessageRepository,
     notificationRepo: UserNotificationRepository,
     publicationRepo:  PublicationRepository,
-    badgeRepo:        BadgeRepository
+    badgeRepo:        BadgeRepository,
+    lookup:           AgentSettingsLookup = AgentSettingsLookup.Defaults
   )(implicit ec: ExecutionContext): Behavior[DomainGuardianCommand] =
     Behaviors.setup { ctx =>
       ctx.log.info("[DomainGuardian] Starting — spawning 4 domain children with backoff supervision")
+
+      val maxRestarts       = lookup.getInt("supervision.domain.maxRestarts")
+      val resetBackoffAfter = lookup.getDuration("supervision.domain.resetBackoffSec")
+      val minBackoff        = lookup.getDuration("backoff.domain.minSec")
+      val maxBackoff        = lookup.getDuration("backoff.domain.maxSec")
+      val heartbeatInterval = lookup.getDuration("heartbeat.domain.intervalSec")
 
       def supervise[T](b: Behavior[T]): Behavior[T] =
         Behaviors
           .supervise(b)
           .onFailure[Throwable](
             SupervisorStrategy
-              .restartWithBackoff(1.second, 30.seconds, randomFactor = 0.2)
-              .withMaxRestarts(5)
-              .withResetBackoffAfter(1.minute)
+              .restartWithBackoff(minBackoff, maxBackoff, randomFactor = 0.2)
+              .withMaxRestarts(maxRestarts)
+              .withResetBackoffAfter(resetBackoffAfter)
           )
 
       val children = Children(
@@ -96,8 +104,8 @@ object DomainGuardian {
       ctx.watchWith(children.gamification, DomainChildTerminated("gamification"))
 
       Behaviors.withTimers { timers =>
-        timers.startTimerAtFixedRate(DomainPingTick, 30.seconds)
-        active(children, initialHealth())
+        timers.startTimerAtFixedRate(DomainPingTick, heartbeatInterval)
+        active(children, initialHealth(), lookup)
       }
     }
 
@@ -107,28 +115,36 @@ object DomainGuardian {
     Health(fresh("contact"), fresh("message"), fresh("publication"), fresh("gamification"))
   }
 
-  private def active(children: Children, health: Health): Behavior[DomainGuardianCommand] =
+  private def active(children: Children, health: Health, lookup: AgentSettingsLookup): Behavior[DomainGuardianCommand] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
 
         // ── Forwarding ────────────────────────────────────────────
         case ForwardContact(cmd) =>
-          if (health.contact.status == ChildStatus.Dead) failContact(ctx, cmd)
+          if (!lookup.getBool("engines.contact.enabled")) {
+            ctx.log.warn("[DomainGuardian] DROP contact — kill-switch off")
+          } else if (health.contact.status == ChildStatus.Dead) failContact(ctx, cmd)
           else children.contact ! cmd
           Behaviors.same
 
         case ForwardMessage(cmd) =>
-          if (health.message.status != ChildStatus.Dead) children.message ! cmd
+          if (!lookup.getBool("engines.message.enabled")) {
+            ctx.log.warn("[DomainGuardian] DROP message — kill-switch off")
+          } else if (health.message.status != ChildStatus.Dead) children.message ! cmd
           else ctx.log.warn(s"[DomainGuardian] DROP message cmd — child is Dead")
           Behaviors.same
 
         case ForwardPublication(cmd) =>
-          if (health.publication.status != ChildStatus.Dead) children.publication ! cmd
+          if (!lookup.getBool("engines.publication.enabled")) {
+            ctx.log.warn("[DomainGuardian] DROP publication — kill-switch off")
+          } else if (health.publication.status != ChildStatus.Dead) children.publication ! cmd
           else ctx.log.warn(s"[DomainGuardian] DROP publication cmd — child is Dead")
           Behaviors.same
 
         case ForwardGamification(cmd) =>
-          if (health.gamification.status != ChildStatus.Dead) children.gamification ! cmd
+          if (!lookup.getBool("engines.gamification.enabled")) {
+            ctx.log.warn("[DomainGuardian] DROP gamification — kill-switch off")
+          } else if (health.gamification.status != ChildStatus.Dead) children.gamification ! cmd
           else ctx.log.warn(s"[DomainGuardian] DROP gamification cmd — child is Dead")
           Behaviors.same
 
@@ -153,22 +169,18 @@ object DomainGuardian {
               updatedAt  = Instant.now()
             )
           }
-          active(children, updated)
+          active(children, updated, lookup)
 
         // ── Periodic mailbox ping (timer) ─────────────────────────
         case DomainPingTick =>
           ctx.log.debug("[DomainGuardian] ping tick — health snapshot dispatched")
-          // El ping real (medir RTT del mailbox) requeriría agregar un comando
-          // Ping a cada engine. Como el Issue prohíbe modificar engines, este
-          // tick por ahora solo refresca el timestamp para detectar liveness
-          // del propio guardian.
           val now = Instant.now()
           active(children, health.copy(
             contact      = health.contact.copy(updatedAt = now),
             message      = health.message.copy(updatedAt = now),
             publication  = health.publication.copy(updatedAt = now),
             gamification = health.gamification.copy(updatedAt = now)
-          ))
+          ), lookup)
       }
     }
 

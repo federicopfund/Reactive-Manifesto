@@ -3,7 +3,7 @@ package core.guardian
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import repositories._
-import services.EmailService
+import services.{AgentSettingsLookup, EmailService}
 
 import scala.concurrent.{ExecutionContext, Promise}
 
@@ -31,14 +31,15 @@ object RootGuardian {
     publicationRepo:  PublicationRepository,
     badgeRepo:        BadgeRepository,
     emailService:     EmailService,
-    promise:          Promise[Refs]
+    promise:          Promise[Refs],
+    lookup:           AgentSettingsLookup = AgentSettingsLookup.Defaults
   )(implicit ec: ExecutionContext): Behavior[Nothing] =
     Behaviors.setup[Nothing] { ctx =>
       ctx.log.info("[Root] Reactive Manifesto — single ActorSystem booting 3 guardian layers")
 
-      val domain   = ctx.spawn(DomainGuardian(contactRepo, messageRepo, notificationRepo, publicationRepo, badgeRepo), "domain")
-      val crossCut = ctx.spawn(CrossCutGuardian(notificationRepo, emailService),                                       "cross-cut")
-      val infra    = ctx.spawn(InfraGuardian(domain, crossCut),                                                        "infra")
+      val domain   = ctx.spawn(DomainGuardian(contactRepo, messageRepo, notificationRepo, publicationRepo, badgeRepo, lookup), "domain")
+      val crossCut = ctx.spawn(CrossCutGuardian(notificationRepo, emailService, lookup),                                       "cross-cut")
+      val infra    = ctx.spawn(InfraGuardian(domain, crossCut, lookup),                                                        "infra")
 
       promise.success(Refs(domain, crossCut, infra))
       Behaviors.empty

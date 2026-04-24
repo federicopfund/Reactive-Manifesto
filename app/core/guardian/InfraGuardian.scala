@@ -4,6 +4,7 @@ import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import akka.actor.typed.scaladsl.{Behaviors, StashBuffer}
 import akka.util.Timeout
 import core._
+import services.AgentSettingsLookup
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext
@@ -50,20 +51,27 @@ object InfraGuardian {
 
   def apply(
     domainGuardian:   ActorRef[DomainGuardianCommand],
-    crossCutGuardian: ActorRef[CrossCutGuardianCommand]
+    crossCutGuardian: ActorRef[CrossCutGuardianCommand],
+    lookup:           AgentSettingsLookup = AgentSettingsLookup.Defaults
   )(implicit ec: ExecutionContext): Behavior[InfraGuardianCommand] =
     Behaviors.withStash(capacity = 1000) { stash =>
       Behaviors.setup { ctx =>
         ctx.log.info("[InfraGuardian] Starting — spawning EventBus, then wiring pipeline")
+
+        val maxRestarts       = lookup.getInt("supervision.infra.maxRestarts")
+        val resetBackoffAfter = lookup.getDuration("supervision.infra.resetBackoffSec")
+        val minBackoff        = lookup.getDuration("backoff.infra.minSec")
+        val maxBackoff        = lookup.getDuration("backoff.infra.maxSec")
+        val heartbeatInterval = lookup.getDuration("heartbeat.infra.intervalSec")
 
         def supervise[T](b: Behavior[T]): Behavior[T] =
           Behaviors
             .supervise(b)
             .onFailure[Throwable](
               SupervisorStrategy
-                .restartWithBackoff(1.second, 30.seconds, randomFactor = 0.2)
-                .withMaxRestarts(5)
-                .withResetBackoffAfter(1.minute)
+                .restartWithBackoff(minBackoff, maxBackoff, randomFactor = 0.2)
+                .withMaxRestarts(maxRestarts)
+                .withResetBackoffAfter(resetBackoffAfter)
             )
 
         // 1) EventBus arranca solo (carga el config eventbus-cluster vía Module)
@@ -81,7 +89,7 @@ object InfraGuardian {
           case Failure(ex)   => WireFailure(s"cross-cut refs: ${ex.getMessage}")
         }
 
-        wiring(stash, ctx, supervise, eventBus, None, None)
+        wiring(stash, ctx, supervise, eventBus, None, None, lookup, heartbeatInterval)
       }
     }
 
@@ -91,13 +99,15 @@ object InfraGuardian {
     supervise: Behavior[PipelineCommand] => Behavior[PipelineCommand],
     eventBus:  ActorRef[EventBusCommand],
     domain:    Option[DomainRefs],
-    crossCut:  Option[CrossCutRefs]
+    crossCut:  Option[CrossCutRefs],
+    lookup:    AgentSettingsLookup,
+    heartbeat: FiniteDuration
   )(implicit ec: ExecutionContext): Behavior[InfraGuardianCommand] =
     Behaviors.receiveMessage {
       case WireDomainRefs(refs) =>
-        tryWire(stash, ctx, supervise, eventBus, Some(refs), crossCut)
+        tryWire(stash, ctx, supervise, eventBus, Some(refs), crossCut, lookup, heartbeat)
       case WireCrossCutRefs(refs) =>
-        tryWire(stash, ctx, supervise, eventBus, domain, Some(refs))
+        tryWire(stash, ctx, supervise, eventBus, domain, Some(refs), lookup, heartbeat)
       case WireFailure(reason) =>
         ctx.log.error(s"[InfraGuardian] wiring failed: $reason — guardian will keep retrying via stash")
         Behaviors.same
@@ -112,7 +122,9 @@ object InfraGuardian {
     supervise: Behavior[PipelineCommand] => Behavior[PipelineCommand],
     eventBus:  ActorRef[EventBusCommand],
     domain:    Option[DomainRefs],
-    crossCut:  Option[CrossCutRefs]
+    crossCut:  Option[CrossCutRefs],
+    lookup:    AgentSettingsLookup,
+    heartbeat: FiniteDuration
   )(implicit ec: ExecutionContext): Behavior[InfraGuardianCommand] =
     (domain, crossCut) match {
       case (Some(d), Some(cc)) =>
@@ -130,11 +142,11 @@ object InfraGuardian {
         )
         ctx.watchWith(pipeline, InfraChildTerminated("pipeline"))
         Behaviors.withTimers[InfraGuardianCommand] { timers =>
-          timers.startTimerAtFixedRate(InfraPingTick, 30.seconds)
-          stash.unstashAll(active(Children(eventBus, pipeline), initialHealth()))
+          timers.startTimerAtFixedRate(InfraPingTick, heartbeat)
+          stash.unstashAll(active(Children(eventBus, pipeline), initialHealth(), lookup))
         }
       case _ =>
-        wiring(stash, ctx, supervise, eventBus, domain, crossCut)
+        wiring(stash, ctx, supervise, eventBus, domain, crossCut, lookup, heartbeat)
     }
 
   private def initialHealth(): Health = {
@@ -143,17 +155,26 @@ object InfraGuardian {
     Health(fresh("eventbus"), fresh("pipeline"))
   }
 
-  private def active(children: Children, health: Health): Behavior[InfraGuardianCommand] =
+  private def active(children: Children, health: Health, lookup: AgentSettingsLookup): Behavior[InfraGuardianCommand] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
 
         case ForwardEventBus(cmd) =>
-          if (health.eventBus.status != ChildStatus.Dead) children.eventBus ! cmd
+          if (!lookup.getBool("engines.eventbus.enabled")) {
+            ctx.log.warn("[InfraGuardian] DROP eventbus — kill-switch off")
+          } else if (health.eventBus.status != ChildStatus.Dead) children.eventBus ! cmd
           else ctx.log.warn("[InfraGuardian] DROP eventbus cmd — child is Dead")
           Behaviors.same
 
         case ForwardPipeline(cmd) =>
-          if (health.pipeline.status != ChildStatus.Dead) children.pipeline ! cmd
+          if (!lookup.getBool("engines.pipeline.enabled")) {
+            ctx.log.warn("[InfraGuardian] DROP pipeline — kill-switch off")
+            cmd match {
+              case ProcessNewPublication(_, _, _, _, _, _, _, _, _, replyTo) =>
+                replyTo ! PipelineError("Pipeline deshabilitado por configuración", "guardian", "kill_switch")
+              case _ =>
+            }
+          } else if (health.pipeline.status != ChildStatus.Dead) children.pipeline ! cmd
           else cmd match {
             case ProcessNewPublication(_, _, _, _, _, _, _, _, _, replyTo) =>
               ctx.log.warn("[InfraGuardian] fast-fail pipeline — child is Dead")
@@ -177,14 +198,14 @@ object InfraGuardian {
               updatedAt = Instant.now()
             )
           }
-          active(children, updated)
+          active(children, updated, lookup)
 
         case InfraPingTick =>
           val now = Instant.now()
           active(children, health.copy(
             eventBus = health.eventBus.copy(updatedAt = now),
             pipeline = health.pipeline.copy(updatedAt = now)
-          ))
+          ), lookup)
 
         case _: WireDomainRefs | _: WireCrossCutRefs | _: WireFailure =>
           // late wiring messages — ignore in active state

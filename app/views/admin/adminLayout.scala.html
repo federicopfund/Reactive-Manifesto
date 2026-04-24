@@ -45,6 +45,7 @@
     case "events"       => "Agenda editorial"
     case "collections"  => "Colecciones"
     case "agents"       => "Agentes y Guardians"
+    case "agent-settings" => "Configuración de agentes"
     case _              => "Backoffice"
   }
 }
@@ -172,6 +173,11 @@
             <a class="ed-bo__nav-item @isActive("agents")" href="@routes.AdminAgentsController.dashboard()">
               <span class="ed-bo__nav-dot"></span>Agentes &amp; Guardians
             </a>
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.ObservabilityManage)) {
+              <a class="ed-bo__nav-item @isActive("agent-settings")" href="@routes.AdminAgentSettingsController.view()">
+                <span class="ed-bo__nav-dot"></span>Configuración de agentes
+              </a>
+            }
           </div>
         }
 

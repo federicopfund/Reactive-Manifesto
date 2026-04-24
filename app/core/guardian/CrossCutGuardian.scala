@@ -4,7 +4,7 @@ import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import core._
 import repositories.UserNotificationRepository
-import services.EmailService
+import services.{AgentSettingsLookup, EmailService}
 
 import java.time.Instant
 import scala.concurrent.ExecutionContext
@@ -40,9 +40,6 @@ final case class CrossCutRefs(
 
 object CrossCutGuardian {
 
-  private val CB_FAILURE_THRESHOLD = 3
-  private val CB_RESET             = 30.seconds
-
   private case class Children(
     notification: ActorRef[NotificationCommand],
     moderation:   ActorRef[ModerationCommand],
@@ -66,19 +63,28 @@ object CrossCutGuardian {
 
   def apply(
     notificationRepo: UserNotificationRepository,
-    emailService:     EmailService
+    emailService:     EmailService,
+    lookup:           AgentSettingsLookup = AgentSettingsLookup.Defaults
   )(implicit ec: ExecutionContext): Behavior[CrossCutGuardianCommand] =
     Behaviors.setup { ctx =>
       ctx.log.info("[CrossCutGuardian] Starting — spawning 3 cross-cutting children with backoff")
+
+      val maxRestarts       = lookup.getInt("supervision.crosscut.maxRestarts")
+      val resetBackoffAfter = lookup.getDuration("supervision.crosscut.resetBackoffSec")
+      val minBackoff        = lookup.getDuration("backoff.crosscut.minSec")
+      val maxBackoff        = lookup.getDuration("backoff.crosscut.maxSec")
+      val heartbeatInterval = lookup.getDuration("heartbeat.crosscut.intervalSec")
+      val cbThreshold       = lookup.getInt("cb.moderation.failureThreshold")
+      val cbReset           = lookup.getDuration("cb.moderation.resetSec")
 
       def supervise[T](b: Behavior[T]): Behavior[T] =
         Behaviors
           .supervise(b)
           .onFailure[Throwable](
             SupervisorStrategy
-              .restartWithBackoff(1.second, 30.seconds, randomFactor = 0.2)
-              .withMaxRestarts(5)
-              .withResetBackoffAfter(1.minute)
+              .restartWithBackoff(minBackoff, maxBackoff, randomFactor = 0.2)
+              .withMaxRestarts(maxRestarts)
+              .withResetBackoffAfter(resetBackoffAfter)
           )
 
       val children = Children(
@@ -92,8 +98,8 @@ object CrossCutGuardian {
       ctx.watchWith(children.analytics,    CrossCutChildTerminated("analytics"))
 
       Behaviors.withTimers { timers =>
-        timers.startTimerAtFixedRate(CrossCutPingTick, 30.seconds)
-        active(timers, children, initialHealth())
+        timers.startTimerAtFixedRate(CrossCutPingTick, heartbeatInterval)
+        active(timers, children, initialHealth(), lookup, cbThreshold, cbReset)
       }
     }
 
@@ -104,33 +110,44 @@ object CrossCutGuardian {
   }
 
   private def active(
-    timers:   akka.actor.typed.scaladsl.TimerScheduler[CrossCutGuardianCommand],
-    children: Children,
-    health:   Health
+    timers:      akka.actor.typed.scaladsl.TimerScheduler[CrossCutGuardianCommand],
+    children:    Children,
+    health:      Health,
+    lookup:      AgentSettingsLookup,
+    cbThreshold: Int,
+    cbReset:     FiniteDuration
   ): Behavior[CrossCutGuardianCommand] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
 
         case ForwardNotification(cmd) =>
-          if (health.notification.status != ChildStatus.Dead) children.notification ! cmd
+          if (!lookup.getBool("engines.notification.enabled")) {
+            ctx.log.warn("[CrossCutGuardian] DROP notification — kill-switch off")
+          } else if (health.notification.status != ChildStatus.Dead) children.notification ! cmd
           else ctx.log.warn("[CrossCutGuardian] DROP notification cmd — child is Dead")
           Behaviors.same
 
         case ForwardModeration(cmd) =>
-          if (health.moderationCB == "open") {
-            // Circuit breaker abierto — degradar a "pending_review"
+          if (!lookup.getBool("engines.moderation.enabled")) {
+            ctx.log.warn("[CrossCutGuardian] DROP moderation — kill-switch off")
+            cmd match {
+              case ModerateContent(contentId, _, _, _, _, replyTo) =>
+                replyTo ! ModerationResult(contentId, "pending_review", List("kill_switch_off"), 0.0)
+              case _ =>
+            }
+          } else if (health.moderationCB == "open") {
             cmd match {
               case ModerateContent(contentId, _, _, _, _, replyTo) =>
                 ctx.log.warn("[CrossCutGuardian] Moderation CB OPEN — fast-fail to pending_review")
                 replyTo ! ModerationResult(contentId, "pending_review", List("cb_open"), 0.0)
-              case _ => // ignore
+              case _ =>
             }
           } else if (health.moderation.status == ChildStatus.Dead) {
             cmd match {
               case ModerateContent(contentId, _, _, _, _, replyTo) =>
                 ctx.log.warn("[CrossCutGuardian] Moderation Dead — fast-fail to pending_review")
                 replyTo ! ModerationResult(contentId, "pending_review", List("dead"), 0.0)
-              case _ => // ignore
+              case _ =>
             }
           } else {
             children.moderation ! cmd
@@ -138,7 +155,9 @@ object CrossCutGuardian {
           Behaviors.same
 
         case ForwardAnalytics(cmd) =>
-          if (health.analytics.status != ChildStatus.Dead) children.analytics ! cmd
+          if (!lookup.getBool("engines.analytics.enabled")) {
+            ctx.log.warn("[CrossCutGuardian] DROP analytics — kill-switch off")
+          } else if (health.analytics.status != ChildStatus.Dead) children.analytics ! cmd
           else ctx.log.warn("[CrossCutGuardian] DROP analytics cmd — child is Dead")
           Behaviors.same
 
@@ -161,18 +180,17 @@ object CrossCutGuardian {
               updatedAt = Instant.now()
             )
           }
-          // Trip CB si llegamos al umbral de moderation
           val updated =
-            if (name == "moderation" && updated0.moderation.restarts >= CB_FAILURE_THRESHOLD && updated0.moderationCB == "closed") {
-              ctx.log.warn(s"[CrossCutGuardian] Moderation CB → OPEN (will retry in ${CB_RESET.toSeconds}s)")
-              timers.startSingleTimer(ModerationCBHalfOpen, CB_RESET)
+            if (name == "moderation" && updated0.moderation.restarts >= cbThreshold && updated0.moderationCB == "closed") {
+              ctx.log.warn(s"[CrossCutGuardian] Moderation CB → OPEN (will retry in ${cbReset.toSeconds}s)")
+              timers.startSingleTimer(ModerationCBHalfOpen, cbReset)
               updated0.copy(moderationCB = "open")
             } else updated0
-          active(timers, children, updated)
+          active(timers, children, updated, lookup, cbThreshold, cbReset)
 
         case ModerationCBHalfOpen =>
           ctx.log.info("[CrossCutGuardian] Moderation CB → HALF_OPEN (next request goes through)")
-          active(timers, children, health.copy(moderationCB = "closed"))
+          active(timers, children, health.copy(moderationCB = "closed"), lookup, cbThreshold, cbReset)
 
         case CrossCutPingTick =>
           val now = Instant.now()
@@ -180,7 +198,7 @@ object CrossCutGuardian {
             notification = health.notification.copy(updatedAt = now),
             moderation   = health.moderation.copy(updatedAt   = now),
             analytics    = health.analytics.copy(updatedAt    = now)
-          ))
+          ), lookup, cbThreshold, cbReset)
       }
     }
 
