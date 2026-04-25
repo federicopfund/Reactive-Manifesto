@@ -46,6 +46,9 @@ libraryDependencies ++= Seq(
   "org.commonmark" % "commonmark-ext-gfm-tables" % "0.22.0",
   "org.commonmark" % "commonmark-ext-autolink" % "0.22.0",
 
+  // PostgreSQL Database (for production)
+  "org.postgresql" % "postgresql" % "42.7.2",
+
   // Testing
   "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.0" % Test,
   "com.typesafe.akka"      %% "akka-actor-testkit-typed" % "2.8.5" % Test

@@ -2,10 +2,12 @@ import akka.actor.typed.ActorSystem
 import com.google.inject.{AbstractModule, Provides, Singleton}
 import com.typesafe.config.ConfigFactory
 import core.guardian._
+import javax.inject.Inject
+import play.api.inject.ApplicationLifecycle
 import repositories._
 import services._
 
-import scala.concurrent.{Await, ExecutionContext, Promise}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
 
 /**
@@ -27,39 +29,21 @@ import scala.concurrent.duration._
  */
 class Module extends AbstractModule {
 
+  override def configure(): Unit = {
+    // Inicialización eager: el ActorSystem se construye al arrancar la app
+    // (no en el primer request). Evita "Shutdown in progress" cuando llegan
+    // requests durante el hot-reload de dev mode.
+    bind(classOf[ReactiveSystemHolder]).asEagerSingleton()
+  }
+
   // ── ActorSystem único + 3 ActorRefs de guardians ──
   @Provides
   @Singleton
-  def provideRefs(
-    contactRepo:      ContactRepository,
-    messageRepo:      PrivateMessageRepository,
-    notificationRepo: UserNotificationRepository,
-    publicationRepo:  PublicationRepository,
-    badgeRepo:        BadgeRepository,
-    emailService:     EmailService,
-    agentSettings:    AgentSettingsService
-  )(implicit ec: ExecutionContext): RootGuardian.Refs = {
-    val rootConfig    = ConfigFactory.load()
-    val clusterConfig = rootConfig.getConfig("eventbus-cluster").withFallback(rootConfig)
-
-    val promise = Promise[RootGuardian.Refs]()
-    val system = ActorSystem[Nothing](
-      RootGuardian(contactRepo, messageRepo, notificationRepo, publicationRepo, badgeRepo, emailService, promise, agentSettings),
-      "reactive-manifesto",
-      clusterConfig
-    )
-    // Anclamos el ActorSystem al ciclo de vida (lo bindeamos abajo).
-    _system = system
-    Await.result(promise.future, 10.seconds)
-  }
-
-  // El sistema se mantiene vivo mientras el `Module` viva. Lo exponemos
-  // por si algún componente necesita el `Scheduler` o el `dispatcher`.
-  @volatile private var _system: ActorSystem[Nothing] = _
+  def provideRefs(holder: ReactiveSystemHolder): RootGuardian.Refs = holder.refs
 
   @Provides
   @Singleton
-  def provideActorSystem(refs: RootGuardian.Refs): ActorSystem[Nothing] = _system
+  def provideActorSystem(holder: ReactiveSystemHolder): ActorSystem[Nothing] = holder.system
 
   // Issue #15/#16: el HealthController usa AskPattern y necesita un
   // `akka.actor.typed.Scheduler` implícito. Lo derivamos del sistema raíz.
@@ -110,4 +94,41 @@ class Module extends AbstractModule {
   @Provides @Singleton
   def providePipelineAdapter(infra: akka.actor.typed.ActorRef[InfraGuardianCommand], system: ActorSystem[Nothing])(implicit ec: ExecutionContext): ReactivePipelineAdapter =
     new ReactivePipelineAdapter(infra, system.scheduler)
+}
+
+/**
+ * Holder eager singleton: construye el ActorSystem raíz en el arranque
+ * de la aplicación y registra su terminación con el ApplicationLifecycle
+ * de Play. Esto evita el error "Shutdown in progress" que ocurría cuando
+ * el ActorSystem se inicializaba perezosamente durante el primer request.
+ */
+@Singleton
+class ReactiveSystemHolder @Inject() (
+  contactRepo:      ContactRepository,
+  messageRepo:      PrivateMessageRepository,
+  notificationRepo: UserNotificationRepository,
+  publicationRepo:  PublicationRepository,
+  badgeRepo:        BadgeRepository,
+  emailService:     EmailService,
+  agentSettings:    AgentSettingsService,
+  lifecycle:        ApplicationLifecycle
+)(implicit ec: ExecutionContext) {
+
+  private val rootConfig    = ConfigFactory.load()
+  private val clusterConfig = rootConfig.getConfig("eventbus-cluster").withFallback(rootConfig)
+
+  private val promise = Promise[RootGuardian.Refs]()
+
+  val system: ActorSystem[Nothing] = ActorSystem[Nothing](
+    RootGuardian(contactRepo, messageRepo, notificationRepo, publicationRepo, badgeRepo, emailService, promise, agentSettings),
+    "reactive-manifesto",
+    clusterConfig
+  )
+
+  val refs: RootGuardian.Refs = Await.result(promise.future, 10.seconds)
+
+  lifecycle.addStopHook { () =>
+    system.terminate()
+    Future.successful(())
+  }
 }
