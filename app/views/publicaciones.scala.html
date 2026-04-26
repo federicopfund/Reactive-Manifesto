@@ -2,7 +2,8 @@
   editorialArticles: Seq[models.EditorialArticle],
   categories: Seq[models.PublicationCategory],
   searchQuery: String = "",
-  searchCategory: Option[String] = None)(implicit request: RequestHeader, messages: Messages)
+  searchCategory: Option[String] = None,
+  currentSeason: Option[models.EditorialSeason] = None)(implicit request: RequestHeader, messages: Messages)
 
 @*
   Listado de publicaciones — Editorial Reactiva.
@@ -13,6 +14,13 @@
 @currentCategoryActive(c: models.PublicationCategory) = @{ searchCategory.contains(c.name) }
 @allActive = @{ searchCategory.isEmpty || searchCategory.exists(_.trim.isEmpty) }
 @totalCount = @{ dynamicPublications.size + editorialArticles.size }
+@seasonName = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
+@seasonEmptyBody = @{
+  seasonName match {
+    case Some(name) => s"Sé de los primeros en proponer un artículo para la temporada $name del Manifiesto Reactivo."
+    case None       => "Sé de los primeros en proponer un artículo para la próxima temporada del Manifiesto Reactivo."
+  }
+}
 
 @main("Publicaciones") {
 
@@ -22,8 +30,8 @@
   <div class="ed-pub-toolbar">
     <header class="ed-pub-header">
       <div>
-        <div class="ed-pub-count">@totalCount publicaciones · Edición Nº 01</div>
-        <h1 class="ed-pub-title">Artículos <em>de la edición</em></h1>
+        <div class="ed-pub-count">@totalCount publicaciones · @seasonName.map(name => "Temporada: " + name).getOrElse("Flujo editorial continuo")</div>
+        <h1 class="ed-pub-title">Artículos <em>@seasonName.map(_ => "de la temporada").getOrElse("publicados")</em></h1>
       </div>
       <form action="@routes.HomeController.searchPublicaciones()" method="GET" class="ed-search-wrap">
         <span class="ed-search-icon">⌕</span>
@@ -63,8 +71,8 @@
       @partials.emptyState(
         variant = "empty",
         icon = "feather",
-        title = "Aún no hay piezas en esta edición",
-        body = "Sé de los primeros en proponer un artículo para la edición Nº 01 del Manifiesto Reactivo.",
+        title = "Aún no hay piezas publicadas",
+        body = seasonEmptyBody,
         ctaLabel = Some("Proponer publicación"),
         ctaHref = Some(routes.UserPublicationController.dashboard().url),
         secondaryLabel = Some("Suscribirme"),
