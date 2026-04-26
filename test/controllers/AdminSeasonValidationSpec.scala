@@ -65,7 +65,7 @@ class AdminSeasonValidationSpec extends AnyWordSpec with Matchers {
         name = "Temporada 2026 Q4",
         tagline = Some("Nuevos ritmos editoriales"),
         openingEssay = Some("https://example.org/opening"),
-        createdAt = Instant.now()
+        createdAt = Instant.parse("2026-10-01T00:00:00Z")
       )
 
       val announcement = AdminSeasonValidation.buildSeasonAnnouncement(season)
@@ -81,7 +81,7 @@ class AdminSeasonValidationSpec extends AnyWordSpec with Matchers {
         name = "Temporada 2027 Q1",
         tagline = Some("Foco en sistemas distribuidos"),
         openingEssay = None,
-        createdAt = Instant.now()
+        createdAt = Instant.parse("2027-01-01T00:00:00Z")
       )
 
       val announcement = AdminSeasonValidation.buildSeasonAnnouncement(season)

@@ -35,13 +35,13 @@ private[controllers] object AdminSeasonValidation {
   case class SeasonAnnouncement(title: String, message: String)
 
   def buildSeasonAnnouncement(season: EditorialSeason): SeasonAnnouncement = {
-    val safeName = season.name.trim
+    val trimmedName = season.name.trim
     val tagline = season.tagline.map(_.trim).filter(_.nonEmpty)
     val openingEssayLink = season.openingEssay.map(_.trim).filter(_.nonEmpty)
 
-    val title = s"Nueva temporada activa: $safeName"
+    val title = s"Nueva temporada activa: $trimmedName"
     val lines = Seq(
-      Some(s"Comenzó «$safeName»."),
+      Some(s"Comenzó «$trimmedName»."),
       tagline.map(t => s"Tagline: $t"),
       openingEssayLink.map(link => s"Opening essay: $link")
     ).flatten
