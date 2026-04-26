@@ -36,8 +36,8 @@ private[controllers] object AdminSeasonValidation {
     val endsOn = parseDate(data.getOrElse("endsOn", ""), "endsOn", errors)
 
     if (isCreate) {
-      if (code.isEmpty) errors += "code" -> "Codigo requerido."
-      else if (!code.matches("^[a-z0-9-]+$")) errors += "code" -> "Codigo invalido (usa a-z, 0-9 y guiones)."
+      if (code.isEmpty) errors += "code" -> "Código requerido."
+      else if (!code.matches("^[a-z0-9-]+$")) errors += "code" -> "Código inválido (usa a-z, 0-9 y guiones)."
     }
     if (name.isEmpty) errors += "name" -> "Nombre requerido."
     for (start <- startsOn; end <- endsOn if !start.isBefore(end)) {
@@ -59,7 +59,7 @@ private[controllers] object AdminSeasonValidation {
       scala.util.Try(LocalDate.parse(value)).toOption match {
         case Some(date) => Some(date)
         case None =>
-          errors += key -> "Fecha invalida."
+          errors += key -> "Fecha inválida."
           None
       }
     }
@@ -98,7 +98,7 @@ class AdminSeasonController @Inject()(
         case Right(parsed) =>
           seasonRepo.findByCode(parsed.code).flatMap {
             case Some(_) =>
-              Future.successful(BadRequest(views.html.admin.seasons.form(None, Map("code" -> "Ya existe una temporada con ese codigo."), formData)))
+              Future.successful(BadRequest(views.html.admin.seasons.form(None, Map("code" -> "Ya existe una temporada con ese código."), formData)))
             case None =>
               seasonRepo.create(parsed.code, parsed.name, parsed.tagline, parsed.openingEssay, parsed.startsOn, parsed.endsOn).map { id =>
                 Redirect(routes.AdminSeasonController.editForm(id)).flashing("success" -> "Temporada creada.")
@@ -139,7 +139,7 @@ class AdminSeasonController @Inject()(
     CapabilityCheck.require(request, Cap.SeasonsManage) {
       seasonRepo.setCurrent(id).map {
         case true  => Redirect(routes.AdminSeasonController.list()).flashing("success" -> "Temporada marcada como actual.")
-        case false => Redirect(routes.AdminSeasonController.list()).flashing("error" -> "No se encontro la temporada.")
+        case false => Redirect(routes.AdminSeasonController.list()).flashing("error" -> "No se encontró la temporada.")
       }
     }
   }

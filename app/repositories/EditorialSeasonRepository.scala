@@ -59,7 +59,6 @@ class EditorialSeasonRepository @Inject()(
     val row = EditorialSeason(
       code = code,
       name = name,
-      description = tagline,
       tagline = tagline,
       openingEssay = openingEssay,
       startsOn = startsOn,
@@ -79,8 +78,8 @@ class EditorialSeasonRepository @Inject()(
   ): Future[Int] =
     db.run(
       seasons.filter(_.id === id)
-        .map(s => (s.name, s.description, s.tagline, s.openingEssay, s.startsOn, s.endsOn))
-        .update((name, tagline, tagline, openingEssay, startsOn, endsOn))
+        .map(s => (s.name, s.tagline, s.openingEssay, s.startsOn, s.endsOn))
+        .update((name, tagline, openingEssay, startsOn, endsOn))
     )
 
   def setCurrent(id: Long): Future[Boolean] = {

@@ -33,7 +33,7 @@
     @helper.CSRF.formField
 
     <div class="ed-bo__field">
-      <label for="code">Codigo *</label>
+      <label for="code">Código *</label>
       <input id="code" name="code" type="text" value="@v("code")" pattern="^[a-z0-9-]+$" required @if(isEdit){readonly}>
       <small class="ed-bo__field-hint">Solo a-z, 0-9 y guiones.</small>
       @err("code")
