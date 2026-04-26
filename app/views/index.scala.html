@@ -1,4 +1,4 @@
-@(contactForm: Form[controllers.ContactFormData], communityPublications: List[models.PublicationWithAuthor] = Nil, pillars: Seq[models.ManifestoPillar] = Nil)(implicit request: RequestHeader, messages: Messages)
+@(contactForm: Form[controllers.ContactFormData], communityPublications: List[models.PublicationWithAuthor] = Nil, pillars: Seq[models.ManifestoPillar] = Nil, currentSeason: Option[models.EditorialSeason] = None)(implicit request: RequestHeader, messages: Messages)
 
 @*
   Portada — Editorial Reactiva.
@@ -14,6 +14,8 @@
 *@
 
 @isAuthenticated = @{ request.session.get("userId").isDefined }
+@seasonName = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
+@seasonTagline = @{ currentSeason.flatMap(_.description).map(_.trim).filter(_.nonEmpty) }
 
 @main("Portada") {
 
@@ -27,21 +29,22 @@
       <div>
         <div class="ed-hero-issue">
           <span class="ed-hero-issue-dot"></span>
-          Edición Nº 01 · Año Cero · 2025
+          @seasonName.map { name =>
+            Temporada vigente · @name
+          }.getOrElse {
+            Temporada editorial en curso
+          }
         </div>
         <h1 class="ed-hero-title">
-          Sistemas que <em>responden,</em><br/>
-          <span class="ed-hero-rule"></span>
-          resisten y escalan.
+          @seasonName.getOrElse("Sistemas que responden, resisten y escalan.")
         </h1>
       </div>
       <div class="ed-hero-bottom">
         <p class="ed-hero-subtitle">
-          Una edición digital sobre el Manifiesto Reactivo:
-          arquitecturas que conviven con el fallo, la carga y el cambio.
+          @seasonTagline.getOrElse("Publicaciones en flujo continuo sobre el Manifiesto Reactivo: arquitecturas que conviven con el fallo, la carga y el cambio.")
         </p>
         <a href="@routes.HomeController.publicaciones()" class="ed-btn-primary">
-          Leer la edición
+          Explorar publicaciones
         </a>
       </div>
     </div>
@@ -80,7 +83,7 @@ de la comunidad</div>
   <section class="ed-concept-strip">
     <div class="ed-concept-col">
       <div class="ed-concept-role"><span class="ed-concept-role-dot"></span>Lector</div>
-      <h3 class="ed-concept-role-title">Sigue la edición</h3>
+      <h3 class="ed-concept-role-title">Sigue la temporada</h3>
       <p class="ed-concept-role-desc">
         Accede a artículos curados sobre sistemas reactivos, patrones de resiliencia
         y arquitecturas modernas.
@@ -262,7 +265,7 @@ de la comunidad</div>
       <div class="ed-guest-main">
         <div class="ed-guest-label">Convocatoria abierta</div>
         <h2 class="ed-guest-headline">
-          Únete a la edición y <em>publica tu pieza.</em>
+          Únete a la temporada y <em>publica tu pieza.</em>
         </h2>
         <p class="ed-guest-body">
           La comunidad reactiva crece con autores y editores que piensan los sistemas
@@ -317,7 +320,7 @@ de la comunidad</div>
       <div>
         <h2 class="ed-h2" style="margin-bottom: 0.75rem;">Escribe a la redacción</h2>
         <p class="ed-prose" style="max-width: 48ch;">
-          Propuestas, errores en la edición, colaboraciones o consultas técnicas.
+          Propuestas, errores en publicaciones, colaboraciones o consultas técnicas.
           Respondemos en un plazo razonable.
         </p>
       </div>
