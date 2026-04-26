@@ -1,0 +1,78 @@
+@(existing: Option[models.EditorialSeason], formErrors: Map[String, String], formData: Map[String, String])(implicit request: RequestHeader)
+
+@isEdit = @{ existing.isDefined }
+@actionUrl = @{
+  existing.flatMap(_.id).map(id => routes.AdminSeasonController.update(id))
+    .getOrElse(routes.AdminSeasonController.create())
+}
+
+@v(field: String) = @{ formData.getOrElse(field, "") }
+@err(field: String) = @{
+  formErrors.get(field).map { msg =>
+    play.twirl.api.Html(s"""<small class="ed-bo__field-error">$msg</small>""")
+  }.getOrElse(play.twirl.api.Html(""))
+}
+
+@admin.adminLayout(if(isEdit) "Editar temporada" else "Nueva temporada", "seasons") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">@if(isEdit) {Editar temporada} else {Nueva temporada}</h1>
+      <p class="ed-bo__page-lead">Define el marco editorial de la temporada.</p>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-ghost" href="@routes.AdminSeasonController.list()">Volver</a>
+    </div>
+  </div>
+
+  @if(formErrors.nonEmpty) {
+    <div class="ed-flash ed-flash--error">Revisa los campos marcados.</div>
+  }
+
+  <form method="POST" action="@actionUrl" class="ed-bo__form">
+    @helper.CSRF.formField
+
+    <div class="ed-bo__field">
+      <label for="code">Código *</label>
+      <input id="code" name="code" type="text" value="@v("code")" pattern="^[a-z0-9-]+$" required @if(isEdit){readonly}>
+      <small class="ed-bo__field-hint">Solo a-z, 0-9 y guiones.</small>
+      @err("code")
+    </div>
+
+    <div class="ed-bo__field">
+      <label for="name">Nombre *</label>
+      <input id="name" name="name" type="text" value="@v("name")" required>
+      @err("name")
+    </div>
+
+    <div class="ed-bo__field">
+      <label for="tagline">Tagline</label>
+      <input id="tagline" name="tagline" type="text" value="@v("tagline")" maxlength="255">
+      @err("tagline")
+    </div>
+
+    <div class="ed-bo__field">
+      <label for="openingEssay">Opening essay</label>
+      <textarea id="openingEssay" name="openingEssay" rows="8">@v("openingEssay")</textarea>
+      @err("openingEssay")
+    </div>
+
+    <div class="ed-bo__field-row">
+      <div class="ed-bo__field">
+        <label for="startsOn">Inicio</label>
+        <input id="startsOn" name="startsOn" type="date" value="@v("startsOn")">
+        @err("startsOn")
+      </div>
+      <div class="ed-bo__field">
+        <label for="endsOn">Fin</label>
+        <input id="endsOn" name="endsOn" type="date" value="@v("endsOn")">
+        @err("endsOn")
+      </div>
+    </div>
+
+    <div class="ed-bo__form-actions">
+      <button type="submit" class="ed-btn-primary">@if(isEdit){Guardar cambios} else {Crear temporada}</button>
+      <a class="ed-btn-ghost" href="@routes.AdminSeasonController.list()">Cancelar</a>
+    </div>
+  </form>
+}

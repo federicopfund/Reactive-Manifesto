@@ -15,7 +15,7 @@
 
 @isAuthenticated = @{ request.session.get("userId").isDefined }
 @seasonName = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
-@seasonTagline = @{ currentSeason.flatMap(_.description).map(_.trim).filter(_.nonEmpty) }
+@seasonTagline = @{ currentSeason.flatMap(s => s.tagline.orElse(s.description)).map(_.trim).filter(_.nonEmpty) }
 
 @main("Portada") {
 
