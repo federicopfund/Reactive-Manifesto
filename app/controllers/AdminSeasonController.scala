@@ -30,23 +30,22 @@ private[controllers] object AdminSeasonValidation {
   def shouldAnnounceNewsletter(form: Map[String, Seq[String]]): Boolean =
     form.get("announceNewsletter")
       .flatMap(_.headOption)
-      .exists(v => Set("on", "true", "1").contains(v.trim.toLowerCase))
+      .exists(v => Set("on", "true").contains(v.trim.toLowerCase))
 
   case class SeasonAnnouncement(title: String, message: String)
 
   def buildSeasonAnnouncement(season: EditorialSeason): SeasonAnnouncement = {
     val safeName = season.name.trim
-    val tagline = season.tagline
-      .orElse(season.description)
-      .map(_.trim)
-      .filter(_.nonEmpty)
+    val tagline = season.tagline.map(_.trim).filter(_.nonEmpty)
     val openingEssayLink = season.openingEssay.map(_.trim).filter(_.nonEmpty)
 
     val title = s"Nueva temporada activa: $safeName"
-    val message =
-      s"""Comenzó «$safeName».
-         |${tagline.map(t => s"\nTagline: $t").getOrElse("")}
-         |${openingEssayLink.map(link => s"\nOpening essay: $link").getOrElse("")}""".stripMargin.trim
+    val lines = Seq(
+      Some(s"Comenzó «$safeName»."),
+      tagline.map(t => s"Tagline: $t"),
+      openingEssayLink.map(link => s"Opening essay: $link")
+    ).flatten
+    val message = lines.mkString("\n")
 
     SeasonAnnouncement(title, message)
   }
@@ -193,7 +192,7 @@ class AdminSeasonController @Inject()(
                 .recover { case ex =>
                   logger.error(s"No se pudo enviar anuncio de apertura para temporada id=$id", ex)
                   Redirect(routes.AdminSeasonController.list())
-                    .flashing("success" -> "Temporada marcada como actual.", "error" -> "No se pudo enviar el anuncio de newsletter.")
+                    .flashing("success" -> "Temporada marcada como actual, pero no se pudo enviar el anuncio de newsletter.")
                 }
           }
       }

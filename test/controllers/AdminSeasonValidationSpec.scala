@@ -52,6 +52,7 @@ class AdminSeasonValidationSpec extends AnyWordSpec with Matchers {
     "return true only when checkbox value is present" in {
       AdminSeasonValidation.shouldAnnounceNewsletter(Map("announceNewsletter" -> Seq("on"))) shouldBe true
       AdminSeasonValidation.shouldAnnounceNewsletter(Map("announceNewsletter" -> Seq("true"))) shouldBe true
+      AdminSeasonValidation.shouldAnnounceNewsletter(Map("announceNewsletter" -> Seq("1"))) shouldBe false
       AdminSeasonValidation.shouldAnnounceNewsletter(Map.empty) shouldBe false
     }
   }
