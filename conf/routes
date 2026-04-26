@@ -14,6 +14,10 @@ GET     /publicaciones              controllers.HomeController.publicaciones()
 GET     /publicaciones/buscar       controllers.HomeController.searchPublicaciones(q: String ?= "", category: Option[String] ?= None)
 GET     /publicaciones/:slug        controllers.HomeController.publicacion(slug: String)
 
+# Temporadas editoriales (Issue #23)
+GET     /temporadas                 controllers.HomeController.temporadas()
+GET     /temporadas/:code           controllers.HomeController.temporada(code: String)
+
 # Portafolio page
 GET     /portafolio                 controllers.HomeController.portafolio()
 GET     /portafolio/:slug           controllers.HomeController.collectionDetail(slug: String)

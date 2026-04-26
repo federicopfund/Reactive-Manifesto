@@ -203,6 +203,21 @@ class PublicationRepository @Inject()(
     db.run(query).map(_.toList)
   }
 
+  /** Listar publicaciones aprobadas asociadas a una temporada editorial. */
+  def findApprovedBySeasonId(seasonId: Long, limit: Int = 200): Future[List[PublicationWithAuthor]] = {
+    val query = sql"""
+      SELECT p.*, u.username, u.full_name
+      FROM publications p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.status = 'approved'
+        AND p.season_id = $seasonId
+      ORDER BY p.published_at DESC, p.created_at DESC
+      LIMIT $limit
+    """.as[PublicationWithAuthor]
+
+    db.run(query).map(_.toList)
+  }
+
   /** Listar publicaciones pendientes de aprobación */
   def findPending(limit: Int = 100): Future[List[PublicationWithAuthor]] = {
     val query = sql"""
