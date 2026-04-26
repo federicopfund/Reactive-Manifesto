@@ -81,6 +81,30 @@ class HomeController @Inject()(
     ))
   }
 
+  def temporadas() = Action.async { implicit request: Request[AnyContent] =>
+    analyticsAdapter.trackPageView("/temporadas", None, request.headers.get("Referer"))
+    seasonRepo.findAllChronologicalDesc().map { seasons =>
+      Ok(views.html.temporadas(seasons))
+    }
+  }
+
+  def temporada(code: String) = Action.async { implicit request: Request[AnyContent] =>
+    analyticsAdapter.trackPageView(s"/temporadas/$code", None, request.headers.get("Referer"))
+    seasonRepo.findByCode(code).flatMap {
+      case Some(season) =>
+        season.id match {
+          case Some(seasonId) =>
+            publicationRepository.findApprovedBySeasonId(seasonId).map { publications =>
+              Ok(views.html.temporadaDetail(season, publications))
+            }
+          case None =>
+            Future.successful(Ok(views.html.temporadaDetail(season, Nil)))
+        }
+      case None =>
+        Future.successful(NotFound(views.html.errors.notFound()))
+    }
+  }
+
   def publicacion(slug: String) = optionalAuth.async { implicit request: OptionalAuthRequest[AnyContent] =>
     // Primero buscar en publicaciones dinámicas
     publicationRepository.findBySlug(slug).flatMap {

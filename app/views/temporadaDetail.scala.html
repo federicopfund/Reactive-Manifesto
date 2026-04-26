@@ -1,0 +1,38 @@
+@(season: models.EditorialSeason, publications: List[models.PublicationWithAuthor])(implicit request: RequestHeader)
+
+@import java.util.Locale
+@import java.time.format.DateTimeFormatter
+
+@dateFmt = @{ DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "AR")) }
+@dateLabel(d: Option[java.time.LocalDate], fallback: String) = @{ d.map(_.format(dateFmt)).getOrElse(fallback) }
+
+@main(season.name, fullBleed = false) {
+  <section class="ed-section">
+    <p><a href="@routes.HomeController.temporadas()">← Volver al archivo de temporadas</a></p>
+    <header class="ed-page-header">
+      <p class="ed-page-kicker">Temporada</p>
+      <h1>@season.name</h1>
+      <p><code>@season.code</code></p>
+      <p>@season.description.getOrElse("Sin descripción editorial publicada.")</p>
+      <p>
+        @dateLabel(season.startsOn, "Inicio no definido")
+        —
+        @dateLabel(season.endsOn, "Cierre no definido")
+      </p>
+    </header>
+
+    <h2>Índice de piezas asociadas (@publications.size)</h2>
+    @if(publications.isEmpty) {
+      <p>Esta temporada todavía no tiene publicaciones asociadas.</p>
+    } else {
+      <ol>
+        @for(item <- publications) {
+          <li>
+            <a href="@routes.HomeController.publicacion(item.publication.slug)">@item.publication.title</a>
+            <span> · @item.authorFullName</span>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+}

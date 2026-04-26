@@ -40,6 +40,9 @@ class EditorialSeasonRepository @Inject()(
   def findAll(): Future[Seq[EditorialSeason]] =
     db.run(seasons.sortBy(_.createdAt.desc).result)
 
+  def findAllChronologicalDesc(): Future[Seq[EditorialSeason]] =
+    db.run(seasons.sortBy(s => (s.startsOn.desc.nullsLast, s.createdAt.desc)).result)
+
   def findByCode(code: String): Future[Option[EditorialSeason]] =
     db.run(seasons.filter(_.code === code).result.headOption)
 }
