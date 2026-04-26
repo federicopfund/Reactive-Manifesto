@@ -43,6 +43,7 @@
     case "newsletter"   => "Newsletter"
     case "admins"       => "Administradores"
     case "events"       => "Agenda editorial"
+    case "seasons"      => "Temporadas"
     case "collections"  => "Colecciones"
     case "agents"       => "Agentes y Guardians"
     case "agent-settings" => "Configuración de agentes"
@@ -136,7 +137,7 @@
           }
         </div>
 
-        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview) || utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsExport) || utils.RolePolicy.can(role, utils.Capabilities.Cap.EditorialIdentityManage)) {
+        @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview) || utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsExport) || utils.RolePolicy.can(role, utils.Capabilities.Cap.EditorialIdentityManage) || utils.RolePolicy.can(role, utils.Capabilities.Cap.SeasonsManage)) {
           <div class="ed-bo__nav-group">
             <span class="ed-bo__nav-label">Editorial</span>
             @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.PublicationsReview)) {
@@ -150,6 +151,11 @@
             @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.EditorialIdentityManage)) {
               <a class="ed-bo__nav-item @isActive("editorial-identity")" href="@routes.AdminEditorialIdentityController.list()">
                 <span class="ed-bo__nav-dot"></span>Identidad editorial
+              </a>
+            }
+            @if(utils.RolePolicy.can(role, utils.Capabilities.Cap.SeasonsManage)) {
+              <a class="ed-bo__nav-item @isActive("seasons")" href="@routes.AdminSeasonController.list()">
+                <span class="ed-bo__nav-dot"></span>Temporadas
               </a>
             }
           </div>

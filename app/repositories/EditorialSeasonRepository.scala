@@ -22,13 +22,15 @@ class EditorialSeasonRepository @Inject()(
     def code        = column[String]("code")
     def name        = column[String]("name")
     def description = column[Option[String]]("description")
+    def tagline     = column[Option[String]]("tagline")
+    def openingEssay = column[Option[String]]("opening_essay")
     def startsOn    = column[Option[LocalDate]]("starts_on")
     def endsOn      = column[Option[LocalDate]]("ends_on")
     def isCurrent   = column[Boolean]("is_current")
     def createdAt   = column[Instant]("created_at")
 
     def * = (
-      id.?, code, name, description, startsOn, endsOn, isCurrent, createdAt
+      id.?, code, name, description, tagline, openingEssay, startsOn, endsOn, isCurrent, createdAt
     ).mapTo[EditorialSeason]
   }
 
@@ -42,4 +44,58 @@ class EditorialSeasonRepository @Inject()(
 
   def findByCode(code: String): Future[Option[EditorialSeason]] =
     db.run(seasons.filter(_.code === code).result.headOption)
+
+  def findById(id: Long): Future[Option[EditorialSeason]] =
+    db.run(seasons.filter(_.id === id).result.headOption)
+
+  def create(
+    code: String,
+    name: String,
+    tagline: Option[String],
+    openingEssay: Option[String],
+    startsOn: Option[LocalDate],
+    endsOn: Option[LocalDate]
+  ): Future[Long] = {
+    val row = EditorialSeason(
+      code = code,
+      name = name,
+      description = tagline,
+      tagline = tagline,
+      openingEssay = openingEssay,
+      startsOn = startsOn,
+      endsOn = endsOn,
+      isCurrent = false
+    )
+    db.run((seasons returning seasons.map(_.id)) += row)
+  }
+
+  def updateBasic(
+    id: Long,
+    name: String,
+    tagline: Option[String],
+    openingEssay: Option[String],
+    startsOn: Option[LocalDate],
+    endsOn: Option[LocalDate]
+  ): Future[Int] =
+    db.run(
+      seasons.filter(_.id === id)
+        .map(s => (s.name, s.description, s.tagline, s.openingEssay, s.startsOn, s.endsOn))
+        .update((name, tagline, tagline, openingEssay, startsOn, endsOn))
+    )
+
+  def setCurrent(id: Long): Future[Boolean] = {
+    val action = for {
+      targetOpt <- seasons.filter(_.id === id).result.headOption
+      updated <- targetOpt match {
+        case None => DBIO.successful(false)
+        case Some(_) =>
+          for {
+            _ <- seasons.map(_.isCurrent).update(false)
+            n <- seasons.filter(_.id === id).map(_.isCurrent).update(true)
+          } yield n > 0
+      }
+    } yield updated
+
+    db.run(action.transactionally)
+  }
 }

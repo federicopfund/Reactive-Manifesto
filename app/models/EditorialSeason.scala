@@ -10,6 +10,8 @@ case class EditorialSeason(
   code: String,
   name: String,
   description: Option[String] = None,
+  tagline: Option[String] = None,
+  openingEssay: Option[String] = None,
   startsOn: Option[LocalDate] = None,
   endsOn: Option[LocalDate] = None,
   isCurrent: Boolean = false,
