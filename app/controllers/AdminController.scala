@@ -568,14 +568,12 @@ class AdminController @Inject()(
               _ <- publicationRepository.updateCurrentStage(id, target.id.get)
               _ <- publicationRepository.changeStatus(id, legacyStatus, request.userId,
                      reason.filter(_ => legacyStatus == "rejected"))
-              _ <- if (shouldAutoAssignSeason && pub.seasonId.isEmpty) {
-                     seasonRepository.findCurrent().flatMap {
-                       case Some(currentSeason) =>
-                         currentSeason.id match {
-                           case Some(seasonId) => publicationRepository.assignSeasonIfEmpty(id, seasonId).map(_ => ())
-                           case None           => Future.successful(())
-                         }
-                       case None => Future.successful(())
+              _ <- if (shouldAutoAssignSeason) {
+                     seasonRepository.findCurrent().flatMap { currentSeasonOpt =>
+                       currentSeasonOpt.flatMap(_.id) match {
+                         case Some(seasonId) => publicationRepository.assignSeasonIfEmpty(id, seasonId).map(_ => ())
+                         case None           => Future.successful(())
+                       }
                      }
                    } else Future.successful(())
               _ <- notificationRepository.create(UserNotification(
