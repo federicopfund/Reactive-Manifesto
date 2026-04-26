@@ -1,5 +1,11 @@
 @(seasons: Seq[models.EditorialSeason])(implicit request: RequestHeader)
 
+@import java.util.Locale
+@import java.time.format.DateTimeFormatter
+
+@dateFmt = @{ DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "AR")) }
+@dateLabel(d: Option[java.time.LocalDate], fallback: String) = @{ d.map(_.format(dateFmt)).getOrElse(fallback) }
+
 @main("Temporadas editoriales", fullBleed = false) {
   <section class="ed-section">
     <header class="ed-page-header">
@@ -23,9 +29,9 @@
             <p><code>@season.code</code></p>
             <p>@season.description.getOrElse("Sin descripción editorial publicada.")</p>
             <p>
-              @season.startsOn.map(_.toString).getOrElse("Inicio no definido")
+              @dateLabel(season.startsOn, "Inicio no definido")
               —
-              @season.endsOn.map(_.toString).getOrElse("Cierre no definido")
+              @dateLabel(season.endsOn, "Cierre no definido")
               @if(season.isCurrent) { · <strong>Temporada vigente</strong> }
             </p>
           </article>
