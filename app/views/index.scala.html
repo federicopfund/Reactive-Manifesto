@@ -1,4 +1,4 @@
-@(contactForm: Form[controllers.ContactFormData], communityPublications: List[models.PublicationWithAuthor] = Nil, pillars: Seq[models.ManifestoPillar] = Nil)(implicit request: RequestHeader, messages: Messages)
+@(contactForm: Form[controllers.ContactFormData], communityPublications: List[models.PublicationWithAuthor] = Nil, pillars: Seq[models.ManifestoPillar] = Nil, currentSeason: Option[models.EditorialSeason] = None)(implicit request: RequestHeader, messages: Messages)
 
 @*
   Portada — Editorial Reactiva.
@@ -14,6 +14,18 @@
 *@
 
 @isAuthenticated = @{ request.session.get("userId").isDefined }
+@seasonName = @{ currentSeason.map(_.name.trim).filter(_.nonEmpty) }
+@seasonTagline = @{
+  currentSeason
+    .flatMap(s => s.tagline.orElse(s.description))
+    .map(_.trim)
+    .filter(_.nonEmpty)
+    .map { text =>
+      if (text == "Temporada editorial inicial para desarrollo.")
+        "Una edición digital sobre el Manifiesto Reactivo: arquitecturas que conviven con el fallo, la carga y el cambio."
+      else text
+    }
+}
 
 @main("Portada") {
 
@@ -27,7 +39,11 @@
       <div>
         <div class="ed-hero-issue">
           <span class="ed-hero-issue-dot"></span>
-          Edición Nº 01 · Año Cero · 2025
+          @seasonName.map { name =>
+            Temporada vigente · @name
+          }.getOrElse {
+            Temporada editorial en curso
+          }
         </div>
         <h1 class="ed-hero-title">
           Sistemas que <em>responden,</em><br/>
@@ -37,15 +53,26 @@
       </div>
       <div class="ed-hero-bottom">
         <p class="ed-hero-subtitle">
-          Una edición digital sobre el Manifiesto Reactivo:
-          arquitecturas que conviven con el fallo, la carga y el cambio.
+          @seasonTagline.getOrElse("Publicaciones en flujo continuo sobre el Manifiesto Reactivo: arquitecturas que conviven con el fallo, la carga y el cambio.")
         </p>
         <a href="@routes.HomeController.publicaciones()" class="ed-btn-primary">
-          Leer la edición
+          Explorar publicaciones
         </a>
       </div>
     </div>
     <aside class="ed-hero-aside">
+      @defining(currentSeason.map(s => routes.HomeController.temporada(s.code)).getOrElse(routes.HomeController.temporadas())) { journeyHref =>
+        <a href="@journeyHref" class="ed-hero-journey-cta">
+          <span class="ed-hero-journey-cta__eyebrow">Journey editorial</span>
+          <span class="ed-hero-journey-cta__body">
+            @seasonName.map { name =>
+              Temporada vigente: @name · <em>Conocer la temporada</em>
+            }.getOrElse {
+              Recorré el archivo · <em>Ver temporadas</em>
+            }
+          </span>
+        </a>
+      }
       <div class="ed-aside-stat">
         <div class="ed-aside-stat-num">@{"%02d".format(pillars.size)} <span>·</span></div>
         <div class="ed-aside-stat-label">Pilares
@@ -80,7 +107,7 @@ de la comunidad</div>
   <section class="ed-concept-strip">
     <div class="ed-concept-col">
       <div class="ed-concept-role"><span class="ed-concept-role-dot"></span>Lector</div>
-      <h3 class="ed-concept-role-title">Sigue la edición</h3>
+      <h3 class="ed-concept-role-title">Sigue la temporada</h3>
       <p class="ed-concept-role-desc">
         Accede a artículos curados sobre sistemas reactivos, patrones de resiliencia
         y arquitecturas modernas.
@@ -262,7 +289,7 @@ de la comunidad</div>
       <div class="ed-guest-main">
         <div class="ed-guest-label">Convocatoria abierta</div>
         <h2 class="ed-guest-headline">
-          Únete a la edición y <em>publica tu pieza.</em>
+          Únete a la temporada y <em>publica tu pieza.</em>
         </h2>
         <p class="ed-guest-body">
           La comunidad reactiva crece con autores y editores que piensan los sistemas
@@ -311,37 +338,48 @@ de la comunidad</div>
   }
 
   @* ── CONTACTO ── *@
-  <section class="ed-section" id="contact">
+  <section class="ed-section ed-contact" id="contact">
     <div class="ed-section-label">IV — Hablemos</div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2.5rem;">
-      <div>
-        <h2 class="ed-h2" style="margin-bottom: 0.75rem;">Escribe a la redacción</h2>
-        <p class="ed-prose" style="max-width: 48ch;">
-          Propuestas, errores en la edición, colaboraciones o consultas técnicas.
+    <div class="ed-contact__grid">
+      <aside class="ed-contact__intro">
+        <span class="ed-contact__ornament" aria-hidden="true">✒</span>
+        <h2 class="ed-h2 ed-contact__title">Escribe a la redacción</h2>
+        <p class="ed-prose ed-contact__lede">
+          Propuestas, errores en publicaciones, colaboraciones o consultas técnicas.
           Respondemos en un plazo razonable.
         </p>
-      </div>
-      <form action="@routes.HomeController.submitContact()" method="POST" class="ed-form">
+        <ul class="ed-contact__meta" aria-label="Canales de contacto">
+          <li><span class="ed-contact__meta-key">Cadencia</span><span class="ed-contact__meta-val">L–V · 09–18 ART</span></li>
+          <li><span class="ed-contact__meta-key">Formato</span><span class="ed-contact__meta-val">Texto plano, sin adjuntos</span></li>
+          <li><span class="ed-contact__meta-key">Privacidad</span><span class="ed-contact__meta-val">No compartimos tu correo</span></li>
+        </ul>
+      </aside>
+      <form action="@routes.HomeController.submitContact()" method="POST" class="ed-form ed-contact__form" novalidate>
         @helper.CSRF.formField
+        <header class="ed-contact__form-head">
+          <span class="ed-contact__form-eyebrow">Carta abierta</span>
+          <span class="ed-contact__form-rule" aria-hidden="true"></span>
+        </header>
         <div class="ed-form__row">
           <div class="ed-field @if(contactForm("name").hasErrors){ed-field--error}">
-            <label>Nombre</label>
-            <input type="text" name="name" value="@contactForm("name").value.getOrElse("")" required>
+            <label for="ed-contact-name">Nombre</label>
+            <input id="ed-contact-name" type="text" name="name" value="@contactForm("name").value.getOrElse("")" placeholder="Tu nombre" required>
             @contactForm("name").errors.headOption.map { e => <div class="ed-field__error">@e.message</div> }
           </div>
           <div class="ed-field @if(contactForm("email").hasErrors){ed-field--error}">
-            <label>Email</label>
-            <input type="email" name="email" value="@contactForm("email").value.getOrElse("")" required>
+            <label for="ed-contact-email">Email</label>
+            <input id="ed-contact-email" type="email" name="email" value="@contactForm("email").value.getOrElse("")" placeholder="nombre@@dominio.com" required>
             @contactForm("email").errors.headOption.map { e => <div class="ed-field__error">@e.message</div> }
           </div>
         </div>
         <div class="ed-field @if(contactForm("message").hasErrors){ed-field--error}">
-          <label>Mensaje</label>
-          <textarea name="message" rows="5" required>@contactForm("message").value.getOrElse("")</textarea>
+          <label for="ed-contact-message">Mensaje</label>
+          <textarea id="ed-contact-message" name="message" rows="6" placeholder="Contanos brevemente el motivo del contacto…" required>@contactForm("message").value.getOrElse("")</textarea>
           @contactForm("message").errors.headOption.map { e => <div class="ed-field__error">@e.message</div> }
         </div>
-        <div class="ed-form__actions">
-          <button type="submit" class="ed-btn-primary">Enviar mensaje</button>
+        <div class="ed-form__actions ed-contact__actions">
+          <p class="ed-contact__legal">Al enviar aceptás nuestra <a href="@routes.HomeController.politicaPrivacidad()">política de privacidad</a>.</p>
+          <button type="submit" class="ed-btn-primary">Enviar mensaje →</button>
         </div>
       </form>
     </div>

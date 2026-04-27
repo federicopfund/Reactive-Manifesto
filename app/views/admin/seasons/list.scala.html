@@ -1,0 +1,74 @@
+@(seasons: Seq[models.EditorialSeason])(implicit request: RequestHeader)
+
+@admin.adminLayout("Temporadas", "seasons") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">Temporadas editoriales</h1>
+      <p class="ed-bo__page-lead">Crea, edita y define la temporada actual.</p>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-primary" href="@routes.AdminSeasonController.newForm()">+ Nueva temporada</a>
+    </div>
+  </div>
+
+  @request.flash.get("success").map { msg => <div class="ed-flash ed-flash--success">@msg</div> }
+  @request.flash.get("error").map   { msg => <div class="ed-flash ed-flash--error">@msg</div> }
+
+  @if(seasons.isEmpty) {
+    <div class="ed-bo__empty">
+      <h2>Sin temporadas</h2>
+      <p>Crea la primera temporada editorial.</p>
+    </div>
+  } else {
+    <table class="ed-bo__table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Código</th>
+          <th>Tagline</th>
+          <th>Fechas</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @seasons.map { season =>
+          <tr>
+            <td><strong>@season.name</strong></td>
+            <td><code>@season.code</code></td>
+            <td>@season.tagline.orElse(season.description).getOrElse("—")</td>
+            <td>
+              @season.startsOn.map(_.toString).getOrElse("—")
+              —
+              @season.endsOn.map(_.toString).getOrElse("—")
+            </td>
+            <td>
+              @if(season.isCurrent) {
+                <span class="ed-bo__badge ed-bo__badge--published">Actual</span>
+              } else {
+                <span class="ed-bo__badge">Histórica</span>
+              }
+            </td>
+            <td class="ed-bo__cell-actions">
+              @season.id.map { sid =>
+                <a href="@routes.AdminSeasonController.editForm(sid)">Editar</a>
+                @if(!season.isCurrent) {
+                  <span> · </span>
+                  <form method="POST" action="@routes.AdminSeasonController.setCurrent(sid)" class="ed-inline-form">
+                    @helper.CSRF.formField
+                    <label>
+                      <input type="checkbox" name="announceNewsletter" value="on">
+                      Anunciar apertura
+                    </label>
+                    <button type="submit" class="ed-link-btn ed-link-btn--success">Marcar actual</button>
+                  </form>
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+}

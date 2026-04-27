@@ -37,6 +37,7 @@ object Capabilities {
     case object EventsView             extends Cap { val key = "events.view";              val label = "Ver agenda editorial" }
     case object EventsManage           extends Cap { val key = "events.manage";            val label = "Crear y editar eventos" }
     case object EventsPublish          extends Cap { val key = "events.publish";           val label = "Publicar / cancelar eventos" }
+    case object SeasonsManage          extends Cap { val key = "seasons.manage";           val label = "Gestionar temporadas editoriales" }
 
     case object CollectionsCurate      extends Cap { val key = "collections.curate";       val label = "Curar colecciones (crear, editar piezas)" }
     case object CollectionsReview      extends Cap { val key = "collections.review";       val label = "Aprobar / devolver colecciones" }
@@ -55,6 +56,7 @@ object Capabilities {
       NewsletterView, NewsletterManage,
       StatsView, DashboardView,
       EventsView, EventsManage, EventsPublish,
+      SeasonsManage,
       CollectionsCurate, CollectionsReview, CollectionsPublish,
       ObservabilityView, ObservabilityManage,
       EditorialIdentityManage
@@ -95,6 +97,7 @@ object RolePolicy {
         PublicationsFeedback, PublicationsExport,
         ContactsView,
         EventsView, EventsManage, EventsPublish,
+        SeasonsManage,
         CollectionsCurate, CollectionsReview, CollectionsPublish,
         EditorialIdentityManage
       )

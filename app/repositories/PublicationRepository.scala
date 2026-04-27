@@ -20,10 +20,11 @@ class PublicationRepository @Inject()(
    * Tabla de publicaciones para Slick.
    *
    * IMPORTANTE — Sprint 1:
-   * Tres columnas nuevas al final del mapeo `*`:
+   * Cuatro columnas editoriales al final del mapeo `*`:
    *   - current_stage_id          (Option[Long])
    *   - publication_type          (String, default 'article')
    *   - requires_technical_review (Boolean, default false)
+   *   - season_id                 (Option[Long], nullable)
    *
    * El orden en `.mapTo[Publication]` debe coincidir EXACTAMENTE
    * con el orden de los parámetros del case class Publication.
@@ -51,6 +52,7 @@ class PublicationRepository @Inject()(
     def currentStageId          = column[Option[Long]]("current_stage_id")
     def publicationType         = column[String]("publication_type")
     def requiresTechnicalReview = column[Boolean]("requires_technical_review")
+    def seasonId                = column[Option[Long]]("season_id")
 
     def * = (
       id.?,
@@ -74,7 +76,8 @@ class PublicationRepository @Inject()(
       // ── Editoriales ──
       currentStageId,
       publicationType,
-      requiresTechnicalReview
+      requiresTechnicalReview,
+      seasonId
     ).mapTo[Publication]
   }
 
@@ -82,7 +85,7 @@ class PublicationRepository @Inject()(
 
   // Implicit GetResult para mapear JOIN con usuarios.
   // Lee las columnas en el mismo orden que `SELECT p.*, u.username, u.full_name`.
-  // Las tres columnas editoriales se leen al final del bloque de publications,
+  // Las cuatro columnas editoriales se leen al final del bloque de publications,
   // antes de las columnas del JOIN con users.
   import slick.jdbc.GetResult
   implicit val getPublicationWithAuthorResult: GetResult[PublicationWithAuthor] = GetResult { r =>
@@ -109,7 +112,8 @@ class PublicationRepository @Inject()(
         // ── Editoriales (Sprint 1) ──
         currentStageId          = r.nextLongOption(),
         publicationType         = r.nextString(),
-        requiresTechnicalReview = r.nextBoolean()
+        requiresTechnicalReview = r.nextBoolean(),
+        seasonId                = r.nextLongOption()
       ),
       authorUsername = r.nextString(),
       authorFullName = r.nextString()
@@ -197,6 +201,58 @@ class PublicationRepository @Inject()(
     """.as[PublicationWithAuthor]
 
     db.run(query).map(_.toList)
+  }
+
+  /** Listar publicaciones aprobadas asociadas a una temporada editorial. */
+  def findApprovedBySeasonId(seasonId: Long, limit: Int = 200): Future[List[PublicationWithAuthor]] = {
+    val query = sql"""
+      SELECT p.*, u.username, u.full_name
+      FROM publications p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.status = 'approved'
+        AND p.season_id = $seasonId
+      ORDER BY p.published_at DESC, p.created_at DESC
+      LIMIT $limit
+    """.as[PublicationWithAuthor]
+
+    db.run(query).map(_.toList)
+  }
+
+  /**
+   * Listar publicaciones aprobadas que NO pertenecen a una temporada
+   * (season_id IS NULL o distinto al seasonId pasado). Sirve para que el
+   * admin pueda elegir qué piezas asignar a una temporada.
+   */
+  def findApprovedAssignableForSeason(seasonId: Long, limit: Int = 200): Future[List[PublicationWithAuthor]] = {
+    val query = sql"""
+      SELECT p.*, u.username, u.full_name
+      FROM publications p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.status = 'approved'
+        AND (p.season_id IS NULL OR p.season_id <> $seasonId)
+      ORDER BY p.published_at DESC, p.created_at DESC
+      LIMIT $limit
+    """.as[PublicationWithAuthor]
+
+    db.run(query).map(_.toList)
+  }
+
+  /** Asignar (o reasignar) una temporada a una publicación. */
+  def setSeasonForPublication(publicationId: Long, seasonIdValue: Long): Future[Boolean] = {
+    val query = publications
+      .filter(_.id === publicationId)
+      .map(_.seasonId)
+      .update(Some(seasonIdValue))
+    db.run(query).map(_ > 0)
+  }
+
+  /** Quitar la temporada de una publicación (season_id = NULL). */
+  def clearSeasonForPublication(publicationId: Long): Future[Boolean] = {
+    val query = publications
+      .filter(_.id === publicationId)
+      .map(_.seasonId)
+      .update(None)
+    db.run(query).map(_ > 0)
   }
 
   /** Listar publicaciones pendientes de aprobación */
@@ -325,6 +381,19 @@ class PublicationRepository @Inject()(
       .filter(_.id === publicationId)
       .map(_.currentStageId)
       .update(Some(stageId))
+
+    db.run(query).map(_ > 0)
+  }
+
+  /**
+   * Asignar temporada solamente si la publicación aún no tiene season_id.
+   * No pisa asignaciones manuales existentes.
+   */
+  def assignSeasonIfEmpty(publicationId: Long, seasonIdValue: Long): Future[Boolean] = {
+    val query = publications
+      .filter(p => p.id === publicationId && p.seasonId.isEmpty)
+      .map(_.seasonId)
+      .update(Some(seasonIdValue))
 
     db.run(query).map(_ > 0)
   }

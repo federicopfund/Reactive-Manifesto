@@ -14,6 +14,10 @@ GET     /publicaciones              controllers.HomeController.publicaciones()
 GET     /publicaciones/buscar       controllers.HomeController.searchPublicaciones(q: String ?= "", category: Option[String] ?= None)
 GET     /publicaciones/:slug        controllers.HomeController.publicacion(slug: String)
 
+# Temporadas editoriales (Issue #23)
+GET     /temporadas                 controllers.HomeController.temporadas()
+GET     /temporadas/:code           controllers.HomeController.temporada(code: String)
+
 # Portafolio page
 GET     /portafolio                 controllers.HomeController.portafolio()
 GET     /portafolio/:slug           controllers.HomeController.collectionDetail(slug: String)
@@ -213,6 +217,16 @@ GET     /admin/agents/settings/runtime.json         controllers.AdminAgentSettin
 # Identidad editorial — Issue #21 (backoffice)
 GET     /admin/editorial-identity                   controllers.AdminEditorialIdentityController.list()
 POST    /admin/editorial-identity/:key              controllers.AdminEditorialIdentityController.update(key: String)
+
+# Temporadas editoriales — Issue #22
+GET     /admin/seasons                              controllers.AdminSeasonController.list()
+GET     /admin/seasons/new                          controllers.AdminSeasonController.newForm()
+POST    /admin/seasons/new                          controllers.AdminSeasonController.create()
+GET     /admin/seasons/:id/edit                     controllers.AdminSeasonController.editForm(id: Long)
+POST    /admin/seasons/:id/edit                     controllers.AdminSeasonController.update(id: Long)
+POST    /admin/seasons/:id/current                  controllers.AdminSeasonController.setCurrent(id: Long)
+POST    /admin/seasons/:id/publications/:pid/assign     controllers.AdminSeasonController.assignPublication(id: Long, pid: Long)
+POST    /admin/seasons/:id/publications/:pid/unassign   controllers.AdminSeasonController.unassignPublication(id: Long, pid: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

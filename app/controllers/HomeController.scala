@@ -6,13 +6,14 @@ import play.api.mvc._
 import play.api.data._
 import play.api.data.Forms._
 import play.api.i18n.I18nSupport
+import play.api.Logging
 import services.ReactiveContactAdapter
 import services.ReactiveAnalyticsAdapter
 import repositories.{
   ContactRepository, ReactionRepository, CommentRepository, BookmarkRepository,
   NewsletterRepository, PublicationCategoryRepository, ManifestoPillarRepository,
   LegalDocumentRepository, CollectionRepository, EditorialArticleRepository,
-  EditorialIdentityRepository
+  EditorialIdentityRepository, EditorialSeasonRepository
 }
 import core.{Contact, ContactSubmitted, ContactError}
 import actions.{OptionalAuthAction, OptionalAuthRequest}
@@ -38,8 +39,9 @@ class HomeController @Inject()(
   collectionRepo: CollectionRepository,
   editorialArticleRepo: EditorialArticleRepository,
   identityRepo: EditorialIdentityRepository,
+  seasonRepo: EditorialSeasonRepository,
   optionalAuth: OptionalAuthAction
-)(implicit ec: ExecutionContext) extends BaseController with I18nSupport {
+)(implicit ec: ExecutionContext) extends BaseController with I18nSupport with Logging {
 
   // Form definition
 
@@ -51,12 +53,20 @@ class HomeController @Inject()(
     )(ContactFormData.apply)(ContactFormData.unapply)
   )
 
+  private def loadCurrentSeason(): Future[Option[models.EditorialSeason]] =
+    seasonRepo.findCurrent().recover {
+      case ex: Throwable =>
+        logger.warn("No se pudo cargar la temporada actual. Se aplicará fallback neutro en la UI pública.", ex)
+        None
+    }
+
   def index() = Action.async { implicit request: Request[AnyContent] =>
     analyticsAdapter.trackPageView("/", None, request.headers.get("Referer"))
     for {
-      publications <- publicationRepository.findAllApproved(limit = 6)
-      pillars      <- pillarRepo.findActive()
-    } yield Ok(views.html.index(contactForm, publications, pillars))
+      publications  <- publicationRepository.findAllApproved(limit = 6)
+      pillars       <- pillarRepo.findActive()
+      currentSeason <- loadCurrentSeason()
+    } yield Ok(views.html.index(contactForm, publications, pillars, currentSeason))
   }
 
   def publicaciones() = Action.async { implicit request: Request[AnyContent] =>
@@ -65,9 +75,34 @@ class HomeController @Inject()(
       dynamicPublications <- publicationRepository.findAllApproved(limit = 20)
       editorialArticles   <- editorialArticleRepo.findAllPublished(limit = 20)
       categories          <- categoryRepo.findActive()
+      currentSeason       <- loadCurrentSeason()
     } yield Ok(views.html.publicaciones(
-      dynamicPublications, editorialArticles, categories, "", None
+      dynamicPublications, editorialArticles, categories, "", None, currentSeason
     ))
+  }
+
+  def temporadas() = Action.async { implicit request: Request[AnyContent] =>
+    analyticsAdapter.trackPageView("/temporadas", None, request.headers.get("Referer"))
+    seasonRepo.findAllChronologicalDesc().map { seasons =>
+      Ok(views.html.temporadas(seasons))
+    }
+  }
+
+  def temporada(code: String) = Action.async { implicit request: Request[AnyContent] =>
+    analyticsAdapter.trackPageView(s"/temporadas/$code", None, request.headers.get("Referer"))
+    seasonRepo.findByCode(code).flatMap {
+      case Some(season) =>
+        season.id match {
+          case Some(seasonId) =>
+            publicationRepository.findApprovedBySeasonId(seasonId).map { publications =>
+              Ok(views.html.temporadaDetail(season, publications))
+            }
+          case None =>
+            Future.successful(Ok(views.html.temporadaDetail(season, Nil)))
+        }
+      case None =>
+        Future.successful(NotFound(views.html.errors.notFound()))
+    }
   }
 
   def publicacion(slug: String) = optionalAuth.async { implicit request: OptionalAuthRequest[AnyContent] =>
@@ -130,8 +165,9 @@ class HomeController @Inject()(
                              }
         editorialArticles <- editorialArticleRepo.search(q, categorySlug)
         categories        <- categoryRepo.findActive()
+        currentSeason     <- loadCurrentSeason()
       } yield Ok(views.html.publicaciones(
-        publications, editorialArticles, categories, q, cleanCategory
+        publications, editorialArticles, categories, q, cleanCategory, currentSeason
       ))
     }
   }
@@ -201,9 +237,10 @@ class HomeController @Inject()(
     contactForm.bindFromRequest().fold(
       formWithErrors => {
         for {
-          publications <- publicationRepository.findAllApproved(limit = 6)
-          pillars      <- pillarRepo.findActive()
-        } yield BadRequest(views.html.index(formWithErrors, publications, pillars))
+          publications  <- publicationRepository.findAllApproved(limit = 6)
+          pillars       <- pillarRepo.findActive()
+          currentSeason <- loadCurrentSeason()
+        } yield BadRequest(views.html.index(formWithErrors, publications, pillars, currentSeason))
       },
       contactData => {
         val contact = Contact(contactData.name, contactData.email, contactData.message)
