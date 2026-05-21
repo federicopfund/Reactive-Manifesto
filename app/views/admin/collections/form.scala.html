@@ -1,6 +1,7 @@
 @(existing: Option[domains.collections.models.Collection],
   formErrors: Map[String, String],
-  formData: Map[String, String])(implicit request: RequestHeader)
+  formData: Map[String, String],
+  sponsors: Seq[domains.editorial.models.Sponsor] = Nil)(implicit request: RequestHeader)
 
 @import domains.collections.models.CollectionAccent
 
@@ -88,4 +89,15 @@
       <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminCollectionController.list(None)">Cancelar</a>
     </div>
   </form>
+
+  @existing.flatMap(_.id).map { cid =>
+    @views.html.admin.partials.sponsorPanel(
+      entityId            = cid,
+      entityType          = "collection",
+      sponsors            = sponsors,
+      currentSponsorId    = existing.flatMap(_.sponsorId),
+      currentSponsorLabel = existing.flatMap(_.sponsorLabel),
+      currentShowPublic   = existing.exists(_.sponsorShowPublic)
+    )
+  }
 }

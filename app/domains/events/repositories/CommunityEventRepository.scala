@@ -229,4 +229,18 @@ class CommunityEventRepository @Inject()(
         .length.result
     )
   }
+
+  def updateSponsor(
+    id: Long,
+    sponsorId: Option[Long],
+    sponsorLabel: Option[String],
+    sponsorShowPublic: Boolean
+  ): Future[Int] = {
+    val now = Instant.now()
+    db.run(
+      events.filter(_.id === id)
+        .map(e => (e.sponsorId, e.sponsorLabel, e.sponsorShowPublic, e.updatedAt))
+        .update((sponsorId, sponsorLabel, sponsorShowPublic, now))
+    )
+  }
 }

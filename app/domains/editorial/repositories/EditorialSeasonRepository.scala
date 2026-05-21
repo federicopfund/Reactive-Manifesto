@@ -105,4 +105,16 @@ class EditorialSeasonRepository @Inject()(
 
     db.run(action.transactionally)
   }
+
+  def updateSponsor(
+    id: Long,
+    sponsorId: Option[Long],
+    sponsorLabel: Option[String],
+    sponsorShowPublic: Boolean
+  ): Future[Int] =
+    db.run(
+      seasons.filter(_.id === id)
+        .map(s => (s.sponsorId, s.sponsorLabel, s.sponsorShowPublic))
+        .update((sponsorId, sponsorLabel, sponsorShowPublic))
+    )
 }

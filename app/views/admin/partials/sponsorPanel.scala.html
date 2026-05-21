@@ -1,0 +1,56 @@
+@(
+  entityId: Long,
+  entityType: String,
+  sponsors: Seq[domains.editorial.models.Sponsor],
+  currentSponsorId: Option[Long],
+  currentSponsorLabel: Option[String],
+  currentShowPublic: Boolean
+)(implicit request: RequestHeader)
+
+@actionUrl = @{ entityType match {
+  case "season"     => controllers.admin.routes.AdminSeasonController.setSponsor(entityId)
+  case "collection" => controllers.admin.routes.AdminCollectionController.setSponsor(entityId)
+  case _            => controllers.admin.routes.AdminEventController.setSponsor(entityId)
+}}
+
+<aside class="ed-bo__panel ed-bo__panel--sponsor">
+  <h2 class="ed-bo__panel-title">Patrocinador</h2>
+  <p class="ed-bo__panel-hint">Asigná un sponsor y controlá su visibilidad pública.</p>
+
+  <form method="POST" action="@actionUrl" class="ed-bo__form">
+    @helper.CSRF.formField
+
+    <div class="ed-bo__form-row">
+      <label class="ed-bo__label" for="sponsorId">Sponsor</label>
+      <select class="ed-bo__input" id="sponsorId" name="sponsorId">
+        <option value="">— Sin patrocinador —</option>
+        @for(s <- sponsors) {
+          <option value="@s.id.getOrElse(0)" @if(currentSponsorId.exists(_ == s.id.getOrElse(-1L))){selected}>
+            @s.name (@s.tierLabel)
+          </option>
+        }
+      </select>
+    </div>
+
+    <div class="ed-bo__form-row">
+      <label class="ed-bo__label" for="sponsorLabel">Etiqueta personalizada</label>
+      <input class="ed-bo__input" id="sponsorLabel" name="sponsorLabel"
+             placeholder="Ej: Patrocinador oficial"
+             value="@currentSponsorLabel.getOrElse("")">
+      <small class="ed-bo__hint">Texto libre que aparece sobre el logo. Dejalo vacío para usar el nombre del sponsor.</small>
+    </div>
+
+    <div class="ed-bo__form-row ed-bo__form-row--check">
+      <label class="ed-bo__label ed-bo__label--check">
+        <input type="checkbox" name="sponsorShowPublic" value="true"
+               @if(currentShowPublic){checked}>
+        Mostrar patrocinador al público
+      </label>
+      <small class="ed-bo__hint">Si está desactivado, el badge no aparece en el sitio.</small>
+    </div>
+
+    <div class="ed-bo__form-actions">
+      <button type="submit" class="ed-btn-primary">Guardar patrocinador</button>
+    </div>
+  </form>
+</aside>

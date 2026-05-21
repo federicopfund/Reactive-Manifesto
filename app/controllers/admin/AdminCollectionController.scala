@@ -9,6 +9,7 @@ import domains.messaging.models.UserNotification
 import domains.collections.repositories.CollectionRepository
 import domains.messaging.repositories.UserNotificationRepository
 import domains.identity.repositories.UserRepository
+import domains.editorial.repositories.SponsorRepository
 import infrastructure.support.Capabilities.Cap
 import infrastructure.support.RolePolicy
 import domains.collections.policies.CollectionWorkflowPolicy
@@ -31,6 +32,7 @@ class AdminCollectionController @Inject()(
   collections: CollectionRepository,
   users: UserRepository,
   notifications: UserNotificationRepository,
+  sponsorRepo: SponsorRepository,
   adminAction: AdminOnlyAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) {
 
@@ -95,14 +97,17 @@ class AdminCollectionController @Inject()(
 
   def editForm(id: Long) = adminAction.async { implicit request =>
     CapabilityCheck.require(request, Cap.CollectionsCurate) {
-      collections.findById(id).map {
+      for {
+        collOpt  <- collections.findById(id)
+        sponsors <- sponsorRepo.findAllActive()
+      } yield collOpt match {
         case None       => NotFound("Coleccion no encontrada")
         case Some(coll) =>
           if (!coll.isEditable)
             Redirect(routes.AdminCollectionController.view(id))
               .flashing("error" -> "Esta coleccion no es editable en su estado actual.")
           else
-            Ok(views.html.admin.collections.form(Some(coll), Map.empty, toFormData(coll)))
+            Ok(views.html.admin.collections.form(Some(coll), Map.empty, toFormData(coll), sponsors))
       }
     }
   }
@@ -390,4 +395,17 @@ class AdminCollectionController @Inject()(
   private case object AudienceReviewers extends Audience
   private case class  AudienceCurator(uid: Option[Long]) extends Audience
   private case class  AudienceCuratorAndPublishers(uid: Option[Long]) extends Audience
+
+  def setSponsor(id: Long) = adminAction.async { implicit request =>
+    CapabilityCheck.require(request, Cap.CollectionsCurate) {
+      val form = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+      def s(k: String) = form.get(k).flatMap(_.headOption).map(_.trim).getOrElse("")
+      val sponsorId        = s("sponsorId") match { case "" | "0" => None; case v => v.toLongOption }
+      val sponsorLabel     = Some(s("sponsorLabel")).filter(_.nonEmpty)
+      val sponsorShowPublic = form.get("sponsorShowPublic").flatMap(_.headOption).exists(v => Set("on","true").contains(v.trim.toLowerCase))
+      collections.updateSponsor(id, sponsorId, sponsorLabel, sponsorShowPublic).map { _ =>
+        Redirect(routes.AdminCollectionController.editForm(id)).flashing("success" -> "Patrocinador actualizado.")
+      }
+    }
+  }
 }

@@ -3,7 +3,7 @@ package controllers.admin
 import controllers.actions.{AdminOnlyAction, CapabilityCheck}
 import domains.editorial.models.EditorialSeason
 import play.api.mvc._
-import domains.editorial.repositories.EditorialSeasonRepository
+import domains.editorial.repositories.{EditorialSeasonRepository, SponsorRepository}
 import domains.publications.repositories.PublicationRepository
 import domains.newsletter.repositories.NewsletterRepository
 import domains.messaging.repositories.UserNotificationRepository
@@ -102,6 +102,7 @@ class AdminSeasonController @Inject()(
   newsletterRepo: NewsletterRepository,
   userRepo: UserRepository,
   notificationRepo: UserNotificationRepository,
+  sponsorRepo: SponsorRepository,
   adminAction: AdminOnlyAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) with Logging {
 
@@ -148,12 +149,14 @@ class AdminSeasonController @Inject()(
           for {
             assigned   <- publicationRepo.findApprovedBySeasonId(id)
             assignable <- publicationRepo.findApprovedAssignableForSeason(id)
+            sponsors   <- sponsorRepo.findAllActive()
           } yield Ok(views.html.admin.seasons.form(
             existing   = Some(season),
             formErrors = Map.empty,
             formData   = toFormData(season),
             assigned   = assigned,
-            assignable = assignable
+            assignable = assignable,
+            sponsors   = sponsors
           ))
       }
     }
@@ -251,6 +254,19 @@ class AdminSeasonController @Inject()(
     "startsOn" -> "",
     "endsOn" -> ""
   )
+
+  def setSponsor(id: Long): Action[AnyContent] = adminAction.async { implicit request =>
+    CapabilityCheck.require(request, Cap.SeasonsManage) {
+      val form = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+      def s(k: String) = form.get(k).flatMap(_.headOption).map(_.trim).getOrElse("")
+      val sponsorId       = s("sponsorId") match { case "" | "0" => None; case v => v.toLongOption }
+      val sponsorLabel    = Some(s("sponsorLabel")).filter(_.nonEmpty)
+      val sponsorShowPublic = form.get("sponsorShowPublic").flatMap(_.headOption).exists(v => Set("on","true").contains(v.trim.toLowerCase))
+      seasonRepo.updateSponsor(id, sponsorId, sponsorLabel, sponsorShowPublic).map { _ =>
+        Redirect(routes.AdminSeasonController.editForm(id)).flashing("success" -> "Patrocinador actualizado.")
+      }
+    }
+  }
 
   private def toFormData(season: EditorialSeason): Map[String, String] = Map(
     "code" -> season.code,

@@ -2,7 +2,8 @@
   formErrors: Map[String, String],
   formData: Map[String, String],
   assigned: List[domains.publications.models.PublicationWithAuthor] = Nil,
-  assignable: List[domains.publications.models.PublicationWithAuthor] = Nil)(implicit request: RequestHeader)
+  assignable: List[domains.publications.models.PublicationWithAuthor] = Nil,
+  sponsors: Seq[domains.editorial.models.Sponsor] = Nil)(implicit request: RequestHeader)
 
 @isEdit = @{ existing.isDefined }
 @actionUrl = @{
@@ -171,6 +172,16 @@
           </script>
         }
       </aside>
+    }
+    @existing.flatMap(_.id).map { sid =>
+      @views.html.admin.partials.sponsorPanel(
+        entityId          = sid,
+        entityType        = "season",
+        sponsors          = sponsors,
+        currentSponsorId  = existing.flatMap(_.sponsorId),
+        currentSponsorLabel = existing.flatMap(_.sponsorLabel),
+        currentShowPublic = existing.exists(_.sponsorShowPublic)
+      )
     }
   </div>
 }

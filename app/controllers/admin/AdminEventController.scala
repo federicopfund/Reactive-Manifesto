@@ -6,6 +6,7 @@ import controllers.actions.{AdminOnlyAction, AuthRequest, CapabilityCheck}
 import domains.events.models.{CommunityEvent, EventEnums, EventSpeaker}
 import domains.events.repositories.{CommunityEventRepository, EventAttendeeRepository}
 import domains.identity.repositories.UserRepository
+import domains.editorial.repositories.SponsorRepository
 import infrastructure.support.Capabilities.Cap
 import play.api.libs.json.Json
 import java.time.{Instant, LocalDateTime, ZoneId}
@@ -25,6 +26,7 @@ class AdminEventController @Inject()(
   events: CommunityEventRepository,
   attendeeRepo: EventAttendeeRepository,
   users: UserRepository,
+  sponsorRepo: SponsorRepository,
   adminAction: AdminOnlyAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) {
 
@@ -85,8 +87,11 @@ class AdminEventController @Inject()(
   // ── Editar ───────────────────────────────────────────────────────
   def editForm(id: Long) = adminAction.async { implicit request =>
     CapabilityCheck.require(request, Cap.EventsManage) {
-      events.findById(id).map {
-        case Some(e) => Ok(views.html.admin.events.form(Some(e), Map.empty, toFormData(e)))
+      for {
+        eventOpt <- events.findById(id)
+        sponsors <- sponsorRepo.findAllActive()
+      } yield eventOpt match {
+        case Some(e) => Ok(views.html.admin.events.form(Some(e), Map.empty, toFormData(e), sponsors))
         case None    => NotFound("Evento no encontrado")
       }
     }
@@ -313,5 +318,18 @@ class AdminEventController @Inject()(
   private def csv(s: String): String = {
     val needsQuote = s.contains(',') || s.contains('"') || s.contains('\n')
     if (needsQuote) "\"" + s.replace("\"", "\"\"") + "\"" else s
+  }
+
+  def setSponsor(id: Long) = adminAction.async { implicit request =>
+    CapabilityCheck.require(request, Cap.EventsManage) {
+      val form = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+      def s(k: String) = form.get(k).flatMap(_.headOption).map(_.trim).getOrElse("")
+      val sponsorId        = s("sponsorId") match { case "" | "0" => None; case v => v.toLongOption }
+      val sponsorLabel     = Some(s("sponsorLabel")).filter(_.nonEmpty)
+      val sponsorShowPublic = form.get("sponsorShowPublic").flatMap(_.headOption).exists(v => Set("on","true").contains(v.trim.toLowerCase))
+      events.updateSponsor(id, sponsorId, sponsorLabel, sponsorShowPublic).map { _ =>
+        Redirect(routes.AdminEventController.editForm(id)).flashing("success" -> "Patrocinador actualizado.")
+      }
+    }
   }
 }

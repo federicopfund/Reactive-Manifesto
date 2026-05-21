@@ -188,6 +188,7 @@ GET     /admin/events/:id                   controllers.admin.AdminEventControll
 GET     /admin/events/:id/edit              controllers.admin.AdminEventController.editForm(id: Long)
 POST    /admin/events/:id/edit              controllers.admin.AdminEventController.update(id: Long)
 POST    /admin/events/:id/status            controllers.admin.AdminEventController.changeStatus(id: Long)
+POST    /admin/events/:id/sponsor           controllers.admin.AdminEventController.setSponsor(id: Long)
 POST    /admin/events/:id/delete            controllers.admin.AdminEventController.delete(id: Long)
 GET     /admin/events/:id/attendees         controllers.admin.AdminEventController.attendees(id: Long)
 GET     /admin/events/:id/attendees.csv     controllers.admin.AdminEventController.attendeesCsv(id: Long)
@@ -206,6 +207,7 @@ GET     /admin/collections/:id/pickable             controllers.admin.AdminColle
 POST    /admin/collections/:id/items                controllers.admin.AdminCollectionController.addItem(id: Long)
 POST    /admin/collections/:id/items/:itemRowId/delete  controllers.admin.AdminCollectionController.removeItem(id: Long, itemRowId: Long)
 POST    /admin/collections/:id/items/reorder        controllers.admin.AdminCollectionController.reorderItems(id: Long)
+POST    /admin/collections/:id/sponsor              controllers.admin.AdminCollectionController.setSponsor(id: Long)
 
 # Observabilidad — Issue #21
 GET     /admin/agents                               controllers.admin.AdminAgentsController.dashboard()
@@ -226,6 +228,7 @@ POST    /admin/seasons/new                          controllers.admin.AdminSeaso
 GET     /admin/seasons/:id/edit                     controllers.admin.AdminSeasonController.editForm(id: Long)
 POST    /admin/seasons/:id/edit                     controllers.admin.AdminSeasonController.update(id: Long)
 POST    /admin/seasons/:id/current                  controllers.admin.AdminSeasonController.setCurrent(id: Long)
+POST    /admin/seasons/:id/sponsor                  controllers.admin.AdminSeasonController.setSponsor(id: Long)
 POST    /admin/seasons/:id/publications/:pid/assign     controllers.admin.AdminSeasonController.assignPublication(id: Long, pid: Long)
 POST    /admin/seasons/:id/publications/:pid/unassign   controllers.admin.AdminSeasonController.unassignPublication(id: Long, pid: Long)
 

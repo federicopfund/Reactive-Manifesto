@@ -1,6 +1,7 @@
 @(existing: Option[domains.events.models.CommunityEvent],
   formErrors: Map[String, String],
-  formData: Map[String, String])(implicit request: RequestHeader)
+  formData: Map[String, String],
+  sponsors: Seq[domains.editorial.models.Sponsor] = Nil)(implicit request: RequestHeader)
 
 @import domains.events.models.EventEnums
 
@@ -170,4 +171,15 @@
       <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminEventController.list(None, 0)">Cancelar</a>
     </div>
   </form>
+
+  @existing.flatMap(_.id).map { eid =>
+    @views.html.admin.partials.sponsorPanel(
+      entityId            = eid,
+      entityType          = "event",
+      sponsors            = sponsors,
+      currentSponsorId    = existing.flatMap(_.sponsorId),
+      currentSponsorLabel = existing.flatMap(_.sponsorLabel),
+      currentShowPublic   = existing.exists(_.sponsorShowPublic)
+    )
+  }
 }
