@@ -2,7 +2,8 @@
   username: Option[String],
   coll: domains.collections.models.Collection,
   items: Seq[domains.collections.models.ResolvedCollectionItem],
-  related: Seq[domains.collections.models.CollectionWithCount])(implicit request: RequestHeader, messages: Messages)
+  related: Seq[domains.collections.models.CollectionWithCount],
+  sponsor: Option[domains.editorial.models.Sponsor] = None)(implicit request: RequestHeader, messages: Messages)
 
 @import domains.collections.models.{CollectionItemType}
 
@@ -26,6 +27,8 @@
             curado · @p.toString.take(10)
           </span>
         }
+        @* ── Patrocinador Silver: chip inline en la meta del hero ── *@
+        @partials.sponsorBadge(sponsor, coll.sponsorShowPublic, coll.sponsorLabel, "silver")
       </div>
     </div>
   </section>

@@ -18,19 +18,24 @@ class EditorialSeasonRepository @Inject()(
 
   private class EditorialSeasonsTable(tag: Tag)
       extends Table[EditorialSeason](tag, "editorial_seasons") {
-    def id          = column[Long]("id", O.PrimaryKey, O.AutoInc)
-    def code        = column[String]("code")
-    def name        = column[String]("name")
-    def description = column[Option[String]]("description")
-    def tagline     = column[Option[String]]("tagline")
-    def openingEssay = column[Option[String]]("opening_essay")
-    def startsOn    = column[Option[LocalDate]]("starts_on")
-    def endsOn      = column[Option[LocalDate]]("ends_on")
-    def isCurrent   = column[Boolean]("is_current")
-    def createdAt   = column[Instant]("created_at")
+    def id                 = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def code               = column[String]("code")
+    def name               = column[String]("name")
+    def description        = column[Option[String]]("description")
+    def tagline            = column[Option[String]]("tagline")
+    def openingEssay       = column[Option[String]]("opening_essay")
+    def startsOn           = column[Option[LocalDate]]("starts_on")
+    def endsOn             = column[Option[LocalDate]]("ends_on")
+    def isCurrent          = column[Boolean]("is_current")
+    def createdAt          = column[Instant]("created_at")
+    // ── Patrocinio (Evolution 31) ──
+    def sponsorId          = column[Option[Long]]("sponsor_id")
+    def sponsorLabel       = column[Option[String]]("sponsor_label")
+    def sponsorShowPublic  = column[Boolean]("sponsor_show_public")
 
     def * = (
-      id.?, code, name, description, tagline, openingEssay, startsOn, endsOn, isCurrent, createdAt
+      id.?, code, name, description, tagline, openingEssay, startsOn, endsOn,
+      isCurrent, createdAt, sponsorId, sponsorLabel, sponsorShowPublic
     ).mapTo[EditorialSeason]
   }
 

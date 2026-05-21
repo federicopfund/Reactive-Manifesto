@@ -52,13 +52,17 @@ class CollectionRepository @Inject()(
     def publishedBy  = column[Option[Long]]("published_by")
     def publishedAt  = column[Option[Instant]]("published_at")
     def reviewNotes  = column[Option[String]]("review_notes")
-    def accentColor  = column[Option[String]]("accent_color")
+    def accentColor        = column[Option[String]]("accent_color")
+    def sponsorId          = column[Option[Long]]("sponsor_id")
+    def sponsorLabel       = column[Option[String]]("sponsor_label")
+    def sponsorShowPublic  = column[Boolean]("sponsor_show_public")
 
     def * = (
       id.?, slug, name, description, coverLabel, curatorId,
       isPublished, orderIndex, createdAt, updatedAt,
       status, createdBy, submittedAt, reviewedBy, reviewedAt,
-      publishedBy, publishedAt, reviewNotes, accentColor
+      publishedBy, publishedAt, reviewNotes, accentColor,
+      sponsorId, sponsorLabel, sponsorShowPublic
     ).mapTo[Collection]
   }
 

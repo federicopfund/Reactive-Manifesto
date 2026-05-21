@@ -50,13 +50,18 @@ class CommunityEventRepository @Inject()(
     def viewCount          = column[Int]("view_count")
     def createdAt          = column[Instant]("created_at")
     def updatedAt          = column[Instant]("updated_at")
+    // ── Patrocinio (Evolution 31) ────────────────────────────
+    def sponsorId         = column[Option[Long]]("sponsor_id")
+    def sponsorLabel      = column[Option[String]]("sponsor_label")
+    def sponsorShowPublic = column[Boolean]("sponsor_show_public")
 
     def * = (
       (id.?, slug, title, summary, descriptionHtml, eventType, modality, startsAt, endsAt, timezone),
       (locationName, locationUrl, locationDetail, coverImage, accentColor, capacity, tagsPipe, speakersJson),
-      (status, cancellationReason, createdBy, publishedBy, publishedAt, viewCount, createdAt, updatedAt)
+      (status, cancellationReason, createdBy, publishedBy, publishedAt, viewCount, createdAt, updatedAt),
+      (sponsorId, sponsorLabel, sponsorShowPublic)
     ).shaped <> ({
-      case (a, b, c) => CommunityEvent(
+      case (a, b, c, d) => CommunityEvent(
         id = a._1, slug = a._2, title = a._3, summary = a._4, descriptionHtml = a._5,
         eventType = a._6, modality = a._7, startsAt = a._8, endsAt = a._9, timezone = a._10,
         locationName = b._1, locationUrl = b._2, locationDetail = b._3,
@@ -64,7 +69,8 @@ class CommunityEventRepository @Inject()(
         capacity = b._6, tagsPipe = b._7, speakersJson = b._8,
         status = c._1, cancellationReason = c._2,
         createdBy = c._3, publishedBy = c._4, publishedAt = c._5,
-        viewCount = c._6, createdAt = c._7, updatedAt = c._8
+        viewCount = c._6, createdAt = c._7, updatedAt = c._8,
+        sponsorId = d._1, sponsorLabel = d._2, sponsorShowPublic = d._3
       )
     }, { ce: CommunityEvent =>
       Some((
@@ -73,7 +79,8 @@ class CommunityEventRepository @Inject()(
         (ce.locationName, ce.locationUrl, ce.locationDetail,
          ce.coverImage, ce.accentColor, ce.capacity, ce.tagsPipe, ce.speakersJson),
         (ce.status, ce.cancellationReason, ce.createdBy, ce.publishedBy,
-         ce.publishedAt, ce.viewCount, ce.createdAt, ce.updatedAt)
+         ce.publishedAt, ce.viewCount, ce.createdAt, ce.updatedAt),
+        (ce.sponsorId, ce.sponsorLabel, ce.sponsorShowPublic)
       ))
     })
   }

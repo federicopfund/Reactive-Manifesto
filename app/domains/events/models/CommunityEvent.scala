@@ -45,7 +45,11 @@ case class CommunityEvent(
 
   viewCount:          Int             = 0,
   createdAt:          Instant         = Instant.now(),
-  updatedAt:          Instant         = Instant.now()
+  updatedAt:          Instant         = Instant.now(),
+  // ── Patrocinio (Evolution 31) ────────────────────────────
+  sponsorId:          Option[Long]    = None,
+  sponsorLabel:       Option[String]  = None,
+  sponsorShowPublic:  Boolean         = false
 ) {
 
   def tags: Seq[String] =

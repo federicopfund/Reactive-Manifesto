@@ -15,5 +15,9 @@ case class EditorialSeason(
   startsOn: Option[LocalDate] = None,
   endsOn: Option[LocalDate] = None,
   isCurrent: Boolean = false,
-  createdAt: Instant = Instant.now()
+  createdAt: Instant = Instant.now(),
+  // ── Patrocinio (Evolution 31) ────────────────────────────
+  sponsorId:          Option[Long]    = None,
+  sponsorLabel:       Option[String]  = None,
+  sponsorShowPublic:  Boolean         = false
 )

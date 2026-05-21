@@ -6,6 +6,7 @@ import play.api.libs.json.{Json, JsObject}
 import controllers.actions.{OptionalAuthAction, OptionalAuthRequest, AuthAction, AuthRequest}
 import domains.events.models.{CommunityEvent, EventEnums, EventAttendee}
 import domains.events.repositories.{CommunityEventRepository, EventAttendeeRepository}
+import domains.editorial.repositories.SponsorRepository
 import shared.analytics.ReactiveAnalyticsAdapter
 import infrastructure.support.IcsBuilder
 import java.time.{Instant, LocalDate, ZoneId, YearMonth}
@@ -19,6 +20,7 @@ class EventController @Inject()(
   val controllerComponents: ControllerComponents,
   events: CommunityEventRepository,
   attendees: EventAttendeeRepository,
+  sponsorRepo: SponsorRepository,
   analytics: ReactiveAnalyticsAdapter,
   optionalAuth: OptionalAuthAction,
   authAction: AuthAction
@@ -82,10 +84,13 @@ class EventController @Inject()(
           case (Some((uid, _, _)), Some(id)) => attendees.findForUserAndEvent(id, uid)
           case _                             => Future.successful(None)
         }
+        val sponsorFut = (if (e.sponsorShowPublic) e.sponsorId else None)
+                           .map(sponsorRepo.findById).getOrElse(Future.successful(None))
         for {
           rsvp     <- rsvpFut
           counts   <- e.id.map(attendees.countByStatus).getOrElse(Future.successful(Map.empty[String, Int]))
-        } yield Ok(views.html.events.detail(e, rsvp, counts, request.userInfo))
+          sponsor  <- sponsorFut
+        } yield Ok(views.html.events.detail(e, rsvp, counts, request.userInfo, sponsor))
       case _ =>
         Future.successful(NotFound(views.html.errors.notFound()))
     }

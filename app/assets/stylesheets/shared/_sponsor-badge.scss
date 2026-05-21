@@ -1,0 +1,308 @@
+// ============================================================
+// _sponsor-badge.scss — Patrocinadores editoriales
+//
+// Tres tratamientos visuales según tier:
+//   .ed-sponsor--gold    → franja editorial completa (temporadas)
+//   .ed-sponsor--silver  → chip integrado en el hero (colecciones)
+//   .ed-sponsor--bronze  → sello compacto en sidebar (eventos)
+//
+// Principio: aspecto editorial, no publicitario.
+// El patrocinador se presenta como un colaborador, no como un anuncio.
+// ============================================================
+
+// ── Variables de componente ──────────────────────────────────
+.ed-sponsor {
+  --_sponsor-logo-size-gold:   44px;
+  --_sponsor-logo-size-silver: 28px;
+  --_sponsor-logo-size-bronze: 22px;
+  --_sponsor-radius:           3px;
+  --_sponsor-gap:              var(--space-3);
+}
+
+// ============================================================
+// BASE — estructura compartida
+// ============================================================
+.ed-sponsor {
+  display: flex;
+  align-items: center;
+  gap: var(--_sponsor-gap);
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.18s ease;
+
+  &:hover { opacity: 0.82; }
+
+  &__logo {
+    flex-shrink: 0;
+    border-radius: var(--_sponsor-radius);
+    object-fit: contain;
+    background: transparent;
+    // Filtro para logros logotipos en modo noche sin invertir colores
+    [data-theme="noche"] & {
+      filter: brightness(0) invert(1) opacity(0.85);
+    }
+  }
+
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  &__label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    white-space: nowrap;
+  }
+
+  &__name {
+    font-family: var(--font-body);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__tier {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 1px 5px;
+    border-radius: 2px;
+    align-self: flex-start;
+  }
+}
+
+// ============================================================
+// GOLD — franja editorial completa (temporadas)
+// Aparece debajo del hero, ancho completo.
+// ============================================================
+.ed-sponsor-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  margin-block: var(--space-5);
+  background: var(--color-surface-raised);
+  border-inline-start: 3px solid var(--color-accent);
+  border-radius: 0 var(--_sponsor-radius) var(--_sponsor-radius) 0;
+
+  &__copy {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    flex-shrink: 0;
+  }
+
+  &__sponsor {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.18s ease;
+
+    &:hover { opacity: 0.78; }
+  }
+
+  &__logo {
+    height: var(--_sponsor-logo-size-gold);
+    width: auto;
+    max-width: 120px;
+    object-fit: contain;
+    border-radius: var(--_sponsor-radius);
+
+    [data-theme="noche"] & {
+      filter: brightness(0) invert(1) opacity(0.85);
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+  }
+
+  &__tier-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    padding: 2px 6px;
+    border: 1px solid var(--color-accent);
+    border-radius: 2px;
+    align-self: flex-start;
+    line-height: 1.4;
+
+    &::before {
+      content: '◆';
+      font-size: 0.45rem;
+    }
+  }
+}
+
+// ============================================================
+// SILVER — chip integrado en el hero (colecciones)
+// Aparece inline junto al resto de la meta del hero.
+// ============================================================
+.ed-sponsor-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 10px 4px 6px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 99px;
+  background: var(--color-surface);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-raised);
+  }
+
+  &__logo {
+    height: var(--_sponsor-logo-size-silver);
+    width: var(--_sponsor-logo-size-silver);
+    object-fit: contain;
+    border-radius: 50%;
+    background: var(--color-surface-raised);
+    padding: 2px;
+    flex-shrink: 0;
+
+    [data-theme="noche"] & {
+      filter: brightness(0) invert(1) opacity(0.8);
+    }
+  }
+
+  &__logo--fallback {
+    // Placeholder cuando no hay logo_url
+    height: var(--_sponsor-logo-size-silver);
+    width: var(--_sponsor-logo-size-silver);
+    border-radius: 50%;
+    background: var(--color-accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    flex-shrink: 0;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+  }
+
+  &__label {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  &__name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+    line-height: 1.2;
+  }
+}
+
+// ============================================================
+// BRONZE — sello compacto (eventos)
+// Aparece en el bloque de facts del evento.
+// ============================================================
+.ed-sponsor-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: inherit;
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--_sponsor-radius);
+  background: var(--color-surface-sunken);
+  transition: border-style 0.15s, background 0.15s;
+
+  &:hover {
+    border-style: solid;
+    background: var(--color-surface-raised);
+  }
+
+  &__logo {
+    height: var(--_sponsor-logo-size-bronze);
+    width: auto;
+    max-width: 60px;
+    object-fit: contain;
+    flex-shrink: 0;
+
+    [data-theme="noche"] & {
+      filter: brightness(0) invert(1) opacity(0.75);
+    }
+  }
+
+  &__logo--fallback {
+    height: var(--_sponsor-logo-size-bronze);
+    width: var(--_sponsor-logo-size-bronze);
+    border-radius: 2px;
+    background: var(--color-accent-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.5rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    flex-shrink: 0;
+  }
+
+  &__label {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    white-space: nowrap;
+  }
+
+  &__name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+}

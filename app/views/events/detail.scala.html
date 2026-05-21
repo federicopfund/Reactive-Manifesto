@@ -1,7 +1,8 @@
 @(e: domains.events.models.CommunityEvent,
   userRsvp: Option[domains.events.models.EventAttendee],
   rsvpCounts: Map[String, Int],
-  userInfo: Option[(Long, String, String)] = None)(implicit request: RequestHeader)
+  userInfo: Option[(Long, String, String)] = None,
+  sponsor: Option[domains.editorial.models.Sponsor] = None)(implicit request: RequestHeader)
 
 @*
   Detalle de evento — incluye RSVP, countdown, share, ICS, agregar a Google.
@@ -83,6 +84,13 @@
           <div>
             <dt>Cupo</dt>
             <dd>@c personas</dd>
+          </div>
+        }
+        @* ── Patrocinador Bronze: sello en el bloque de facts ─────── *@
+        @if(e.sponsorShowPublic && sponsor.isDefined) {
+          <div>
+            <dt>Partner</dt>
+            <dd>@partials.sponsorBadge(sponsor, e.sponsorShowPublic, e.sponsorLabel, "bronze")</dd>
           </div>
         }
       </dl>

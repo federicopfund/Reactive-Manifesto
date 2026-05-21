@@ -13,7 +13,7 @@ import domains.contact.repositories.ContactRepository
 import domains.publications.repositories.{ReactionRepository, CommentRepository, PublicationCategoryRepository, EditorialArticleRepository}
 import domains.gamification.repositories.BookmarkRepository
 import domains.newsletter.repositories.NewsletterRepository
-import domains.editorial.repositories.{ManifestoPillarRepository, LegalDocumentRepository, EditorialIdentityRepository, EditorialSeasonRepository}
+import domains.editorial.repositories.{ManifestoPillarRepository, LegalDocumentRepository, EditorialIdentityRepository, EditorialSeasonRepository, SponsorRepository}
 import domains.collections.repositories.CollectionRepository
 import domains.events.repositories.CommunityEventRepository
 import domains.events.models.CommunityEvent
@@ -46,6 +46,7 @@ class HomeController @Inject()(
   identityRepo: EditorialIdentityRepository,
   seasonRepo: EditorialSeasonRepository,
   eventRepo: CommunityEventRepository,
+  sponsorRepo: SponsorRepository,
   userRepo: UserRepository,
   optionalAuth: OptionalAuthAction
 )(implicit ec: ExecutionContext) extends BaseController with I18nSupport with Logging {
@@ -118,12 +119,15 @@ class HomeController @Inject()(
         }).recover { case _ => Nil }
         val collsFut      = collectionRepo.findPublishedWithCounts().recover { case _ => Nil }
         val allSeasonsFut = seasonRepo.findAllChronologicalDesc().recover { case _ => Nil }
+        val sponsorFut    = (if (season.sponsorShowPublic) season.sponsorId else None)
+                              .map(sponsorRepo.findById).getOrElse(Future.successful(None))
         for {
           publications <- pubsFut
           events       <- eventsFut
           collections  <- collsFut
           allSeasons   <- allSeasonsFut
-        } yield Ok(views.html.seasons.detail(season, publications, events, collections, allSeasons))
+          sponsor      <- sponsorFut
+        } yield Ok(views.html.seasons.detail(season, publications, events, collections, allSeasons, sponsor))
       case None =>
         Future.successful(NotFound(views.html.errors.notFound()))
     }
@@ -212,13 +216,15 @@ class HomeController @Inject()(
     val username        = request.userInfo.map(_._2)
     collectionRepo.findBySlug(slug).flatMap {
       case Some(c) if c.isLive =>
+        val sponsorFut = (if (c.sponsorShowPublic) c.sponsorId else None)
+                           .map(sponsorRepo.findById).getOrElse(Future.successful(None))
         for {
-          items <- collectionRepo.resolveItems(c.id.get)
-          others <- collectionRepo.findPublishedWithCounts()
+          items   <- collectionRepo.resolveItems(c.id.get)
+          others  <- collectionRepo.findPublishedWithCounts()
+          sponsor <- sponsorFut
         } yield {
           val related = others.filter(_.collection.id != c.id).take(3)
-          // Estamos parados en una colección: si había otro breadcrumb, lo borramos.
-          Ok(views.html.collections.detail(isAuthenticated, username, c, items, related))
+          Ok(views.html.collections.detail(isAuthenticated, username, c, items, related, sponsor))
             .removingFromSession("fromCollection", "fromCollectionName")
         }
       case _ =>

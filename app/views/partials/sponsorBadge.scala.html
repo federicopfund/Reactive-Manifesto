@@ -1,0 +1,130 @@
+@**
+ * Partial: sponsorBadge.scala.html
+ *
+ * Renderiza el badge de patrocinador según tier y contexto editorial.
+ *
+ *  variant = "gold"   → .ed-sponsor-strip   (temporadas — franja hero)
+ *  variant = "silver" → .ed-sponsor-chip    (colecciones — chip inline)
+ *  variant = "bronze" → .ed-sponsor-stamp   (eventos — sello compacto)
+ *
+ * Si sponsor es None o sponsorShowPublic = false, no renderiza nada.
+ *@
+@(sponsor: Option[domains.editorial.models.Sponsor],
+  sponsorShowPublic: Boolean,
+  sponsorLabel: Option[String],
+  variant: String = "gold")
+
+@if(sponsor.isDefined && sponsorShowPublic) {
+  @defining(sponsor.get) { sp =>
+    @defining(sponsorLabel.getOrElse(sp.name)) { displayName =>
+
+      @* ── GOLD: franja editorial debajo del hero de temporada ─────── *@
+      @if(variant == "gold") {
+        <aside class="ed-sponsor-strip" aria-label="Patrocinador de la temporada">
+          <span class="ed-sponsor-strip__copy">Este período editorial es posible gracias a</span>
+          @sp.website.map { url =>
+            <a class="ed-sponsor-strip__sponsor"
+               href="@url"
+               target="_blank"
+               rel="noopener nofollow"
+               aria-label="Visitar @displayName">
+              @sponsorContent(sp, displayName, "gold")
+            </a>
+          }.getOrElse {
+            <div class="ed-sponsor-strip__sponsor">
+              @sponsorContent(sp, displayName, "gold")
+            </div>
+          }
+        </aside>
+      }
+
+      @* ── SILVER: chip en el hero meta de colección ───────────────── *@
+      @if(variant == "silver") {
+        @sp.website.map { url =>
+          <a class="ed-sponsor-chip"
+             href="@url"
+             target="_blank"
+             rel="noopener nofollow"
+             title="Con el apoyo de @displayName">
+            @silverChipInner(sp, displayName)
+          </a>
+        }.getOrElse {
+          <span class="ed-sponsor-chip" title="Con el apoyo de @displayName">
+            @silverChipInner(sp, displayName)
+          </span>
+        }
+      }
+
+      @* ── BRONZE: sello compacto en facts del evento ──────────────── *@
+      @if(variant == "bronze") {
+        @sp.website.map { url =>
+          <a class="ed-sponsor-stamp"
+             href="@url"
+             target="_blank"
+             rel="noopener nofollow"
+             title="Partner del evento: @displayName">
+            @bronzeStampInner(sp, displayName)
+          </a>
+        }.getOrElse {
+          <span class="ed-sponsor-stamp" title="Partner del evento: @displayName">
+            @bronzeStampInner(sp, displayName)
+          </span>
+        }
+      }
+
+    }
+  }
+}
+
+@* ── Sub-templates inline ────────────────────────────────────────── *@
+
+@sponsorContent(sp: domains.editorial.models.Sponsor, name: String, tier: String) = {
+  @sp.logoUrl.map { logo =>
+    <img class="ed-sponsor-strip__logo"
+         src="@logo"
+         alt="Logo @name"
+         loading="lazy"
+         width="120"
+         height="44" />
+  }
+  <div class="ed-sponsor-strip__info">
+    <span class="ed-sponsor-strip__name">@name</span>
+    <span class="ed-sponsor-strip__tier-chip">@sp.tierLabel Partner</span>
+  </div>
+}
+
+@silverChipInner(sp: domains.editorial.models.Sponsor, name: String) = {
+  @sp.logoUrl.map { logo =>
+    <img class="ed-sponsor-chip__logo"
+         src="@logo"
+         alt="Logo @name"
+         loading="lazy"
+         width="28"
+         height="28" />
+  }.getOrElse {
+    <span class="ed-sponsor-chip__logo--fallback" aria-hidden="true">
+      @name.headOption.map(_.toUpper.toString).getOrElse("S")
+    </span>
+  }
+  <span class="ed-sponsor-chip__text">
+    <span class="ed-sponsor-chip__label">Con el apoyo de</span>
+    <span class="ed-sponsor-chip__name">@name</span>
+  </span>
+}
+
+@bronzeStampInner(sp: domains.editorial.models.Sponsor, name: String) = {
+  @sp.logoUrl.map { logo =>
+    <img class="ed-sponsor-stamp__logo"
+         src="@logo"
+         alt="Logo @name"
+         loading="lazy"
+         width="60"
+         height="22" />
+  }.getOrElse {
+    <span class="ed-sponsor-stamp__logo--fallback" aria-hidden="true">
+      @name.take(2).toUpperCase
+    </span>
+  }
+  <span class="ed-sponsor-stamp__label">Partner</span>
+  <span class="ed-sponsor-stamp__name">@name</span>
+}

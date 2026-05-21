@@ -3,7 +3,8 @@
   publications: List[domains.publications.models.PublicationWithAuthor],
   events:       Seq[domains.events.models.CommunityEvent],
   collections:  Seq[domains.collections.models.CollectionWithCount],
-  allSeasons:   Seq[domains.editorial.models.EditorialSeason]
+  allSeasons:   Seq[domains.editorial.models.EditorialSeason],
+  sponsor:      Option[domains.editorial.models.Sponsor] = None
 )(implicit request: RequestHeader)
 
 @import java.util.Locale
@@ -85,6 +86,9 @@
       </div>
     </dl>
   </section>
+
+  @* ── Patrocinador Gold: franja editorial debajo del hero ───────── *@
+  @partials.sponsorBadge(sponsor, season.sponsorShowPublic, season.sponsorLabel, "gold")
 
   @season.description.map { desc =>
     <section class="ed-section ed-season-block">

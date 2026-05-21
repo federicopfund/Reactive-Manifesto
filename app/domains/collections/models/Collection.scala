@@ -102,10 +102,14 @@ case class Collection(
   submittedAt:  Option[Instant] = None,
   reviewedBy:   Option[Long]    = None,
   reviewedAt:   Option[Instant] = None,
-  publishedBy:  Option[Long]    = None,
-  publishedAt:  Option[Instant] = None,
-  reviewNotes:  Option[String]  = None,
-  accentColor:  Option[String]  = None
+  publishedBy:        Option[Long]    = None,
+  publishedAt:        Option[Instant] = None,
+  reviewNotes:        Option[String]  = None,
+  accentColor:        Option[String]  = None,
+  // ── Patrocinio (Evolution 31) ────────────────────────────
+  sponsorId:          Option[Long]    = None,
+  sponsorLabel:       Option[String]  = None,
+  sponsorShowPublic:  Boolean         = false
 ) {
   /** Visible en el portafolio publico. */
   def isLive: Boolean = status == CollectionStatus.Published && isPublished
