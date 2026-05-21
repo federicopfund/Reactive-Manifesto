@@ -1,0 +1,119 @@
+@(existing: Option[domains.editorial.models.Sponsor],
+  formErrors: Map[String, String],
+  formData: Map[String, String])(implicit request: RequestHeader)
+
+@isEdit = @{ existing.isDefined }
+@actionUrl = @{ existing.flatMap(_.id) match {
+  case Some(id) => controllers.admin.routes.AdminSponsorController.update(id)
+  case None     => controllers.admin.routes.AdminSponsorController.create()
+}}
+@title = @{ if(isEdit) s"Editar · ${existing.get.name}" else "Nuevo sponsor" }
+
+@v(field: String) = @{ formData.getOrElse(field, "") }
+@err(field: String) = @{
+  formErrors.get(field).map { msg =>
+    play.twirl.api.Html(s"""<small class="ed-bo__error">$msg</small>""")
+  }.getOrElse(play.twirl.api.Html(""))
+}
+
+@views.html.admin.adminLayout(title, "sponsors") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">@title</h1>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminSponsorController.list()">← Volver</a>
+    </div>
+  </div>
+
+  @request.flash.get("success").map { msg => <div class="ed-flash ed-flash--success">@msg</div> }
+
+  @if(formErrors.nonEmpty) {
+    <div class="ed-flash ed-flash--error">
+      <strong>Revisá los errores:</strong>
+      <ul>@for((_, msg) <- formErrors) { <li>@msg</li> }</ul>
+    </div>
+  }
+
+  <form method="POST" action="@actionUrl" class="ed-bo__form">
+    @helper.CSRF.formField
+
+    <div class="ed-bo__form-row ed-bo__form-row--inline">
+      <div>
+        <label class="ed-bo__label" for="name">Nombre *</label>
+        <input class="ed-bo__input @if(formErrors.contains("name")){is-error}" id="name" name="name"
+               required maxlength="120" value="@v("name")">
+        @err("name")
+      </div>
+      <div>
+        <label class="ed-bo__label" for="slug">Slug *</label>
+        <input class="ed-bo__input @if(formErrors.contains("slug")){is-error}" id="slug" name="slug"
+               required pattern="^[a-z0-9-]+$" value="@v("slug")">
+        <small class="ed-bo__hint">Solo a-z, 0-9 y guiones. Ej: evolution-31</small>
+        @err("slug")
+      </div>
+    </div>
+
+    <div class="ed-bo__form-row ed-bo__form-row--inline">
+      <div>
+        <label class="ed-bo__label" for="tierDefault">Tier</label>
+        <select class="ed-bo__input" id="tierDefault" name="tierDefault">
+          <option value="gold"   @if(v("tierDefault") == "gold"){selected}>Gold — Temporada completa</option>
+          <option value="silver" @if(v("tierDefault") == "silver"){selected}>Silver — Colección temática</option>
+          <option value="bronze" @if(v("tierDefault") == "bronze" || v("tierDefault").isEmpty){selected}>Bronze — Evento puntual</option>
+        </select>
+      </div>
+      <div>
+        <label class="ed-bo__label" for="website">Sitio web</label>
+        <input class="ed-bo__input" id="website" name="website" type="url"
+               placeholder="https://ejemplo.com" value="@v("website")">
+      </div>
+    </div>
+
+    <div class="ed-bo__form-row">
+      <label class="ed-bo__label" for="logoUrl">URL del logo</label>
+      <input class="ed-bo__input" id="logoUrl" name="logoUrl" type="url"
+             placeholder="https://cdn.ejemplo.com/logo.png" value="@v("logoUrl")">
+      <small class="ed-bo__hint">URL pública de la imagen. Se muestra en el badge del sitio.</small>
+    </div>
+
+    <fieldset class="ed-bo__fieldset">
+      <legend class="ed-bo__legend">Contacto</legend>
+      <div class="ed-bo__form-row ed-bo__form-row--inline">
+        <div>
+          <label class="ed-bo__label" for="contactName">Nombre del contacto</label>
+          <input class="ed-bo__input" id="contactName" name="contactName" value="@v("contactName")">
+        </div>
+        <div>
+          <label class="ed-bo__label" for="contactRole">Rol</label>
+          <input class="ed-bo__input" id="contactRole" name="contactRole"
+                 placeholder="CEO, Marketing Manager…" value="@v("contactRole")">
+        </div>
+      </div>
+      <div class="ed-bo__form-row">
+        <label class="ed-bo__label" for="contactEmail">Email del contacto</label>
+        <input class="ed-bo__input" id="contactEmail" name="contactEmail" type="email" value="@v("contactEmail")">
+      </div>
+    </fieldset>
+
+    <div class="ed-bo__form-row">
+      <label class="ed-bo__label" for="notes">Notas internas</label>
+      <textarea class="ed-bo__textarea" id="notes" name="notes" rows="3">@v("notes")</textarea>
+      <small class="ed-bo__hint">Solo visible en el backoffice.</small>
+    </div>
+
+    <div class="ed-bo__form-row ed-bo__form-row--check">
+      <label class="ed-bo__label ed-bo__label--check">
+        <input type="checkbox" name="isActive" value="true"
+               @if(v("isActive") != "false"){checked}>
+        Sponsor activo (aparece en los dropdowns de asignación)
+      </label>
+    </div>
+
+    <div class="ed-bo__form-actions">
+      <button class="ed-btn-primary" type="submit">@if(isEdit){Guardar cambios}else{Crear sponsor}</button>
+      <a class="ed-btn-ghost" href="@controllers.admin.routes.AdminSponsorController.list()">Cancelar</a>
+    </div>
+  </form>
+}

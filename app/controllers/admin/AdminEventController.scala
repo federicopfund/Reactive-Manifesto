@@ -77,8 +77,9 @@ class AdminEventController @Inject()(
       events.findById(id).flatMap {
         case Some(e) =>
           for {
-            counts <- attendeeRepo.countByStatus(id)
-          } yield Ok(views.html.admin.events.view(e, counts))
+            counts   <- attendeeRepo.countByStatus(id)
+            sponsors <- sponsorRepo.findAllActive()
+          } yield Ok(views.html.admin.events.view(e, counts, sponsors))
         case None => Future.successful(NotFound("Evento no encontrado"))
       }
     }

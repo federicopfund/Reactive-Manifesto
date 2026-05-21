@@ -83,11 +83,12 @@ class AdminCollectionController @Inject()(
         case None => Future.successful(NotFound("Coleccion no encontrada"))
         case Some(coll) =>
           for {
-            items   <- collections.resolveItems(id)
-            history <- collections.historyOf(id)
+            items    <- collections.resolveItems(id)
+            history  <- collections.historyOf(id)
+            sponsors <- sponsorRepo.findAllActive()
           } yield {
             val available = CollectionWorkflowPolicy.availableFor(request.role, coll.status)
-            Ok(views.html.admin.collections.detail(coll, items, history, available))
+            Ok(views.html.admin.collections.detail(coll, items, history, available, sponsors))
           }
       }
     }

@@ -221,6 +221,13 @@ GET     /admin/agents/settings/runtime.json         controllers.admin.AdminAgent
 GET     /admin/editorial-identity                   controllers.admin.AdminEditorialIdentityController.list()
 POST    /admin/editorial-identity/:key              controllers.admin.AdminEditorialIdentityController.update(key: String)
 
+# Sponsors editoriales
+GET     /admin/sponsors                             controllers.admin.AdminSponsorController.list()
+GET     /admin/sponsors/new                         controllers.admin.AdminSponsorController.newForm()
+POST    /admin/sponsors/new                         controllers.admin.AdminSponsorController.create()
+GET     /admin/sponsors/:id/edit                    controllers.admin.AdminSponsorController.editForm(id: Long)
+POST    /admin/sponsors/:id/edit                    controllers.admin.AdminSponsorController.update(id: Long)
+
 # Temporadas editoriales — Issue #22
 GET     /admin/seasons                              controllers.admin.AdminSeasonController.list()
 GET     /admin/seasons/new                          controllers.admin.AdminSeasonController.newForm()

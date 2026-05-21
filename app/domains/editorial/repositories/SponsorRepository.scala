@@ -52,4 +52,36 @@ class SponsorRepository @Inject()(
 
   def findAllActive(): Future[Seq[Sponsor]] =
     db.run(sponsors.filter(_.isActive).sortBy(_.name).result)
+
+  def findAll(): Future[Seq[Sponsor]] =
+    db.run(sponsors.sortBy(_.name).result)
+
+  def slugExists(slug: String, excludeId: Option[Long] = None): Future[Boolean] = {
+    val base = sponsors.filter(_.slug === slug)
+    val q = excludeId match {
+      case Some(id) => base.filter(_.id =!= id)
+      case None     => base
+    }
+    db.run(q.exists.result)
+  }
+
+  def create(s: Sponsor): Future[Long] = {
+    val now = Instant.now()
+    val row = s.copy(createdAt = now, updatedAt = now)
+    db.run((sponsors returning sponsors.map(_.id)) += row)
+  }
+
+  def update(s: Sponsor): Future[Int] = s.id match {
+    case None => Future.successful(0)
+    case Some(id) =>
+      val now = Instant.now()
+      db.run(
+        sponsors.filter(_.id === id)
+          .map(r => (r.slug, r.name, r.website, r.logoUrl, r.contactName, r.contactEmail, r.contactRole, r.tierDefault, r.notes, r.isActive, r.updatedAt))
+          .update((s.slug, s.name, s.website, s.logoUrl, s.contactName, s.contactEmail, s.contactRole, s.tierDefault, s.notes, s.isActive, now))
+      )
+  }
+
+  def findByIdAny(id: Long): Future[Option[Sponsor]] =
+    db.run(sponsors.filter(_.id === id).result.headOption)
 }

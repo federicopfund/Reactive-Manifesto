@@ -48,6 +48,7 @@
     case "agents"       => "Agentes y Guardians"
     case "agent-settings" => "Configuración de agentes"
     case "editorial-identity" => "Identidad editorial"
+    case "sponsors"          => "Sponsors"
     case _              => "Backoffice"
   }
 }
@@ -166,6 +167,9 @@
             @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.SeasonsManage)) {
               <a class="ed-bo__nav-item @isActive("seasons")" href="@controllers.admin.routes.AdminSeasonController.list()">
                 <span class="ed-bo__nav-dot"></span>Temporadas
+              </a>
+              <a class="ed-bo__nav-item @isActive("sponsors")" href="@controllers.admin.routes.AdminSponsorController.list()">
+                <span class="ed-bo__nav-dot"></span>Sponsors
               </a>
             }
           </details>

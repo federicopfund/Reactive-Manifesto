@@ -1,4 +1,4 @@
-@(e: domains.events.models.CommunityEvent, rsvpCounts: Map[String, Int])(implicit request: RequestHeader)
+@(e: domains.events.models.CommunityEvent, rsvpCounts: Map[String, Int], sponsors: Seq[domains.editorial.models.Sponsor] = Nil)(implicit request: RequestHeader)
 
 @import domains.events.models.EventEnums
 
@@ -95,5 +95,16 @@
         @e.speakers.map { s => @partials.speakerCard(s) }
       </div>
     </article>
+  }
+
+  @e.id.map { eid =>
+    @views.html.admin.partials.sponsorPanel(
+      entityId            = eid,
+      entityType          = "event",
+      sponsors            = sponsors,
+      currentSponsorId    = e.sponsorId,
+      currentSponsorLabel = e.sponsorLabel,
+      currentShowPublic   = e.sponsorShowPublic
+    )
   }
 }
