@@ -35,6 +35,8 @@
     <div class="ed-flash ed-flash--error">Revisa los campos marcados.</div>
   }
 
+  <div class="ed-event-edit-layout">
+
   <form method="POST" action="@actionUrl" class="ed-bo__form ed-event-form">
     @helper.CSRF.formField
 
@@ -181,5 +183,7 @@
       currentSponsorLabel = existing.flatMap(_.sponsorLabel),
       currentShowPublic   = existing.exists(_.sponsorShowPublic)
     )
-  }
+  }.getOrElse(play.twirl.api.Html(""))
+
+  </div>
 }

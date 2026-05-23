@@ -53,32 +53,35 @@ class PublicationRepository @Inject()(
     def publicationType         = column[String]("publication_type")
     def requiresTechnicalReview = column[Boolean]("requires_technical_review")
     def seasonId                = column[Option[Long]]("season_id")
+    // ── Sponsor (Evolution 32) ──
+    def sponsorId               = column[Option[Long]]("sponsor_id")
+    def sponsorLabel            = column[Option[String]]("sponsor_label")
+    def sponsorShowPublic       = column[Boolean]("sponsor_show_public")
 
     def * = (
-      id.?,
-      userId,
-      title,
-      slug,
-      content,
-      excerpt,
-      coverImage,
-      category,
-      tags,
-      status,
-      viewCount,
-      createdAt,
-      updatedAt,
-      publishedAt,
-      reviewedBy,
-      reviewedAt,
-      rejectionReason,
-      adminNotes,
-      // ── Editoriales ──
-      currentStageId,
-      publicationType,
-      requiresTechnicalReview,
-      seasonId
-    ).mapTo[Publication]
+      (id.?, userId, title, slug, content, excerpt, coverImage, category, tags,
+       status, viewCount, createdAt, updatedAt, publishedAt, reviewedBy, reviewedAt,
+       rejectionReason, adminNotes, currentStageId, publicationType, requiresTechnicalReview),
+      (seasonId, sponsorId, sponsorLabel, sponsorShowPublic)
+    ).shaped <> ({
+      case (a, b) => Publication(
+        id = a._1, userId = a._2, title = a._3, slug = a._4, content = a._5,
+        excerpt = a._6, coverImage = a._7, category = a._8, tags = a._9,
+        status = a._10, viewCount = a._11, createdAt = a._12, updatedAt = a._13,
+        publishedAt = a._14, reviewedBy = a._15, reviewedAt = a._16,
+        rejectionReason = a._17, adminNotes = a._18,
+        currentStageId = a._19, publicationType = a._20, requiresTechnicalReview = a._21,
+        seasonId = b._1, sponsorId = b._2, sponsorLabel = b._3, sponsorShowPublic = b._4
+      )
+    }, { p: Publication =>
+      Some((
+        (p.id, p.userId, p.title, p.slug, p.content, p.excerpt, p.coverImage,
+         p.category, p.tags, p.status, p.viewCount, p.createdAt, p.updatedAt,
+         p.publishedAt, p.reviewedBy, p.reviewedAt, p.rejectionReason, p.adminNotes,
+         p.currentStageId, p.publicationType, p.requiresTechnicalReview),
+        (p.seasonId, p.sponsorId, p.sponsorLabel, p.sponsorShowPublic)
+      ))
+    })
   }
 
   private val publications = TableQuery[PublicationsTable]
@@ -113,7 +116,11 @@ class PublicationRepository @Inject()(
         currentStageId          = r.nextLongOption(),
         publicationType         = r.nextString(),
         requiresTechnicalReview = r.nextBoolean(),
-        seasonId                = r.nextLongOption()
+        seasonId                = r.nextLongOption(),
+        // ── Sponsor (Evolution 32) ──
+        sponsorId               = r.nextLongOption(),
+        sponsorLabel            = r.nextStringOption(),
+        sponsorShowPublic       = r.nextBoolean()
       ),
       authorUsername = r.nextString(),
       authorFullName = r.nextString()
@@ -493,5 +500,24 @@ class PublicationRepository @Inject()(
     db.run(
       publications.filter(p => p.id === id && p.userId === userId).delete
     ).map(_ > 0)
+  }
+
+  // ═══════════════════════════════════════════════
+  //  SPONSOR (Evolution 32)
+  // ═══════════════════════════════════════════════
+
+  def updateSponsor(
+    id: Long,
+    sponsorId: Option[Long],
+    sponsorLabel: Option[String],
+    sponsorShowPublic: Boolean
+  ): Future[Int] = {
+    val now = Instant.now()
+    db.run(
+      publications
+        .filter(_.id === id)
+        .map(p => (p.sponsorId, p.sponsorLabel, p.sponsorShowPublic, p.updatedAt))
+        .update((sponsorId, sponsorLabel, sponsorShowPublic, now))
+    )
   }
 }

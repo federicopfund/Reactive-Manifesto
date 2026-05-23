@@ -141,6 +141,7 @@ POST    /admin/publications/:id/approve controllers.admin.AdminController.approv
 POST    /admin/publications/:id/reject  controllers.admin.AdminController.rejectPublication(id: Long)
 POST    /admin/publications/:id/transition controllers.admin.AdminController.transitionStage(id: Long)
 POST    /admin/publications/:id/delete  controllers.admin.AdminController.deletePublication(id: Long)
+POST    /admin/publications/:id/sponsor   controllers.admin.AdminController.setPublicationSponsor(id: Long)
 POST    /admin/publications/:id/notes   controllers.admin.AdminController.saveAdminNotes(id: Long)
 
 # Feedback estructurado
@@ -223,6 +224,7 @@ POST    /admin/editorial-identity/:key              controllers.admin.AdminEdito
 
 # Sponsors editoriales
 GET     /admin/sponsors                             controllers.admin.AdminSponsorController.list()
+GET     /admin/sponsors/asignaciones                controllers.admin.AdminSponsorController.asignaciones()
 GET     /admin/sponsors/new                         controllers.admin.AdminSponsorController.newForm()
 POST    /admin/sponsors/new                         controllers.admin.AdminSponsorController.create()
 GET     /admin/sponsors/:id/edit                    controllers.admin.AdminSponsorController.editForm(id: Long)

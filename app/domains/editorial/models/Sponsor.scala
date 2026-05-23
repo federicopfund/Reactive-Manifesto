@@ -33,3 +33,33 @@ case class Sponsor(
     case other    => other.capitalize
   }
 }
+
+/**
+ * Resumen de una asignación de sponsor a una entidad del sistema.
+ * Se usa en la vista de /admin/comercial/asignaciones.
+ */
+case class SponsorAssignment(
+  entityType:   String,         // "publicacion" | "evento" | "coleccion" | "temporada"
+  entityId:     Long,
+  entityTitle:  String,
+  entitySlug:   String,
+  sponsorId:    Long,
+  sponsorName:  String,
+  sponsorTier:  String,
+  sponsorLabel: Option[String],
+  showPublic:   Boolean
+) {
+  def entityTypeLabel: String = entityType match {
+    case "publicacion" => "Publicación"
+    case "evento"      => "Evento"
+    case "coleccion"   => "Colección"
+    case "temporada"   => "Temporada"
+    case other         => other.capitalize
+  }
+  def tierLabel: String = sponsorTier match {
+    case "gold"   => "Gold"
+    case "silver" => "Silver"
+    case "bronze" => "Bronze"
+    case other    => other.capitalize
+  }
+}

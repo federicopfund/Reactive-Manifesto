@@ -8,9 +8,10 @@
 )(implicit request: RequestHeader)
 
 @actionUrl = @{ entityType match {
-  case "season"     => controllers.admin.routes.AdminSeasonController.setSponsor(entityId)
-  case "collection" => controllers.admin.routes.AdminCollectionController.setSponsor(entityId)
-  case _            => controllers.admin.routes.AdminEventController.setSponsor(entityId)
+  case "season"      => controllers.admin.routes.AdminSeasonController.setSponsor(entityId)
+  case "collection"  => controllers.admin.routes.AdminCollectionController.setSponsor(entityId)
+  case "publication" => controllers.admin.routes.AdminController.setPublicationSponsor(entityId)
+  case _             => controllers.admin.routes.AdminEventController.setSponsor(entityId)
 }}
 
 <aside class="ed-bo__panel ed-bo__panel--sponsor">

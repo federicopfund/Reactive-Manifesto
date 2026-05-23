@@ -306,3 +306,30 @@
     white-space: nowrap;
   }
 }
+
+// ============================================================
+// CONTEXTO ARTÍCULO — modificadores para publicaciones
+// Ajusta márgenes y tamaños para el body de un artículo.
+// ============================================================
+.ed-article__sponsor {
+  margin-block: var(--space-6);
+
+  // Gold strip en artículo: borde izquierdo más sutil, sin ancho full invasivo
+  .ed-sponsor-strip {
+    margin-block: 0;
+    border-inline-start-width: 2px;
+    background: var(--color-surface-raised);
+  }
+
+  // Silver chip en artículo: alineado a la izquierda por defecto
+  .ed-sponsor-chip {
+    justify-content: flex-start;
+  }
+
+  // Bronze stamp en artículo: reducido y centrado
+  .ed-sponsor-stamp {
+    --_sponsor-logo-size-bronze: 20px;
+    margin-inline: 0;
+    justify-content: flex-start;
+  }
+}

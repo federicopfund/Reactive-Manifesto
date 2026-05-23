@@ -1,4 +1,4 @@
-@(publication: domains.publications.models.Publication, username: String, feedbacks: List[domains.publications.models.PublicationFeedbackWithAdmin], reactions: Map[String, Int], userReactions: Set[String], comments: List[domains.publications.models.CommentWithAuthor], isBookmarked: Boolean, userId: Option[Long])(implicit request: RequestHeader, messages: Messages)
+@(publication: domains.publications.models.Publication, username: String, feedbacks: List[domains.publications.models.PublicationFeedbackWithAdmin], reactions: Map[String, Int], userReactions: Set[String], comments: List[domains.publications.models.CommentWithAuthor], isBookmarked: Boolean, userId: Option[Long], sponsor: Option[domains.editorial.models.Sponsor] = None)(implicit request: RequestHeader, messages: Messages)
 
 @isAuthenticated = @{ userId.isDefined }
 @reactionTypes = @{ List(("like","♥","Me gusta"), ("insight","✦","Aporta"), ("save","☆","Guardar")) }
@@ -23,6 +23,16 @@
           <img src="@url" alt="@publication.title" />
         </figure>
       }
+
+      @* ── Badge de sponsor según tier ─────────────────────── *@
+      <div class="ed-article__sponsor">
+        @partials.sponsorBadge(
+          sponsor,
+          publication.sponsorShowPublic,
+          publication.sponsorLabel,
+          sponsor.map(_.tierDefault).getOrElse("gold")
+        )
+      </div>
 
       @publication.excerpt.map { e => <p class="ed-article-lede">@e</p> }
 

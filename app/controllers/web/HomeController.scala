@@ -147,11 +147,13 @@ class HomeController @Inject()(
         publicationRepository.incrementViewCount(publication.id.get)
         val pubId = publication.id.get
         for {
-          reactions <- reactionRepo.countByPublication(pubId)
+          reactions     <- reactionRepo.countByPublication(pubId)
           userReactions <- userId.map(uid => reactionRepo.getUserReactions(pubId, uid)).getOrElse(Future.successful(Set.empty[String]))
-          comments <- commentRepo.findByPublicationId(pubId)
-          isBookmarked <- userId.map(uid => bookmarkRepo.isBookmarked(uid, pubId)).getOrElse(Future.successful(false))
+          comments      <- commentRepo.findByPublicationId(pubId)
+          isBookmarked  <- userId.map(uid => bookmarkRepo.isBookmarked(uid, pubId)).getOrElse(Future.successful(false))
           authorUsername <- userRepo.findById(publication.userId).map(_.map(_.username).getOrElse("desconocido"))
+          sponsor       <- (if (publication.sponsorShowPublic) publication.sponsorId else None)
+                             .map(sponsorRepo.findById).getOrElse(Future.successful(None))
         } yield {
           Ok(views.html.user.publicationPreview(
             publication,
@@ -161,7 +163,8 @@ class HomeController @Inject()(
             userReactions,
             comments,
             isBookmarked,
-            userId
+            userId,
+            sponsor
           ))
         }
       case _ =>

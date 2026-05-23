@@ -1,7 +1,7 @@
 package domains.editorial.repositories
 
 import javax.inject.{Inject, Singleton}
-import domains.editorial.models.Sponsor
+import domains.editorial.models.{Sponsor, SponsorAssignment}
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.db.slick.DatabaseConfigProvider
@@ -84,4 +84,48 @@ class SponsorRepository @Inject()(
 
   def findByIdAny(id: Long): Future[Option[Sponsor]] =
     db.run(sponsors.filter(_.id === id).result.headOption)
+
+  // ── Asignaciones cruzadas ─────────────────────────────────────────────────
+  // Retorna todas las entidades (publicaciones, eventos, colecciones, temporadas)
+  // que tienen un sponsor asignado, para la vista /admin/comercial/asignaciones.
+
+  def findAssignments(): Future[Seq[SponsorAssignment]] = {
+    import slick.jdbc.GetResult
+    implicit val gr: GetResult[SponsorAssignment] = GetResult { r =>
+      SponsorAssignment(
+        entityType   = r.nextString(),
+        entityId     = r.nextLong(),
+        entityTitle  = r.nextString(),
+        entitySlug   = r.nextString(),
+        sponsorId    = r.nextLong(),
+        sponsorName  = r.nextString(),
+        sponsorTier  = r.nextString(),
+        sponsorLabel = r.nextStringOption(),
+        showPublic   = r.nextBoolean()
+      )
+    }
+    val q = sql"""
+      SELECT 'publicacion' AS entity_type, p.id AS entity_id, p.title AS entity_title, p.slug AS entity_slug,
+             s.id AS sponsor_id, s.name AS sponsor_name, s.tier_default AS sponsor_tier, p.sponsor_label, p.sponsor_show_public
+      FROM publications p
+      JOIN sponsors s ON p.sponsor_id = s.id
+      UNION ALL
+      SELECT 'evento', e.id, e.title, e.slug,
+             s.id, s.name, s.tier_default, e.sponsor_label, e.sponsor_show_public
+      FROM community_events e
+      JOIN sponsors s ON e.sponsor_id = s.id
+      UNION ALL
+      SELECT 'coleccion', c.id, c.name, c.slug,
+             s.id, s.name, s.tier_default, c.sponsor_label, c.sponsor_show_public
+      FROM collections c
+      JOIN sponsors s ON c.sponsor_id = s.id
+      UNION ALL
+      SELECT 'temporada', t.id, t.name, ''::text,
+             s.id, s.name, s.tier_default, t.sponsor_label, t.sponsor_show_public
+      FROM editorial_seasons t
+      JOIN sponsors s ON t.sponsor_id = s.id
+      ORDER BY entity_type, entity_id
+    """.as[SponsorAssignment]
+    db.run(q)
+  }
 }

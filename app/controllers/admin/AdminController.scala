@@ -12,7 +12,7 @@ import domains.publications.repositories.{PublicationRepository, PublicationFeed
 import domains.messaging.repositories.UserNotificationRepository
 import domains.newsletter.repositories.NewsletterRepository
 import domains.messaging.repositories.PrivateMessageRepository
-import domains.editorial.repositories.{EditorialStageRepository, EditorialSeasonRepository}
+import domains.editorial.repositories.{EditorialStageRepository, EditorialSeasonRepository, SponsorRepository}
 import domains.contact.models.ContactRecord
 import domains.publications.models.{PublicationFeedback, FeedbackType, PublicationStageHistory}
 import domains.messaging.models.UserNotification
@@ -51,6 +51,7 @@ class AdminController @Inject()(
   stageRepository: EditorialStageRepository,
   stageHistoryRepository: PublicationStageHistoryRepository,
   seasonRepository: EditorialSeasonRepository,
+  sponsorRepository: SponsorRepository,
   publicationAdapter: ReactivePublicationAdapter,
   notificationAdapter: ReactiveNotificationAdapter,
   analyticsAdapter: ReactiveAnalyticsAdapter,
@@ -519,16 +520,32 @@ class AdminController @Inject()(
           stages       <- stageRepository.findActive()
           timeline     <- stageHistoryRepository.timelineWithStageOf(id)
           currentEntry <- stageHistoryRepository.currentStageOf(id)
+          sponsors     <- sponsorRepository.findAllActive()
         } yield {
           val currentCode = currentEntry.flatMap(h => stages.find(_.id.contains(h.stageId)).map(_.code))
             .orElse(Some(EditorialStageCode.fromLegacyStatus(publication.status)))
           val nextStages = currentCode
             .map(c => EditorialStagePolicy.nextStagesFor(c, request.role, stages))
             .getOrElse(Seq.empty)
-          Ok(views.html.admin.publicationDetail(publication, feedbacks, stages, timeline, currentCode, nextStages, request.role))
+          Ok(views.html.admin.publicationDetail(publication, feedbacks, stages, timeline, currentCode, nextStages, request.role, sponsors))
         }
       case None =>
         Future.successful(NotFound("Publicación no encontrada"))
+    }
+  }
+
+  /** Asignar / actualizar el patrocinador de una publicación. */
+  def setPublicationSponsor(id: Long): Action[AnyContent] = adminAction.async { implicit request: AuthRequest[AnyContent] =>
+    val form = request.body.asFormUrlEncoded.getOrElse(Map.empty)
+    val sponsorId         = form.get("sponsorId").flatMap(_.headOption) match {
+      case Some("") | Some("0") | None => None
+      case Some(v)                     => v.toLongOption
+    }
+    val sponsorLabel      = form.get("sponsorLabel").flatMap(_.headOption).filter(_.nonEmpty)
+    val sponsorShowPublic = form.get("sponsorShowPublic").flatMap(_.headOption).exists(v => Set("on", "true").contains(v.trim.toLowerCase))
+    publicationRepository.updateSponsor(id, sponsorId, sponsorLabel, sponsorShowPublic).map { _ =>
+      Redirect(controllers.admin.routes.AdminController.reviewPublicationDetail(id))
+        .flashing("success" -> "Sponsor actualizado.")
     }
   }
 

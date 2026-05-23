@@ -98,13 +98,15 @@
   }
 
   @e.id.map { eid =>
-    @views.html.admin.partials.sponsorPanel(
-      entityId            = eid,
-      entityType          = "event",
-      sponsors            = sponsors,
-      currentSponsorId    = e.sponsorId,
-      currentSponsorLabel = e.sponsorLabel,
-      currentShowPublic   = e.sponsorShowPublic
-    )
+    <div class="ed-bo__card">
+      @views.html.admin.partials.sponsorPanel(
+        entityId            = eid,
+        entityType          = "event",
+        sponsors            = sponsors,
+        currentSponsorId    = e.sponsorId,
+        currentSponsorLabel = e.sponsorLabel,
+        currentShowPublic   = e.sponsorShowPublic
+      )
+    </div>
   }
 }

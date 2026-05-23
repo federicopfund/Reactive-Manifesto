@@ -49,6 +49,7 @@
     case "agent-settings" => "Configuración de agentes"
     case "editorial-identity" => "Identidad editorial"
     case "sponsors"          => "Sponsors"
+    case "asignaciones"      => "Asignaciones de sponsors"
     case _              => "Backoffice"
   }
 }
@@ -168,9 +169,6 @@
               <a class="ed-bo__nav-item @isActive("seasons")" href="@controllers.admin.routes.AdminSeasonController.list()">
                 <span class="ed-bo__nav-dot"></span>Temporadas
               </a>
-              <a class="ed-bo__nav-item @isActive("sponsors")" href="@controllers.admin.routes.AdminSponsorController.list()">
-                <span class="ed-bo__nav-dot"></span>Sponsors
-              </a>
             }
           </details>
         }
@@ -195,6 +193,21 @@
             </summary>
             <a class="ed-bo__nav-item @isActive("collections")" href="@controllers.admin.routes.AdminCollectionController.list(None)">
               <span class="ed-bo__nav-dot"></span>Colecciones
+            </a>
+          </details>
+        }
+
+        @if(infrastructure.support.RolePolicy.can(role, infrastructure.support.Capabilities.Cap.SeasonsManage)) {
+          <details class="ed-bo__nav-group" data-section="comercial" open>
+            <summary class="ed-bo__nav-label">
+              <span class="ed-bo__nav-label-text">Comercial</span>
+              <span class="ed-bo__nav-chevron" aria-hidden="true"></span>
+            </summary>
+            <a class="ed-bo__nav-item @isActive("sponsors")" href="@controllers.admin.routes.AdminSponsorController.list()">
+              <span class="ed-bo__nav-dot"></span>Sponsors
+            </a>
+            <a class="ed-bo__nav-item @isActive("asignaciones")" href="@controllers.admin.routes.AdminSponsorController.asignaciones()">
+              <span class="ed-bo__nav-dot"></span>Asignaciones
             </a>
           </details>
         }

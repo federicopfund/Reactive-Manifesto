@@ -17,6 +17,15 @@ class AdminSponsorController @Inject()(
   adminAction: AdminOnlyAction
 )(implicit ec: ExecutionContext) extends AbstractController(cc) {
 
+  // ── Asignaciones ─────────────────────────────────────────────────
+  def asignaciones() = adminAction.async { implicit request =>
+    CapabilityCheck.require(request, Cap.SeasonsManage) {
+      sponsorRepo.findAssignments().map { rows =>
+        Ok(views.html.admin.sponsors.asignaciones(rows))
+      }
+    }
+  }
+
   // ── Listado ──────────────────────────────────────────────────────
   def list() = adminAction.async { implicit request =>
     CapabilityCheck.require(request, Cap.SeasonsManage) {

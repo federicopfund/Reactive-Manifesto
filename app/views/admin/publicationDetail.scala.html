@@ -5,7 +5,8 @@
   timeline: Seq[domains.publications.models.PublicationStageHistoryWithStage],
   currentStageCode: Option[String],
   nextStages: Seq[domains.editorial.models.EditorialStage],
-  role: String
+  role: String,
+  sponsors: Seq[domains.editorial.models.Sponsor] = Nil
 )(implicit request: RequestHeader)
 
 @views.html.admin.adminLayout("Revisión: " + publication.title, "review") {
@@ -143,6 +144,18 @@
             </div>
           }
         </section>
+      }
+
+      @* ── Panel de sponsor ─────────────────────────────────────────── *@
+      @publication.id.map { pid =>
+        @views.html.admin.partials.sponsorPanel(
+          entityId           = pid,
+          entityType         = "publication",
+          sponsors           = sponsors,
+          currentSponsorId   = publication.sponsorId,
+          currentSponsorLabel = publication.sponsorLabel,
+          currentShowPublic  = publication.sponsorShowPublic
+        )
       }
     </aside>
   </div>

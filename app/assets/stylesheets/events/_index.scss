@@ -1042,19 +1042,29 @@ $event-accents: (
 
 // ── Form admin de eventos ─────────────────────────────────────
 .ed-event-form {
+  // Anula el max-width de .ed-bo__form para aceptar fieldsets anchos
+  // (cuando está en columna de grid se controla desde .ed-event-edit-layout)
+  max-width: 760px;
+
+  .ed-event-edit-layout > & {
+    max-width: none;
+  }
+
   &__group {
-    border: 1px solid var(--ed-color-border);
+    border: 1px solid var(--color-border-subtle, var(--ed-color-border));
+    border-top: 3px solid var(--color-accent, var(--ed-color-accent));
     border-radius: 8px;
-    padding: 1.25rem;
-    margin-bottom: 1.25rem;
+    padding: 1.5rem 1.25rem 1.25rem;
+    margin-bottom: 0; // el gap del flex padre maneja el espacio
 
     legend {
       padding: 0 0.5rem;
       font-family: var(--ed-font-mono, 'IBM Plex Mono', monospace);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--ed-color-accent);
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      color: var(--color-accent, var(--ed-color-accent));
     }
   }
 }

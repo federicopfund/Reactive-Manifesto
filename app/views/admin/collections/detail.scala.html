@@ -108,19 +108,20 @@
 
       <h2 class="ed-bo__panel-title">Historial</h2>
       @views.html.admin.collections._historyTimeline(history)
+
+      @* ── Panel de sponsor ───────────────────────────── *@
+      @coll.id.map { cid =>
+        @views.html.admin.partials.sponsorPanel(
+          entityId            = cid,
+          entityType          = "collection",
+          sponsors            = sponsors,
+          currentSponsorId    = coll.sponsorId,
+          currentSponsorLabel = coll.sponsorLabel,
+          currentShowPublic   = coll.sponsorShowPublic
+        )
+      }
     </aside>
   </div>
-
-  @coll.id.map { cid =>
-    @views.html.admin.partials.sponsorPanel(
-      entityId            = cid,
-      entityType          = "collection",
-      sponsors            = sponsors,
-      currentSponsorId    = coll.sponsorId,
-      currentSponsorLabel = coll.sponsorLabel,
-      currentShowPublic   = coll.sponsorShowPublic
-    )
-  }
 
   @if(coll.isEditable) {
     <script src="@routes.Assets.versioned("javascripts/collection-items.js")?v=@System.currentTimeMillis"></script>

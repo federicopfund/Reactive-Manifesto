@@ -12,17 +12,18 @@
   align-items: flex-end;
   justify-content: space-between;
   padding: 1.5rem 0 1rem;
-  border-bottom: 1px solid rgba(0,0,0,.06);
+  border-bottom: 1px solid var(--color-border-subtle, rgba(0,0,0,.06));
   margin-bottom: 1.5rem;
 }
 .ed-bo__page-title {
   font-family: 'Playfair Display', serif;
   font-size: 1.75rem;
   margin: 0 0 .25rem;
+  color: var(--color-text-primary, inherit);
 }
 .ed-bo__page-lead {
   margin: 0;
-  color: rgba(0,0,0,.6);
+  color: var(--color-text-secondary, rgba(0,0,0,.6));
   font-size: .95rem;
 }
 .ed-bo__page-actions {
@@ -170,7 +171,58 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+
+  // Estilos nativos para elementos sin clase explícita (form.scala.html)
+  label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .78rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary, rgba(0,0,0,.7));
+    margin-bottom: .35rem;
+  }
+
+  input[type="text"],
+  input[type="url"],
+  input[type="number"],
+  input[type="datetime-local"],
+  select,
+  textarea {
+    width: 100%;
+    padding: .65rem .8rem;
+    border: 1px solid var(--color-border-strong, rgba(0,0,0,.18));
+    border-radius: 8px;
+    background: var(--color-surface, #fff);
+    color: var(--color-text-primary, inherit);
+    font: inherit;
+    font-size: .9rem;
+    transition: border-color .12s ease, outline-color .12s ease;
+
+    &:focus {
+      outline: 2px solid var(--color-accent-soft, rgba(182, 92, 58, .35));
+      border-color: var(--color-accent, #b65c3a);
+    }
+    &::placeholder { color: var(--color-text-tertiary, rgba(0,0,0,.4)); }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.55;
+  }
+
+  select {
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    padding-right: 2.25rem;
+  }
 }
+
 .ed-bo__form-row {
   display: flex;
   flex-direction: column;
@@ -182,29 +234,49 @@
     > div { flex: 1 1 50%; display: flex; flex-direction: column; gap: .35rem; }
   }
 }
+
+// Campo individual: label + control apilados
+.ed-bo__field {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  min-width: 0;
+}
+
+// Fila de campos horizontales
+.ed-bo__field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
+}
+
 .ed-bo__label {
   font-family: 'IBM Plex Mono', monospace;
   font-size: .78rem;
   letter-spacing: .06em;
   text-transform: uppercase;
-  color: rgba(0,0,0,.7);
+  color: var(--color-text-secondary, rgba(0,0,0,.7));
 }
 .ed-bo__input,
 .ed-bo__textarea {
   width: 100%;
   padding: .65rem .8rem;
-  border: 1px solid rgba(0,0,0,.18);
+  border: 1px solid var(--color-border-strong, rgba(0,0,0,.18));
   border-radius: 8px;
-  background: #fff;
+  background: var(--color-surface, #fff);
   font: inherit;
-  color: inherit;
+  color: var(--color-text-primary, inherit);
 
-  &:focus { outline: 2px solid rgba(182, 92, 58, .35); border-color: #b65c3a; }
-  &.is-error { border-color: #8a2222; }
+  &:focus { outline: 2px solid var(--color-accent-soft, rgba(182, 92, 58, .35)); border-color: var(--color-accent, #b65c3a); }
+  &.is-error { border-color: var(--color-danger, #8a2222); }
 }
 .ed-bo__textarea { resize: vertical; min-height: 80px; }
-.ed-bo__hint  { font-size: .78rem; color: rgba(0,0,0,.55); }
-.ed-bo__error { font-size: .82rem; color: #8a2222; }
+.ed-bo__hint,
+.ed-bo__field-hint { font-size: .78rem; color: var(--color-text-tertiary, rgba(0,0,0,.55)); }
+.ed-bo__error,
+.ed-bo__field-error { font-size: .82rem; color: var(--color-danger, #8a2222); }
 .ed-bo__form-actions {
   display: flex;
   gap: .5rem;
@@ -222,8 +294,8 @@
   }
 }
 .ed-bo__panel {
-  background: #fff;
-  border: 1px solid rgba(0,0,0,.08);
+  background: var(--color-surface-raised, #fff);
+  border: 1px solid var(--color-border-subtle, rgba(0,0,0,.08));
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
 }
@@ -234,7 +306,43 @@
 
   &:first-child { margin-top: 0; }
 }
+.ed-bo__panel-hint {
+  font-size: .88rem;
+  color: var(--color-text-secondary, rgba(0,0,0,.6));
+  margin: 0 0 1rem;
+}
 .ed-bo__muted { color: rgba(0,0,0,.5); font-style: italic; }
+
+// ── Layout edición de evento: formulario principal + sidebar de patrocinador ──
+.ed-event-edit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 2rem;
+  align-items: start;
+
+  // Anula max-width del form para que ocupe toda la columna izquierda
+  > .ed-bo__form,
+  > .ed-event-form {
+    max-width: none;
+  }
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Panel de patrocinador como sidebar pegajoso
+.ed-bo__panel--sponsor {
+  position: sticky;
+  top: 1.5rem;
+  border-top: 3px solid var(--color-accent, #b65c3a);
+
+  // El form interno no hereda max-width ni gap generoso
+  .ed-bo__form {
+    max-width: none;
+    gap: 1rem;
+  }
+}
 
 // ── Listado de items en detalle ──
 .ed-bo__items-add { margin-bottom: 1rem; position: relative; }
@@ -396,3 +504,54 @@
   @media (max-width: 720px) { grid-template-columns: 1fr; }
 }
 .ed-bo__items-list--season .ed-bo__item-row { background: rgba(0,0,0,.02); }
+
+// ── Sección Comercial / Asignaciones ─────────────────────────────────────────
+.ed-bo__assign-section {
+  margin-bottom: var(--space-7, 2.5rem);
+}
+.ed-bo__assign-heading {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 var(--space-3, 0.75rem);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  color: var(--color-text-primary, #1a1a1a);
+}
+.ed-bo__assign-count {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--color-text-tertiary, #a09880);
+  background: var(--color-surface-raised, #f4f0e8);
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+}
+.ed-bo__assign-table-wrap {
+  overflow-x: auto;
+}
+.ed-bo__table-title {
+  font-weight: 500;
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Tier pills de sponsor (gold / silver / bronze)
+.ed-sponsor-tier-pill {
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  color: #fff;
+
+  &--gold   { background: #b59a3a; }
+  &--silver { background: #7a8a96; }
+  &--bronze { background: #8b5e3c; }
+}

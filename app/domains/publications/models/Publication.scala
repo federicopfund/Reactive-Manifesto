@@ -102,7 +102,11 @@ case class Publication(
   publicationType: String = PublicationType.Article,
   requiresTechnicalReview: Boolean = false,
   // ── Temporada editorial (Issue #22) ──
-  seasonId: Option[Long] = None
+  seasonId: Option[Long] = None,
+  // ── Sponsor (Issue #24 — Evolution 32) ──
+  sponsorId:          Option[Long]    = None,
+  sponsorLabel:       Option[String]  = None,
+  sponsorShowPublic:  Boolean         = false
 )
 
 /**

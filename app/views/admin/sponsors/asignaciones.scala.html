@@ -1,0 +1,92 @@
+@(rows: Seq[domains.editorial.models.SponsorAssignment])(implicit request: RequestHeader)
+
+@views.html.admin.adminLayout("Asignaciones de sponsors", "sponsors") {
+
+  <div class="ed-bo__page-head">
+    <div>
+      <h1 class="ed-bo__page-title">Asignaciones de sponsors</h1>
+      <p class="ed-bo__page-lead">
+        @rows.size entidad(es) con sponsor asignado en publicaciones, eventos, colecciones y temporadas.
+      </p>
+    </div>
+    <div class="ed-bo__page-actions">
+      <a class="ed-link-btn" href="@controllers.admin.routes.AdminSponsorController.list()">← Sponsors</a>
+    </div>
+  </div>
+
+  @request.flash.get("success").map { msg => <div class="ed-flash ed-flash--success">@msg</div> }
+  @request.flash.get("error").map   { msg => <div class="ed-flash ed-flash--error">@msg</div> }
+
+  @if(rows.isEmpty) {
+    <div class="ed-bo__empty">
+      <p>No hay sponsors asignados todavía. Abrí un evento, colección, publicación o temporada y usá el panel <strong>Patrocinador</strong> del lateral.</p>
+    </div>
+  } else {
+
+    @* Agrupar por tipo de entidad *@
+    @for(entityType <- Seq("publicacion", "evento", "coleccion", "temporada")) {
+      @defining(rows.filter(_.entityType == entityType)) { group =>
+        @if(group.nonEmpty) {
+          <section class="ed-bo__assign-section">
+            <h2 class="ed-bo__assign-heading">
+              @group.head.entityTypeLabel
+              <span class="ed-bo__assign-count">@group.size</span>
+            </h2>
+            <div class="ed-bo__assign-table-wrap">
+              <table class="ed-bo__table">
+                <thead>
+                  <tr>
+                    <th>Título</th>
+                    <th>Sponsor</th>
+                    <th>Tier</th>
+                    <th>Etiqueta</th>
+                    <th>Público</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for(a <- group) {
+                    <tr>
+                      <td class="ed-bo__table-title">@a.entityTitle</td>
+                      <td>@a.sponsorName</td>
+                      <td>
+                        <span class="ed-sponsor-tier-pill ed-sponsor-tier-pill--@a.sponsorTier">
+                          @a.tierLabel
+                        </span>
+                      </td>
+                      <td class="ed-bo__muted">@a.sponsorLabel.getOrElse("—")</td>
+                      <td>
+                        @if(a.showPublic) {
+                          <span class="ed-status-pill ed-status-pill--approved">Visible</span>
+                        } else {
+                          <span class="ed-status-pill ed-status-pill--draft">Oculto</span>
+                        }
+                      </td>
+                      <td>
+                        @entityType match {
+                          case "publicacion" => {
+                            <a class="ed-link-btn" href="@controllers.admin.routes.AdminController.reviewPublicationDetail(a.entityId)">Ver</a>
+                          }
+                          case "evento" => {
+                            <a class="ed-link-btn" href="@controllers.admin.routes.AdminEventController.view(a.entityId)">Ver</a>
+                          }
+                          case "coleccion" => {
+                            <a class="ed-link-btn" href="@controllers.admin.routes.AdminCollectionController.view(a.entityId)">Ver</a>
+                          }
+                          case "temporada" => {
+                            <a class="ed-link-btn" href="@controllers.admin.routes.AdminSeasonController.editForm(a.entityId)">Ver</a>
+                          }
+                          case _ => {}
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+      }
+    }
+  }
+}
